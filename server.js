@@ -19,6 +19,14 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
+const htmlDir = path.join(__dirname, 'html');
+const htmlPages = {
+  '/': 'index.html',
+  '/services': 'services.html',
+  '/about': 'about.html',
+  '/contact': 'contact.html',
+  '/request-service': 'request-service.html'
+};
 
 connectDB();
 
@@ -35,7 +43,14 @@ app.use(helmet({
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
       frameSrc: ["'self'", 'https://js.stripe.com', 'https://www.google.com', 'https://www.google.com/maps'],
-      connectSrc: ["'self'", 'https://api.stripe.com']
+      connectSrc: [
+        "'self'",
+        'https://api.stripe.com',
+        'https://geocode.arcgis.com',
+        'https://nominatim.openstreetmap.org',
+        'https://router.project-osrm.org',
+        'https://maps.googleapis.com'
+      ]
     }
   }
 }));
@@ -44,6 +59,20 @@ app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: isProduction ? '7d' : 0,
   etag: true
 }));
+app.get(['/index.html', '/home.html'], (req, res) => res.redirect(301, '/'));
+app.get(['/services.html', '/about.html', '/contact.html', '/request-service.html'], (req, res) => {
+  const cleanPath = req.path.replace(/\.html$/, '');
+  const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  res.redirect(301, `${cleanPath}${query}`);
+});
+app.use(express.static(htmlDir, {
+  index: false,
+  maxAge: isProduction ? '7d' : 0,
+  etag: true
+}));
+Object.entries(htmlPages).forEach(([route, file]) => {
+  app.get(route, (req, res) => res.sendFile(path.join(htmlDir, file)));
+});
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(express.json({ limit: '2mb' }));
 app.use(methodOverride('_method'));
