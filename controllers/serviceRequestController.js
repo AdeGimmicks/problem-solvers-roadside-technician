@@ -4,11 +4,33 @@ const ServiceRequest = require('../models/ServiceRequest');
 const { sendServiceRequestNotification } = require('../services/emailService');
 const { cleanObject } = require('../utils/sanitize');
 
+function wantsJson(req) {
+  return req.originalUrl.startsWith('/api/') || req.get('accept')?.includes('application/json');
+}
+
+function serializeRequest(serviceRequest) {
+  return {
+    id: serviceRequest._id.toString(),
+    referenceNumber: serviceRequest.referenceNumber,
+    preferredPaymentMethod: serviceRequest.preferredPaymentMethod,
+    paymentStatus: serviceRequest.paymentStatus,
+    estimatedArrivalMinutes: serviceRequest.estimatedArrivalMinutes,
+    basePrice: serviceRequest.basePrice,
+    travelFee: serviceRequest.travelFee,
+    totalPrice: serviceRequest.totalPrice,
+    distanceMiles: serviceRequest.distanceMiles,
+    travelTimeMinutes: serviceRequest.travelTimeMinutes
+  };
+}
+
 async function submitRequest(req, res, next) {
   try {
     const errors = validationResult(req);
     const form = req.body;
     if (!errors.isEmpty()) {
+      if (wantsJson(req)) {
+        return res.status(422).json({ errors: errors.array() });
+      }
       return res.status(422).render('request-service', {
         title: 'Request Roadside Assistance',
         metaDescription: 'Request mobile roadside assistance in Chicago.',
@@ -54,6 +76,9 @@ async function submitRequest(req, res, next) {
     });
 
     await sendServiceRequestNotification(serviceRequest);
+    if (wantsJson(req)) {
+      return res.status(201).json({ request: serializeRequest(serviceRequest) });
+    }
     res.render('success', {
       title: 'Request Received',
       metaDescription: 'Your roadside assistance request has been received.',

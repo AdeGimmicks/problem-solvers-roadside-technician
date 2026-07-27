@@ -70,6 +70,8 @@ Requests can also be marked Cancelled. Every status change is stored in MongoDB 
 
 This project includes `render.yaml`. Connect the GitHub repository to Render, set the required environment variables, and deploy with `npm start`.
 
+Stripe Checkout uses environment variables only. Reuse the existing Stripe account by setting `STRIPE_SECRET_KEY=sk_live_...` and `STRIPE_PUBLISHABLE_KEY=pk_live_...` in Render. Do not paste Stripe keys into the source code.
+
 ## Notes
 
 - This is not a towing-company site. The copy and workflows are focused on mobile roadside service at the customer's location.

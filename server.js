@@ -14,6 +14,7 @@ const connectDB = require('./config/db');
 const publicRoutes = require('./routes/publicRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const paymentController = require('./controllers/paymentController');
 const { attachBusinessSettings } = require('./middleware/settings');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
@@ -55,6 +56,7 @@ app.use(helmet({
   }
 }));
 app.use(morgan(isProduction ? 'combined' : 'dev'));
+app.post('/payments/stripe-webhook', express.raw({ type: 'application/json' }), paymentController.stripeWebhook);
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: isProduction ? '7d' : 0,
   etag: true
@@ -105,6 +107,9 @@ const csrfProtection = csrf();
 app.use((req, res, next) => {
   if (req.path === '/payments/stripe-webhook') return next();
   return csrfProtection(req, res, next);
+});
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
 });
 app.use((req, res, next) => {
   res.locals.csrfToken = req.csrfToken ? req.csrfToken() : '';

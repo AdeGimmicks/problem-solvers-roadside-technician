@@ -829,6 +829,70 @@ function validatePhotoUpload(form) {
   return true;
 }
 
+let csrfTokenPromise;
+
+async function getCsrfToken() {
+  csrfTokenPromise ||= fetch('/api/csrf-token', {
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' }
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Unable to prepare the secure form token.');
+      return response.json();
+    })
+    .then((data) => data.csrfToken);
+
+  return csrfTokenPromise;
+}
+
+async function createServiceRequest(form) {
+  const csrfToken = await getCsrfToken();
+  const response = await fetch('/api/service-requests', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      Accept: 'application/json',
+      'X-CSRF-Token': csrfToken
+    },
+    body: new FormData(form)
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload.errors?.map((error) => error.msg).join('\n')
+      || payload.error
+      || 'Please check the form and try again.';
+    throw new Error(message);
+  }
+
+  return payload.request;
+}
+
+async function startStripeCheckout(request) {
+  const csrfToken = await getCsrfToken();
+  const response = await fetch('/payments/checkout', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
+    },
+    body: JSON.stringify({
+      serviceRequestId: request.id,
+      amount: request.totalPrice
+    })
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error || 'Stripe checkout is not ready yet.');
+  }
+  if (!payload.url) throw new Error('Stripe did not return a checkout page.');
+
+  window.location.href = payload.url;
+}
+
 function setupStaticRequestSave() {
   const form = document.querySelector('[data-request-form]');
   if (!form) return;
@@ -845,46 +909,42 @@ function setupStaticRequestSave() {
     renderQuote(latestQuote);
   });
 
-  document.querySelector('[data-confirm-request]')?.addEventListener('click', () => {
+  document.querySelector('[data-confirm-request]')?.addEventListener('click', async () => {
     if (!latestQuote) return;
-    if (form.getAttribute('action') !== '#') {
-      form.dataset.quoteConfirmed = 'true';
-      form.submit();
-      return;
+    const confirmButton = document.querySelector('[data-confirm-request]');
+    const originalText = confirmButton?.textContent || 'Confirm Request';
+    let savedRequest = null;
+
+    try {
+      if (!validateVehicleSelection()) {
+        vehicleModelInput?.reportValidity();
+        return;
+      }
+      if (!validatePhotoUpload(form)) return;
+
+      if (confirmButton) {
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'Submitting...';
+      }
+
+      savedRequest = await createServiceRequest(form);
+      const data = new FormData(form);
+      if (data.get('preferredPaymentMethod') === 'Card') {
+        if (confirmButton) confirmButton.textContent = 'Opening Payment...';
+        await startStripeCheckout(savedRequest);
+        return;
+      }
+
+      showCustomerConfirmation(savedRequest);
+    } catch (error) {
+      if (savedRequest) showCustomerConfirmation(savedRequest);
+      alert(error.message);
+    } finally {
+      if (confirmButton) {
+        confirmButton.disabled = false;
+        confirmButton.textContent = originalText;
+      }
     }
-
-    const data = new FormData(form);
-    const requests = getStoredRequests();
-    const photoFiles = data.getAll('photos').filter((file) => file && file.name).map((file) => file.name);
-    const request = {
-      id: `local-${Date.now()}`,
-      customerName: data.get('customerName'),
-      phone: data.get('phone'),
-      email: data.get('email'),
-      vehicleMake: data.get('vehicleMake'),
-      vehicleModel: data.get('vehicleModel'),
-      vehicleYear: data.get('vehicleYear'),
-      problem: data.get('problem'),
-      currentLocation: data.get('currentLocation'),
-      message: data.get('message'),
-      preferredPaymentMethod: data.get('preferredPaymentMethod'),
-      photos: photoFiles,
-      status: 'Pending',
-      paymentStatus: 'Payment Pending',
-      distanceMiles: latestQuote.distanceMiles,
-      travelTimeMinutes: latestQuote.travelTimeMinutes,
-      basePrice: latestQuote.basePrice,
-      travelFee: latestQuote.travelFee,
-      totalPrice: latestQuote.totalPrice,
-      estimatedArrivalMinutes: latestQuote.estimatedArrivalMinutes,
-      travelEstimateStatus: latestQuote.travelEstimateStatus,
-      referenceNumber: latestQuote.referenceNumber,
-      note: '',
-      createdAt: new Date().toISOString()
-    };
-
-    saveStoredRequests([request, ...requests]);
-    showCustomerConfirmation(request);
   });
 }
 

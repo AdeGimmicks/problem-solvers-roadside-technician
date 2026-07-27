@@ -1,6 +1,6 @@
 const ServiceRequest = require('../models/ServiceRequest');
 const Payment = require('../models/Payment');
-const { stripe } = require('../config/services');
+const { stripe, stripePublishableKey } = require('../config/services');
 
 async function createCheckoutSession(req, res, next) {
   try {
@@ -11,7 +11,7 @@ async function createCheckoutSession(req, res, next) {
     const serviceRequest = await ServiceRequest.findById(req.body.serviceRequestId);
     if (!serviceRequest) return res.status(404).json({ error: 'Service request not found.' });
 
-    const amount = Number(req.body.amount || serviceRequest.estimatedPrice || 0);
+    const amount = Number(serviceRequest.totalPrice || serviceRequest.estimatedPrice || 0);
     if (amount <= 0) return res.status(422).json({ error: 'A valid payment amount is required.' });
 
     const session = await stripe.checkout.sessions.create({
@@ -27,12 +27,16 @@ async function createCheckoutSession(req, res, next) {
           }
         }
       }],
-      metadata: { serviceRequestId: serviceRequest._id.toString() },
+      customer_email: serviceRequest.email || undefined,
+      metadata: {
+        serviceRequestId: serviceRequest._id.toString(),
+        referenceNumber: serviceRequest.referenceNumber || ''
+      },
       success_url: `${process.env.APP_URL}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.APP_URL}/payments/cancel`
     });
 
-    res.json({ url: session.url });
+    res.json({ url: session.url, publishableKeyConfigured: Boolean(stripePublishableKey) });
   } catch (error) {
     next(error);
   }
@@ -54,7 +58,17 @@ async function cancel(req, res) {
 
 async function stripeWebhook(req, res) {
   if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) return res.sendStatus(204);
-  const event = req.body;
+  const signature = req.headers['stripe-signature'];
+  let event = req.body;
+
+  if (Buffer.isBuffer(req.body)) {
+    try {
+      event = stripe.webhooks.constructEvent(req.body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+    } catch (error) {
+      return res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+  }
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const request = await ServiceRequest.findById(session.metadata.serviceRequestId);
@@ -68,6 +82,7 @@ async function stripeWebhook(req, res) {
         stripePaymentIntentId: session.payment_intent
       });
       request.payment = payment._id;
+      request.paymentStatus = 'Paid';
       request.setStatus('Payment Recorded', null, 'Stripe payment completed.');
       await request.save();
     }

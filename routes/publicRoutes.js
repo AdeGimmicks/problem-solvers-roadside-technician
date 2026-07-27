@@ -30,6 +30,7 @@ router.get('/contact', publicController.contact);
 router.post('/contact', contactValidators, requestController.submitContact);
 router.get('/request-service', publicController.requestService);
 router.post('/request-service', upload.array('photos', 5), requestValidators, requestController.submitRequest);
+router.post('/api/service-requests', upload.array('photos', 5), requestValidators, requestController.submitRequest);
 router.get('/robots.txt', publicController.robots);
 router.get('/sitemap.xml', publicController.sitemap);
 
