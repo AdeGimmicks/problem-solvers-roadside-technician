@@ -1810,13 +1810,14 @@ td {
 
 @media (max-width: 430px) {
   .home-banner {
-    padding-inline: 12px;
+    padding-inline: 10px;
   }
 
   .home-banner img {
-    height: 156px;
-    object-fit: cover;
-    object-position: left center;
+    height: 168px;
+    object-fit: contain;
+    object-position: center center;
+    background: #050506;
   }
 
   .service-choice-heading {
@@ -1835,42 +1836,42 @@ td {
   }
 
   .home-service-strip {
-    grid-template-columns: 1fr;
-    padding-inline: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-inline: 8px;
   }
 
   .service-chip {
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 1fr;
     min-width: 0;
-    min-height: 96px;
-    justify-items: stretch;
+    min-height: 128px;
+    justify-items: center;
     align-content: center;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
+    gap: 8px;
+    padding: 12px 6px;
     overflow: hidden;
-    text-align: left;
+    text-align: center;
   }
 
   .service-icon {
-    width: 56px;
-    height: 56px;
+    width: 46px;
+    height: 46px;
     border-width: 2px;
-    font-size: 1.3rem;
+    font-size: 1.12rem;
   }
 
   .service-copy {
     width: 100%;
     min-width: 0;
-    justify-items: start;
-    gap: 5px;
-    font-size: clamp(1.35rem, 7.3vw, 1.85rem);
-    line-height: 0.9;
+    justify-items: center;
+    gap: 4px;
+    font-size: clamp(1.06rem, 6.1vw, 1.38rem);
+    line-height: 0.92;
   }
 
   .service-copy small {
     max-width: 100%;
-    font-size: 0.78rem;
+    font-size: 0.67rem;
     line-height: 1.1;
   }
 
