@@ -1548,7 +1548,8 @@ td {
 
   .home-service-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding-inline: 18px;
+    gap: 0;
+    padding-inline: 12px;
   }
 
   .services-showcase {
@@ -1576,29 +1577,73 @@ td {
   .board-phone { top: 58%; }
 
   .services-button-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .service-request-btn {
-    min-height: 88px;
-    padding: 16px 18px;
+    min-height: 98px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 8px;
+    padding: 14px 10px;
+    border-radius: 18px;
+    text-align: center;
   }
 
   .service-request-btn strong {
-    font-size: clamp(1.55rem, 8vw, 2.2rem);
+    font-size: clamp(1.2rem, 5.6vw, 1.65rem);
+  }
+
+  .service-request-btn small {
+    grid-column: auto;
+    margin-top: 0;
+    font-size: 0.78rem;
   }
 
   .service-btn-icon {
-    flex-basis: 58px;
-    width: 58px;
-    height: 58px;
+    flex-basis: auto;
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
   }
 
   .service-chip {
-    min-height: 172px;
-    gap: 22px;
-    padding: 28px 26px;
+    min-height: 168px;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 12px;
+    padding: 18px 12px;
     border: 1px solid rgba(255, 210, 31, 0.45);
+    text-align: center;
+  }
+
+  .service-copy {
+    justify-items: center;
+    gap: 6px;
+    font-size: clamp(1.35rem, 7vw, 1.8rem);
+  }
+
+  .service-copy small {
+    font-size: 0.78rem;
+  }
+
+  .service-copy em {
+    max-width: 14ch;
+    font-size: 0.72rem;
+  }
+
+  .service-copy b {
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  .service-icon {
+    flex-basis: auto;
+    width: 58px;
+    height: 58px;
+    font-size: 1.45rem;
   }
 
   .service-chip:nth-child(4n + 1) {
@@ -1711,7 +1756,7 @@ td {
 
 @media (max-width: 520px) {
   .services-button-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .services-intro h1 {
@@ -1719,6 +1764,46 @@ td {
   }
 
   .service-request-btn {
-    min-height: 82px;
+    min-height: 92px;
+    padding: 12px 8px;
+  }
+
+  .service-request-btn strong {
+    font-size: clamp(1.05rem, 5.8vw, 1.38rem);
+  }
+
+  .service-request-btn small {
+    font-size: 0.72rem;
+  }
+
+  .home-service-strip {
+    padding-inline: 8px;
+  }
+
+  .service-chip {
+    min-height: 142px;
+    padding: 14px 8px;
+  }
+
+  .service-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+
+  .service-copy {
+    font-size: clamp(1.12rem, 6.4vw, 1.45rem);
+  }
+
+  .service-copy small {
+    font-size: 0.7rem;
+  }
+
+  .service-copy em {
+    display: none;
+  }
+
+  .service-copy b {
+    font-size: 0.68rem;
   }
 }
