@@ -1,36 +1,57 @@
 <%- include('partials/head') %>
 <%- include('partials/nav') %>
 <main>
-  <section class="services-showcase" aria-label="Roadside assistance services">
-    <div class="services-board-top">
-      <img src="/images/brand/ps-services-banner.png" alt="Problem Solvers Roadside Assistance mobile service board">
-      <a class="service-board-link board-tire" href="/request-service?service=Tire%20Change" aria-label="Request Tire Change"></a>
-      <a class="service-board-link board-jump" href="/request-service?service=Jump%20Start" aria-label="Request Jump Start"></a>
-      <a class="service-board-link board-fuel" href="/request-service?service=Fuel%20Delivery" aria-label="Request Fuel Delivery"></a>
-      <a class="service-board-link board-battery" href="/request-service?service=Battery%20Replacement" aria-label="Request Battery Replacement"></a>
-      <a class="service-board-link board-inflation" href="/request-service?service=Tire%20Inflation" aria-label="Request Tire Inflation"></a>
-      <a class="service-board-link board-lockout" href="/request-service?service=Lockout%20Service" aria-label="Request Lockout Service"></a>
-      <a class="service-board-link board-diagnostic" href="/request-service?service=Car%20Diagnostic%20Scanner" aria-label="Request Car Diagnostic"></a>
-      <a class="service-board-link board-testing" href="/request-service?service=Battery%20Testing" aria-label="Request Battery Testing"></a>
-      <a class="service-board-link board-light" href="/request-service?service=Light%20Roadside%20Repairs" aria-label="Request Light Roadside Repairs"></a>
-      <a class="service-board-link board-more" href="/request-service" aria-label="Request another roadside service"></a>
-      <a class="service-board-link board-phone" href="tel:<%= settings.phoneNumber %>" aria-label="Call <%= settings.businessName %>"></a>
-    </div>
+  <section class="services-landing">
+    <section class="image-feature home-banner services-landing-banner">
+      <img src="/images/brand/ps-hero-clean.png" alt="Problem Solvers Roadside Assistance hero banner with technician, service vehicle, and we come to you message">
+    </section>
 
-    <div class="services-intro">
-      <p class="eyebrow">Mobile roadside services</p>
-      <h1>Tap A Service To Request Help</h1>
-    </div>
+    <section class="services-landing-hero" aria-labelledby="services-landing-title">
+      <div class="services-landing-copy">
+        <p class="eyebrow">Roadside help without the wait</p>
+        <h1 id="services-landing-title">Reliable Roadside Assistance, Fast</h1>
+        <p>Flat tire, dead battery, lockout, fuel delivery, battery service, or roadside help. Choose what you need and keep your phone nearby.</p>
+        <div class="hero-actions services-landing-actions">
+          <a class="btn primary" href="/">Get Started</a>
+          <a class="btn secondary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
+          <a class="btn ghost" href="sms:<%= settings.phoneNumber %>">Text Now</a>
+        </div>
+      </div>
+      <div class="services-landing-points" aria-label="How roadside help works">
+        <div>
+          <strong>1</strong>
+          <span>Tell us the service you need.</span>
+        </div>
+        <div>
+          <strong>2</strong>
+          <span>Share your vehicle and location.</span>
+        </div>
+        <div>
+          <strong>3</strong>
+          <span>We call or text to confirm the job.</span>
+        </div>
+      </div>
+    </section>
+  </section>
 
-    <div class="services-button-grid">
-      <a class="service-request-btn" href="/request-service?service=Tire%20Change"><span class="service-btn-icon">◎</span><strong>Tire Change</strong><small>Starting at $70</small></a>
-      <a class="service-request-btn" href="/request-service?service=Jump%20Start"><span class="service-btn-icon">⚡</span><strong>Jump Start</strong><small>Starting at $60</small></a>
-      <a class="service-request-btn" href="/request-service?service=Fuel%20Delivery"><span class="service-btn-icon">⛽</span><strong>Fuel Delivery</strong><small>Starting at $60 + fuel</small></a>
-      <a class="service-request-btn" href="/request-service?service=Battery%20Replacement"><span class="service-btn-icon">▤</span><strong>Battery Replacement</strong><small>Starting at $75 labor</small></a>
-      <a class="service-request-btn" href="/request-service?service=Tire%20Inflation"><span class="service-btn-icon">✚</span><strong>Tire Inflation</strong><small>Starting at $35</small></a>
-      <a class="service-request-btn" href="/request-service?service=Lockout%20Service"><span class="service-btn-icon">▣</span><strong>Lockout Service</strong><small>Starting at $65</small></a>
-      <a class="service-request-btn" href="/request-service?service=Car%20Diagnostic%20Scanner"><span class="service-btn-icon">⌁</span><strong>Car Diagnostic</strong><small>Starting at $50</small></a>
-      <a class="service-request-btn" href="/request-service?service=Battery%20Testing"><span class="service-btn-icon">⌁</span><strong>Battery Testing</strong><small>Starting at $35</small></a>
+  <section class="section home-panel-section">
+    <div class="section-heading">
+      <p class="eyebrow">Reviews</p>
+      <h2>Customer feedback</h2>
+    </div>
+    <div class="review-grid">
+      <% const fallbackReviews = (typeof reviews !== 'undefined' && reviews.length) ? reviews : [
+        { customerName: 'Illinois Driver', quote: 'Fast response and professional service when my battery died.', rating: 5 },
+        { customerName: 'South Side Customer', quote: 'Helped with a flat tire at my location and got me moving again.', rating: 5 },
+        { customerName: 'Suburban Driver', quote: 'Clear communication, reliable arrival, and friendly roadside help.', rating: 5 }
+      ]; %>
+      <% fallbackReviews.forEach((review) => { %>
+        <article class="review">
+          <div class="stars"><%= '★'.repeat(review.rating || 5) %></div>
+          <p>“<%= review.quote %>”</p>
+          <strong><%= review.customerName %></strong>
+        </article>
+      <% }) %>
     </div>
   </section>
 </main>
