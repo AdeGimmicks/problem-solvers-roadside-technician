@@ -1,0 +1,55 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main>
+  <section class="page-hero compact-hero">
+    <p class="eyebrow">Technician Sign Up</p>
+    <h1>Work With Problem Solvers Roadside</h1>
+    <p>Tell us what services you can handle. We will review your application and contact you before activation.</p>
+  </section>
+  <section class="form-layout single request-layout">
+    <form class="form-card request-card technician-card" action="/technicians/apply" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <%- include('partials/form-errors', { errors }) %>
+      <div class="form-grid">
+        <label>Full Name
+          <input name="fullName" value="<%= form.fullName || '' %>" required>
+        </label>
+        <label>Phone Number
+          <input name="phone" value="<%= form.phone || '' %>" required>
+        </label>
+        <label>Email
+          <input type="email" name="email" value="<%= form.email || '' %>">
+        </label>
+        <label>City
+          <input name="city" value="<%= form.city || '' %>" placeholder="Chicago, Calumet City, Aurora..." required>
+        </label>
+        <label>Service Area
+          <input name="serviceArea" value="<%= form.serviceArea || '' %>" placeholder="Areas you can cover in Illinois">
+        </label>
+        <label>Vehicle
+          <input name="vehicle" value="<%= form.vehicle || '' %>" placeholder="Vehicle you use for jobs">
+        </label>
+      </div>
+
+      <fieldset class="check-panel">
+        <legend>Services You Can Handle</legend>
+        <% services.forEach((service) => { %>
+          <label><input type="checkbox" name="servicesOffered" value="<%= service %>" <%= [].concat(form.servicesOffered || []).includes(service) ? 'checked' : '' %>> <span><%= service %></span></label>
+        <% }) %>
+      </fieldset>
+
+      <label>Tools / Equipment
+        <textarea name="tools" required placeholder="Example: floor jack, impact wrench, jump box, air compressor, lockout kit"><%= form.tools || '' %></textarea>
+      </label>
+      <label>Experience
+        <textarea name="experience" placeholder="Tell us about roadside jobs you have handled."><%= form.experience || '' %></textarea>
+      </label>
+      <label>Tool Photos
+        <input type="file" name="photos" accept=".jpg,.jpeg,.png,.heic,.heif,image/jpeg,image/png,image/heic,image/heif" multiple>
+      </label>
+      <small class="muted-note">Upload up to 5 JPG, PNG, or HEIC images.</small>
+      <button class="btn primary" type="submit">Submit Application</button>
+    </form>
+  </section>
+</main>
+<%- include('partials/footer') %>

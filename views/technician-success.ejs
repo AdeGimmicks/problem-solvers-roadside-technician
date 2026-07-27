@@ -1,0 +1,18 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main>
+  <section class="page-hero success-panel payment-result">
+    <p class="eyebrow">Application Received</p>
+    <h1>Thank You, <%= application.fullName %>.</h1>
+    <div class="result-card">
+      <p>Your technician application was received. We will review your tools, services, and coverage area before activation.</p>
+      <p><strong>Status:</strong> <%= application.applicationStatus %></p>
+      <p><strong>Phone:</strong> <a href="tel:<%= application.phone %>"><%= application.phone %></a></p>
+      <div class="hero-actions">
+        <a class="btn primary" href="/">Back Home</a>
+        <a class="btn ghost" href="tel:<%= settings.phoneNumber %>">Call Office</a>
+      </div>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>

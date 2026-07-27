@@ -1156,6 +1156,74 @@ textarea {
   min-height: 52vh;
 }
 
+.compact-hero {
+  padding-bottom: 22px;
+}
+
+.compact-hero h1 {
+  font-size: clamp(2.35rem, 5.2vw, 4.4rem);
+}
+
+.payment-result {
+  display: grid;
+  gap: 18px;
+}
+
+.result-card {
+  display: grid;
+  gap: 10px;
+  max-width: 780px;
+  padding: 20px;
+  border: 1px solid rgba(255, 210, 31, 0.34);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 210, 31, 0.12), transparent 32%),
+    var(--panel);
+}
+
+.result-card p {
+  margin: 0;
+}
+
+.muted-note {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.technician-card {
+  margin-top: 0;
+}
+
+.check-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid rgba(255, 210, 31, 0.32);
+  border-radius: var(--radius);
+}
+
+.check-panel legend {
+  padding: 0 8px;
+  color: var(--yellow);
+  font-family: var(--display-font);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.check-panel label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.92rem;
+}
+
+.check-panel input {
+  width: auto;
+  min-height: auto;
+}
+
 .site-footer {
   display: grid;
   grid-template-columns: 1.2fr 1fr 0.7fr;
@@ -1289,7 +1357,103 @@ td {
   padding: 6px 8px;
   border-radius: var(--radius);
   background: #fff7cf;
+  color: var(--black);
   font-weight: 800;
+}
+
+.technician-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.status-filter {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 210, 31, 0.35);
+  border-radius: var(--radius);
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.status-filter.active,
+.status-filter:hover {
+  color: var(--black);
+  background: var(--yellow);
+}
+
+.manager-request-list {
+  display: grid;
+  gap: 14px;
+}
+
+.manager-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255, 210, 31, 0.25);
+  border-radius: var(--radius);
+  background: #0d0d10;
+}
+
+.manager-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.manager-card h2 {
+  margin: 0 0 4px;
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+}
+
+.manager-card p {
+  margin: 0;
+}
+
+.request-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.request-card-grid > div,
+.manager-note-block {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.request-card-grid strong,
+.manager-note-block strong {
+  color: var(--yellow);
+  font-family: var(--display-font);
+  text-transform: uppercase;
+}
+
+.photo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photo-strip img {
+  width: 86px;
+  height: 86px;
+  border: 1px solid rgba(255, 210, 31, 0.35);
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+.manager-update-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 2fr auto;
+  gap: 8px;
+  align-items: end;
 }
 
 .inline-form,
@@ -1471,6 +1635,29 @@ td {
 
 .manager-update-row {
   grid-template-columns: 190px 190px minmax(220px, 1fr);
+}
+
+.technician-manager-card .manager-update-row {
+  grid-template-columns: 160px 160px 140px minmax(220px, 1fr) auto;
+}
+
+.technician-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.technician-manager-card .photo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.technician-manager-card .photo-strip img {
+  width: 86px;
+  height: 86px;
+  object-fit: cover;
 }
 
 .empty-state {

@@ -1,0 +1,101 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <div>
+      <h1><%= currentStatus || 'Technician Applications' %></h1>
+      <p class="muted-note">Review technician signups, tools, services, and payout readiness.</p>
+    </div>
+    <a class="btn secondary" href="/technicians/apply" target="_blank" rel="noreferrer">Open Signup Link</a>
+  </div>
+
+  <div class="technician-filterbar">
+    <a class="status-filter <%= !currentStatus ? 'active' : '' %>" href="/dashboard/technicians">All</a>
+    <% statuses.forEach((status) => { %>
+      <a class="status-filter <%= currentStatus === status ? 'active' : '' %>" href="/dashboard/technicians?status=<%= encodeURIComponent(status) %>"><%= status %></a>
+    <% }) %>
+  </div>
+
+  <section class="dashboard-panel">
+    <% if (!items.length) { %>
+      <p>No technician applications yet.</p>
+    <% } %>
+
+    <div class="manager-request-list">
+      <% items.forEach((item) => { %>
+        <article class="manager-request-card technician-manager-card">
+          <div class="request-card-head">
+            <div>
+              <h3><%= item.fullName %></h3>
+              <p><%= item.city %><% if (item.serviceArea) { %> • <%= item.serviceArea %><% } %></p>
+            </div>
+            <span class="status-pill manager-status"><%= item.applicationStatus %></span>
+          </div>
+
+          <div class="request-card-grid">
+            <p><span>Phone</span><a href="tel:<%= item.phone %>"><%= item.phone %></a></p>
+            <p><span>Email</span><strong><%= item.email || 'Not provided' %></strong></p>
+            <p><span>Vehicle</span><strong><%= item.vehicle || 'Not provided' %></strong></p>
+            <p><span>Stripe Connect</span><strong><%= item.stripeConnectStatus %></strong></p>
+            <p><span>Payout</span><strong><%= item.payoutStatus %></strong></p>
+            <p><span>Applied</span><strong><%= item.createdAt.toLocaleString() %></strong></p>
+          </div>
+
+          <div class="request-message">
+            <span>Services</span>
+            <p><%= item.servicesOffered && item.servicesOffered.length ? item.servicesOffered.join(', ') : 'Not listed' %></p>
+          </div>
+          <div class="request-message">
+            <span>Tools / Equipment</span>
+            <p><%= item.tools || 'Not listed' %></p>
+          </div>
+          <% if (item.experience) { %>
+            <div class="request-message">
+              <span>Experience</span>
+              <p><%= item.experience %></p>
+            </div>
+          <% } %>
+
+          <% if (item.photoPaths && item.photoPaths.length) { %>
+            <div class="photo-strip">
+              <% item.photoPaths.forEach((photo) => { %>
+                <a href="<%= photo %>" target="_blank" rel="noreferrer"><img src="<%= photo %>" alt="Technician uploaded tool photo"></a>
+              <% }) %>
+            </div>
+          <% } %>
+
+          <form class="manager-update-row" action="/dashboard/technicians/<%= item._id %>/status?_method=PATCH" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label>Status
+              <select name="applicationStatus">
+                <% statuses.forEach((status) => { %>
+                  <option <%= status === item.applicationStatus ? 'selected' : '' %>><%= status %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Connect
+              <select name="stripeConnectStatus">
+                <% ['Not Started', 'Pending', 'Active', 'Restricted'].forEach((status) => { %>
+                  <option <%= status === item.stripeConnectStatus ? 'selected' : '' %>><%= status %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Payout
+              <select name="payoutStatus">
+                <% ['Not Ready', 'Ready'].forEach((status) => { %>
+                  <option <%= status === item.payoutStatus ? 'selected' : '' %>><%= status %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Notes
+              <input name="notes" value="<%= item.notes || '' %>" placeholder="Internal note">
+            </label>
+            <button class="btn primary" type="submit">Save</button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</main>
+</body>
+</html>

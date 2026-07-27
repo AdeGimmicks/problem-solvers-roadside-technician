@@ -1,3 +1,22 @@
 <%- include('partials/head') %><%- include('partials/nav') %>
-<main><section class="page-hero"><h1>Payment Cancelled</h1><p>No payment was completed. You can return to the payment link when ready.</p></section></main>
+<main>
+  <section class="page-hero payment-result">
+    <p class="eyebrow">Payment Not Completed</p>
+    <h1>No Charge Was Made.</h1>
+    <div class="result-card">
+      <% if (request) { %>
+        <p>Your request is still saved as <strong><%= request.paymentStatus %></strong>.</p>
+        <p><strong>Reference:</strong> <%= request.referenceNumber || request._id %></p>
+        <p><strong>Service:</strong> <%= request.problem %></p>
+      <% } else { %>
+        <p>No payment was completed. You can request service again or call/text us directly.</p>
+      <% } %>
+      <div class="hero-actions">
+        <a class="btn primary" href="/request-service<%= request ? `?service=${encodeURIComponent(request.problem)}` : '' %>">Return To Request</a>
+        <a class="btn ghost" href="tel:<%= settings.phoneNumber %>">Call Now</a>
+        <a class="btn ghost" href="sms:<%= settings.textNumber %>">Text Now</a>
+      </div>
+    </div>
+  </section>
+</main>
 <%- include('partials/footer') %>

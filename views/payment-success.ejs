@@ -1,3 +1,28 @@
 <%- include('partials/head') %><%- include('partials/nav') %>
-<main><section class="page-hero success-panel"><h1>Payment Successful</h1><p>Your payment was recorded. Thank you.</p></section></main>
+<main>
+  <section class="page-hero success-panel payment-result">
+    <p class="eyebrow">Payment Successful</p>
+    <h1>Your Roadside Payment Is Confirmed.</h1>
+    <div class="result-card">
+      <% if (request) { %>
+        <p><strong>Reference:</strong> <%= request.referenceNumber || request._id %></p>
+        <p><strong>Service:</strong> <%= request.problem %></p>
+        <p><strong>Customer:</strong> <%= request.customerName %></p>
+        <p><strong>Location:</strong> <%= request.currentLocation %></p>
+      <% } %>
+      <% if (payment || session) { %>
+        <p><strong>Amount paid:</strong> $<%= payment ? payment.amount.toFixed(2) : ((session.amount_total || 0) / 100).toFixed(2) %></p>
+        <p><strong>Payment status:</strong> <%= payment ? payment.status : session.payment_status %></p>
+      <% } else { %>
+        <p>Your payment was completed. Keep your phone nearby so we can call or text with updates.</p>
+      <% } %>
+      <p>Keep your phone nearby. We will call or text to confirm the job.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
+        <a class="btn ghost" href="sms:<%= settings.textNumber %>">Text Now</a>
+        <a class="btn secondary" href="/">Back Home</a>
+      </div>
+    </div>
+  </section>
+</main>
 <%- include('partials/footer') %>

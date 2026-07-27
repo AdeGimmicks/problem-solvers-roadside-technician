@@ -5,6 +5,43 @@ const { stripe, stripePublishableKey } = require('../config/services');
 const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
 const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
 
+async function recordStripeCheckoutPayment(session) {
+  const serviceRequestId = session?.metadata?.serviceRequestId;
+  if (!serviceRequestId) return null;
+
+  const request = await ServiceRequest.findById(serviceRequestId);
+  if (!request) return null;
+
+  const paymentIntentId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id;
+  let payment = paymentIntentId
+    ? await Payment.findOne({ stripePaymentIntentId: paymentIntentId })
+    : null;
+
+  if (!payment) {
+    payment = await Payment.create({
+      serviceRequest: request._id,
+      customer: request.customer,
+      amount: Number(session.amount_total || 0) / 100,
+      currency: session.currency || process.env.STRIPE_CURRENCY || 'usd',
+      method: 'Card',
+      status: session.payment_status === 'paid' ? 'Paid' : 'Pending',
+      stripePaymentIntentId: paymentIntentId,
+      notes: `Stripe Checkout Session: ${session.id}`
+    });
+  }
+
+  request.payment = payment._id;
+  request.paymentStatus = payment.status === 'Paid' ? 'Paid' : 'Payment Pending';
+  if (payment.status === 'Paid' && request.status !== 'Payment Recorded') {
+    request.setStatus('Payment Recorded', null, 'Stripe payment completed.');
+  }
+  await request.save();
+
+  return { request, payment };
+}
+
 async function createCheckoutSession(req, res, next) {
   try {
     if (!stripe) {
@@ -48,7 +85,7 @@ async function createCheckoutSession(req, res, next) {
         metadata: roadsideMetadata
       },
       success_url: `${process.env.APP_URL}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.APP_URL}/payments/cancel`
+      cancel_url: `${process.env.APP_URL}/payments/cancel?request=${serviceRequest._id}`
     });
 
     res.json({ url: session.url, publishableKeyConfigured: Boolean(stripePublishableKey) });
@@ -57,18 +94,46 @@ async function createCheckoutSession(req, res, next) {
   }
 }
 
-async function success(req, res) {
-  res.render('payment-success', {
-    title: 'Payment Successful',
-    metaDescription: 'Your roadside assistance payment was successful.'
-  });
+async function success(req, res, next) {
+  try {
+    let request = null;
+    let payment = null;
+    let session = null;
+
+    if (stripe && req.query.session_id) {
+      session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+      if (session.payment_status === 'paid') {
+        const recorded = await recordStripeCheckoutPayment(session);
+        request = recorded?.request || null;
+        payment = recorded?.payment || null;
+      } else if (session.metadata?.serviceRequestId) {
+        request = await ServiceRequest.findById(session.metadata.serviceRequestId);
+      }
+    }
+
+    res.render('payment-success', {
+      title: 'Payment Successful',
+      metaDescription: 'Your roadside assistance payment was successful.',
+      request,
+      payment,
+      session
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 
-async function cancel(req, res) {
-  res.render('payment-cancel', {
-    title: 'Payment Cancelled',
-    metaDescription: 'Your payment was cancelled.'
-  });
+async function cancel(req, res, next) {
+  try {
+    const request = req.query.request ? await ServiceRequest.findById(req.query.request) : null;
+    res.render('payment-cancel', {
+      title: 'Payment Cancelled',
+      metaDescription: 'Your payment was cancelled.',
+      request
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 
 async function stripeWebhook(req, res) {
@@ -85,24 +150,15 @@ async function stripeWebhook(req, res) {
   }
 
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const request = await ServiceRequest.findById(session.metadata.serviceRequestId);
-    if (request) {
-      const payment = await Payment.create({
-        serviceRequest: request._id,
-        customer: request.customer,
-        amount: session.amount_total / 100,
-        method: 'Card',
-        status: 'Paid',
-        stripePaymentIntentId: session.payment_intent
-      });
-      request.payment = payment._id;
-      request.paymentStatus = 'Paid';
-      request.setStatus('Payment Recorded', null, 'Stripe payment completed.');
-      await request.save();
-    }
+    await recordStripeCheckoutPayment(event.data.object);
   }
   res.json({ received: true });
 }
 
-module.exports = { createCheckoutSession, success, cancel, stripeWebhook };
+module.exports = {
+  createCheckoutSession,
+  success,
+  cancel,
+  stripeWebhook,
+  recordStripeCheckoutPayment
+};
