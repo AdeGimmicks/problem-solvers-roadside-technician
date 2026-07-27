@@ -2,6 +2,9 @@ const ServiceRequest = require('../models/ServiceRequest');
 const Payment = require('../models/Payment');
 const { stripe, stripePublishableKey } = require('../config/services');
 
+const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
+const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
+
 async function createCheckoutSession(req, res, next) {
   try {
     if (!stripe) {
@@ -13,6 +16,15 @@ async function createCheckoutSession(req, res, next) {
 
     const amount = Number(serviceRequest.totalPrice || serviceRequest.estimatedPrice || 0);
     if (amount <= 0) return res.status(422).json({ error: 'A valid payment amount is required.' });
+    const selectedService = serviceRequest.problem || 'Roadside Service';
+    const paymentDescription = selectedService;
+    const roadsideMetadata = {
+      website: STRIPE_WEBSITE_NAME,
+      business: STRIPE_BUSINESS_TYPE,
+      service: selectedService,
+      serviceRequestId: serviceRequest._id.toString(),
+      referenceNumber: serviceRequest.referenceNumber || ''
+    };
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -23,14 +35,17 @@ async function createCheckoutSession(req, res, next) {
           currency: process.env.STRIPE_CURRENCY || 'usd',
           unit_amount: Math.round(amount * 100),
           product_data: {
-            name: `Roadside Assistance - ${serviceRequest.problem}`
+            name: `${STRIPE_WEBSITE_NAME} - ${selectedService}`,
+            description: paymentDescription,
+            metadata: roadsideMetadata
           }
         }
       }],
       customer_email: serviceRequest.email || undefined,
-      metadata: {
-        serviceRequestId: serviceRequest._id.toString(),
-        referenceNumber: serviceRequest.referenceNumber || ''
+      metadata: roadsideMetadata,
+      payment_intent_data: {
+        description: paymentDescription,
+        metadata: roadsideMetadata
       },
       success_url: `${process.env.APP_URL}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.APP_URL}/payments/cancel`
