@@ -1810,18 +1810,11 @@ td {
 
 @media (max-width: 430px) {
   .home-banner {
-    padding-inline: 10px;
-  }
-
-  .home-banner img {
-    height: 168px;
-    object-fit: contain;
-    object-position: center center;
-    background: #050506;
+    display: none;
   }
 
   .service-choice-heading {
-    padding: 26px 18px 14px;
+    padding: 30px 18px 14px;
   }
 
   .service-choice-heading h1,
