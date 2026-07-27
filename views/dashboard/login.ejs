@@ -1,6 +1,6 @@
 <%- include('partials/head') %>
 <main class="login-page">
-  <form class="form-card login-card" action="/dashboard/login" method="post">
+  <form class="form-card login-card" action="/store-manager/login" method="post">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <span class="brand-mark">PS</span>
     <h1>Store Manager Login</h1>
@@ -10,7 +10,7 @@
     <button class="btn primary" type="submit">Login</button>
     <% if (canSetup) { %>
       <p class="setup-help">No store manager login exists yet.</p>
-      <a class="btn ghost" href="/dashboard/setup">Create Store Manager Login</a>
+      <a class="btn ghost" href="/store-manager/setup">Create Store Manager Login</a>
     <% } %>
   </form>
 </main>

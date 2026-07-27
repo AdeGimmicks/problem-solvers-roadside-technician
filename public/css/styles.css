@@ -1668,15 +1668,27 @@ td {
 }
 
 .login-page {
+  grid-column: 1 / -1;
+  width: 100%;
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: clamp(18px, 4vw, 48px);
   background: var(--black);
 }
 
 .login-card {
-  width: min(100%, 420px);
+  width: min(100%, 680px);
+  padding: clamp(24px, 4vw, 44px);
+}
+
+.login-card h1 {
+  max-width: 100%;
+  margin-bottom: 18px;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .setup-help {
