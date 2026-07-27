@@ -24,22 +24,72 @@ async function ensureDefaultAdmin() {
 
 async function loginPage(req, res) {
   await ensureDefaultAdmin();
+  const adminCount = await Admin.countDocuments();
   res.render('dashboard/login', {
-    title: 'Dashboard Login',
-    metaDescription: 'Secure admin login.',
-    error: null
+    title: 'Store Manager Login',
+    metaDescription: 'Secure store manager login.',
+    error: null,
+    canSetup: adminCount === 0
   });
 }
 
 async function login(req, res) {
   const admin = await Admin.findOne({ email: String(req.body.email || '').toLowerCase(), active: true });
   if (!admin || !(await admin.comparePassword(req.body.password || ''))) {
+    const adminCount = await Admin.countDocuments();
     return res.status(401).render('dashboard/login', {
-      title: 'Dashboard Login',
-      metaDescription: 'Secure admin login.',
-      error: 'Invalid email or password.'
+      title: 'Store Manager Login',
+      metaDescription: 'Secure store manager login.',
+      error: 'Invalid email or password.',
+      canSetup: adminCount === 0
     });
   }
+  req.session.admin = {
+    id: admin._id.toString(),
+    name: admin.name,
+    email: admin.email,
+    role: admin.role,
+    token: issueToken(admin)
+  };
+  res.redirect('/dashboard');
+}
+
+async function setupPage(req, res) {
+  const adminCount = await Admin.countDocuments();
+  if (adminCount > 0) return res.redirect('/dashboard/login');
+  res.render('dashboard/setup', {
+    title: 'Create Store Manager Login',
+    metaDescription: 'Create your store manager login.',
+    error: null,
+    form: {}
+  });
+}
+
+async function setup(req, res) {
+  const adminCount = await Admin.countDocuments();
+  if (adminCount > 0) return res.redirect('/dashboard/login');
+
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
+  const confirmPassword = String(req.body.confirmPassword || '');
+  const name = String(req.body.name || 'Store Manager').trim();
+
+  if (!email || password.length < 8 || password !== confirmPassword) {
+    return res.status(422).render('dashboard/setup', {
+      title: 'Create Store Manager Login',
+      metaDescription: 'Create your store manager login.',
+      error: 'Enter an email and matching password with at least 8 characters.',
+      form: { name, email }
+    });
+  }
+
+  const admin = await Admin.create({
+    name,
+    email,
+    password,
+    role: 'owner'
+  });
+
   req.session.admin = {
     id: admin._id.toString(),
     name: admin.name,
@@ -214,6 +264,8 @@ async function addServiceArea(req, res) {
 module.exports = {
   loginPage,
   login,
+  setupPage,
+  setup,
   logout,
   overview,
   requests,

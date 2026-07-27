@@ -8,6 +8,8 @@ const router = express.Router();
 
 router.get('/login', dashboard.loginPage);
 router.post('/login', dashboard.login);
+router.get('/setup', dashboard.setupPage);
+router.post('/setup', dashboard.setup);
 router.post('/logout', requireAdmin, dashboard.logout);
 router.get('/', requireAdmin, dashboard.overview);
 router.get('/requests', requireAdmin, dashboard.requests);

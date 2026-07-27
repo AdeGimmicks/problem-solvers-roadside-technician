@@ -121,6 +121,7 @@ app.use(attachBusinessSettings);
 
 app.use('/', publicRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/store-manager', dashboardRoutes);
 app.use('/payments', paymentRoutes);
 app.use(notFound);
 app.use(errorHandler);

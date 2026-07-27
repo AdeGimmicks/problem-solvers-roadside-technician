@@ -1,0 +1,26 @@
+<%- include('partials/head') %>
+<main class="login-page">
+  <form class="form-card login-card" action="/dashboard/setup" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <span class="brand-mark">PS</span>
+    <h1>Create Store Manager Login</h1>
+    <p class="setup-help">Create the private login you will use to manage requests, payments, and technician applications.</p>
+    <% if (error) { %><div class="form-errors"><p><%= error %></p></div><% } %>
+    <label>Name
+      <input name="name" value="<%= form.name || 'Store Manager' %>" required>
+    </label>
+    <label>Email
+      <input type="email" name="email" value="<%= form.email || '' %>" required>
+    </label>
+    <label>Password
+      <input type="password" name="password" minlength="8" required>
+    </label>
+    <label>Confirm Password
+      <input type="password" name="confirmPassword" minlength="8" required>
+    </label>
+    <button class="btn primary" type="submit">Create Login</button>
+    <a class="btn ghost" href="/dashboard/login">Back To Login</a>
+  </form>
+</main>
+</body>
+</html>

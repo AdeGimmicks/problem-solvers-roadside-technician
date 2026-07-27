@@ -3,11 +3,15 @@
   <form class="form-card login-card" action="/dashboard/login" method="post">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <span class="brand-mark">PS</span>
-    <h1>Admin Login</h1>
+    <h1>Store Manager Login</h1>
     <% if (error) { %><div class="form-errors"><p><%= error %></p></div><% } %>
     <label>Email<input type="email" name="email" required></label>
     <label>Password<input type="password" name="password" required></label>
     <button class="btn primary" type="submit">Login</button>
+    <% if (canSetup) { %>
+      <p class="setup-help">No store manager login exists yet.</p>
+      <a class="btn ghost" href="/dashboard/setup">Create Store Manager Login</a>
+    <% } %>
   </form>
 </main>
 </body>
