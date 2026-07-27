@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customers | Dashboard</title>
+  <meta name="description" content="Customer list.">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="dashboard-body">
+<aside class="dashboard-nav">
+  <a class="brand dashboard-brand" href="./dashboard.html"><span class="brand-mark">PS</span><span>Dashboard</span></a>
+  <a href="./dashboard.html">Overview</a>
+  <a href="./dashboard-requests.html">Requests</a>
+  <a href="/dashboard/requests?status=Pending">Pending Requests</a>
+  <a href="/dashboard/requests?status=Accepted">Accepted Jobs</a>
+  <a href="/dashboard/requests?status=Completed">Completed Jobs</a>
+  <a href="/dashboard/requests?status=Cancelled">Cancelled Jobs</a>
+  <a href="./dashboard-customers.html">Customer List</a>
+  <a href="./dashboard-payments.html">Payments</a>
+  <a href="./dashboard-settings.html">Reviews / Photos / Settings</a>
+  <form action="#" method="post">
+    <input type="hidden" data-name="_csrf" value="static-preview">
+    <button type="submit">Logout</button>
+  </form>
+</aside>
+
+<main class="dashboard-main">
+  <h1>Customer List</h1>
+  <section class="dashboard-panel table-wrap">
+    <table><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Vehicles</th></tr></thead><tbody>
+      
+        <tr><td>Sample Customer</td><td>(312) 900-7711</td><td>customer@example.com</td><td>2018 Toyota Camry</td></tr>
+      
+    </tbody></table>
+  </section>
+</main></body></html>

@@ -1,0 +1,14 @@
+<%- include('partials/head') %>
+<main class="login-page">
+  <form class="form-card login-card" action="/dashboard/login" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <span class="brand-mark">PS</span>
+    <h1>Admin Login</h1>
+    <% if (error) { %><div class="form-errors"><p><%= error %></p></div><% } %>
+    <label>Email<input type="email" name="email" required></label>
+    <label>Password<input type="password" name="password" required></label>
+    <button class="btn primary" type="submit">Login</button>
+  </form>
+</main>
+</body>
+</html>

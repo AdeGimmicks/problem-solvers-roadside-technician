@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | <%= settings.businessName %></title>
+  <meta name="description" content="<%= metaDescription %>">
+  <meta name="keywords" content="Roadside Assistance Chicago, Jump Start Chicago, Flat Tire Chicago, Battery Replacement Chicago, Fuel Delivery Chicago, Car Lockout Chicago, Emergency Roadside Assistance">
+  <meta property="og:title" content="<%= title %>">
+  <meta property="og:description" content="<%= metaDescription %>">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="<%= process.env.APP_URL || '' %><%= path %>">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="<%= process.env.APP_URL || '' %><%= path %>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AutomotiveBusiness",
+    "name": "<%= settings.businessName %>",
+    "telephone": "<%= settings.phoneNumber %>",
+    "email": "<%= settings.email %>",
+    "areaServed": "<%= settings.serviceArea %>",
+    "description": "Mobile roadside assistance in Chicago and surrounding suburbs.",
+    "url": "<%= process.env.APP_URL || '' %>"
+  }
+  </script>
+</head>
+<body>

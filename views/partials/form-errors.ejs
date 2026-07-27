@@ -1,0 +1,5 @@
+<% if (errors && errors.length) { %>
+  <div class="form-errors" role="alert">
+    <% errors.forEach((error) => { %><p><%= error.msg %></p><% }) %>
+  </div>
+<% } %>

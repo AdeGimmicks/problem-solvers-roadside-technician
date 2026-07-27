@@ -1,0 +1,14 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main>
+  <section class="page-hero success-panel">
+    <p class="eyebrow">Received</p>
+    <h1>Your request has been received</h1>
+    <p>Thanks, <%= request.customerName %>. The technician will review your request and contact you as soon as possible.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
+      <a class="btn secondary" href="sms:<%= settings.textNumber %>">Text Now</a>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>

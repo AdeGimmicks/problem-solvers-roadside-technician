@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payments | Dashboard</title>
+  <meta name="description" content="Payment records.">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="dashboard-body">
+<aside class="dashboard-nav">
+  <a class="brand dashboard-brand" href="./dashboard.html"><span class="brand-mark">PS</span><span>Dashboard</span></a>
+  <a href="./dashboard.html">Overview</a>
+  <a href="./dashboard-requests.html">Requests</a>
+  <a href="/dashboard/requests?status=Pending">Pending Requests</a>
+  <a href="/dashboard/requests?status=Accepted">Accepted Jobs</a>
+  <a href="/dashboard/requests?status=Completed">Completed Jobs</a>
+  <a href="/dashboard/requests?status=Cancelled">Cancelled Jobs</a>
+  <a href="./dashboard-customers.html">Customer List</a>
+  <a href="./dashboard-payments.html">Payments</a>
+  <a href="./dashboard-settings.html">Reviews / Photos / Settings</a>
+  <form action="#" method="post">
+    <input type="hidden" data-name="_csrf" value="static-preview">
+    <button type="submit">Logout</button>
+  </form>
+</aside>
+
+<main class="dashboard-main">
+  <h1>Payments</h1>
+  <section class="dashboard-panel">
+    <h2>Record Offline Payment</h2>
+    <form class="settings-form" action="#" method="post">
+      <input type="hidden" data-name="_csrf" value="static-preview">
+      <label>Service Request ID<input name="serviceRequest" required></label>
+      <label>Amount<input type="number" step="0.01" name="amount" required></label>
+      <label>Method<select name="method"><option>Cash</option><option>Cash App</option><option>Zelle</option><option>Card</option><option>Other</option></select></label>
+      <label>Status<select name="status"><option>Paid</option><option>Pending</option><option>Failed</option></select></label>
+      <label>Notes<input name="notes"></label>
+      <button class="btn primary" type="submit">Record Payment</button>
+    </form>
+  </section>
+  <section class="dashboard-panel table-wrap">
+    <table><thead><tr><th>Amount</th><th>Method</th><th>Status</th><th>Request</th><th>Date</th></tr></thead><tbody>
+      <tr><td>$75.00</td><td>Cash</td><td>Paid</td><td>REQ-1001</td><td>7/24/2026, 6:32:28 AM</td></tr>
+    </tbody></table>
+  </section>
+</main></body></html>

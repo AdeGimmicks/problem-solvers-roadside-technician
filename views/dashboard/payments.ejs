@@ -1,0 +1,21 @@
+<%- include('partials/head') %><%- include('partials/nav') %>
+<main class="dashboard-main">
+  <h1>Payments</h1>
+  <section class="dashboard-panel">
+    <h2>Record Offline Payment</h2>
+    <form class="settings-form" action="/dashboard/payments" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Service Request ID<input name="serviceRequest" required></label>
+      <label>Amount<input type="number" step="0.01" name="amount" required></label>
+      <label>Method<select name="method"><option>Cash</option><option>Cash App</option><option>Zelle</option><option>Card</option><option>Other</option></select></label>
+      <label>Status<select name="status"><option>Paid</option><option>Pending</option><option>Failed</option></select></label>
+      <label>Notes<input name="notes"></label>
+      <button class="btn primary" type="submit">Record Payment</button>
+    </form>
+  </section>
+  <section class="dashboard-panel table-wrap">
+    <table><thead><tr><th>Amount</th><th>Method</th><th>Status</th><th>Request</th><th>Date</th></tr></thead><tbody>
+      <% items.forEach((item) => { %><tr><td>$<%= item.amount.toFixed(2) %></td><td><%= item.method %></td><td><%= item.status %></td><td><%= item.serviceRequest?._id || '' %></td><td><%= item.createdAt.toLocaleString() %></td></tr><% }) %>
+    </tbody></table>
+  </section>
+</main></body></html>

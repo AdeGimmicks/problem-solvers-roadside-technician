@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Service Requests | Dashboard</title>
+  <meta name="description" content="Manage roadside assistance requests.">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="dashboard-body">
+
+<aside class="dashboard-nav">
+  <a class="brand dashboard-brand" href="./dashboard.html"><span class="brand-mark">PS</span><span>Dashboard</span></a>
+  <a href="./dashboard.html">Overview</a>
+  <a href="./dashboard-requests.html">Requests</a>
+  <a href="/dashboard/requests?status=Pending">Pending Requests</a>
+  <a href="/dashboard/requests?status=Accepted">Accepted Jobs</a>
+  <a href="/dashboard/requests?status=Completed">Completed Jobs</a>
+  <a href="/dashboard/requests?status=Cancelled">Cancelled Jobs</a>
+  <a href="./dashboard-customers.html">Customer List</a>
+  <a href="./dashboard-payments.html">Payments</a>
+  <a href="./dashboard-settings.html">Reviews / Photos / Settings</a>
+  <form action="#" method="post">
+    <input type="hidden" data-name="_csrf" value="static-preview">
+    <button type="submit">Logout</button>
+  </form>
+</aside>
+
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <div>
+      <p class="eyebrow">Manager Queue</p>
+      <h1>Service Requests</h1>
+    </div>
+    <div class="manager-actions small">
+      <button class="btn secondary" type="button" data-seed-demo>Load Demo Jobs</button>
+      <button class="btn ghost" type="button" data-clear-demo>Clear Demo</button>
+    </div>
+  </div>
+  <section class="dashboard-panel manager-panel">
+    <div class="manager-filterbar">
+      <input type="search" placeholder="Search name, phone, vehicle, service, or location" data-request-search>
+      <select data-request-filter>
+        <option value="">All Statuses</option>
+        <option>Pending</option>
+        <option>Accepted</option>
+        <option>On The Way</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+        <option>Cancelled</option>
+      </select>
+    </div>
+    <div class="manager-request-list" data-manager-requests></div>
+  </section>
+</main>
+<script src="./js/main.js" defer></script>
+</body>
+</html>

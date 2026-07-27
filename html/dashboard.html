@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Overview | Dashboard</title>
+  <meta name="description" content="Admin dashboard overview.">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="dashboard-body">
+
+<aside class="dashboard-nav">
+  <a class="brand dashboard-brand" href="./dashboard.html"><span class="brand-mark">PS</span><span>Dashboard</span></a>
+  <a href="./dashboard.html">Overview</a>
+  <a href="./dashboard-requests.html">Requests</a>
+  <a href="/dashboard/requests?status=Pending">Pending Requests</a>
+  <a href="/dashboard/requests?status=Accepted">Accepted Jobs</a>
+  <a href="/dashboard/requests?status=Completed">Completed Jobs</a>
+  <a href="/dashboard/requests?status=Cancelled">Cancelled Jobs</a>
+  <a href="./dashboard-customers.html">Customer List</a>
+  <a href="./dashboard-payments.html">Payments</a>
+  <a href="./dashboard-settings.html">Reviews / Photos / Settings</a>
+  <form action="#" method="post">
+    <input type="hidden" data-name="_csrf" value="static-preview">
+    <button type="submit">Logout</button>
+  </form>
+</aside>
+
+<main class="dashboard-main">
+  <section class="manager-hero">
+    <p class="eyebrow">Store Manager</p>
+    <h1>Roadside Command Center</h1>
+    <p>Track new service requests, call customers fast, open their location, and move each job from request to completion.</p>
+    <div class="manager-actions">
+      <a class="btn primary" href="./dashboard-requests.html">View Requests</a>
+      <a class="btn ghost" href="./index.html">Back To Website</a>
+    </div>
+  </section>
+
+  <div class="stat-grid manager-stat-grid" data-dashboard-stats>
+    <a class="stat-card manager-stat" href="./dashboard-requests.html?status=Pending"><span>Pending</span><strong data-stat="Pending">0</strong></a>
+    <a class="stat-card manager-stat" href="./dashboard-requests.html?status=Accepted"><span>Accepted</span><strong data-stat="Accepted">0</strong></a>
+    <a class="stat-card manager-stat" href="./dashboard-requests.html?status=On%20The%20Way"><span>On The Way</span><strong data-stat="On The Way">0</strong></a>
+    <a class="stat-card manager-stat" href="./dashboard-requests.html?status=Completed"><span>Completed</span><strong data-stat="Completed">0</strong></a>
+  </div>
+
+  <section class="dashboard-panel manager-panel">
+    <div class="dashboard-topline">
+      <div>
+        <p class="eyebrow">Today</p>
+        <h2>Recent Requests</h2>
+      </div>
+      <a class="btn secondary" href="./dashboard-requests.html">Manage All</a>
+    </div>
+    <div class="manager-request-list compact" data-manager-recent></div>
+  </section>
+</main>
+<script src="./js/main.js" defer></script>
+</body>
+</html>

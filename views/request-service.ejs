@@ -1,0 +1,79 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main>
+  <section class="page-hero request-hero">
+    <p>Fill this out and keep your phone nearby. We will call or text to confirm the job.</p>
+  </section>
+  <section class="form-layout single request-layout">
+    <form class="form-card wide request-card" action="/request-service" method="post" enctype="multipart/form-data" data-request-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <%- include('partials/form-errors', { errors }) %>
+      <div class="form-grid">
+        <label>Customer Name<input name="customerName" value="<%= form.customerName || '' %>" placeholder="Your name" required></label>
+        <label>Phone<input type="tel" name="phone" value="<%= form.phone || '' %>" placeholder="Your phone number" required></label>
+        <label>Email<input type="email" name="email" value="<%= form.email || '' %>" placeholder="Optional"></label>
+        <label>Vehicle Make<input name="vehicleMake" value="<%= form.vehicleMake || '' %>" list="vehicleMakes" placeholder="Start typing make" autocomplete="new-password" autocapitalize="words" data-vehicle-make required></label>
+        <label>Vehicle Model<input name="vehicleModel" value="<%= form.vehicleModel || '' %>" list="vehicleModels" placeholder="Choose make first, then type model" autocomplete="new-password" autocapitalize="words" data-vehicle-model required></label>
+        <label>Vehicle Year
+          <input name="vehicleYear" value="<%= form.vehicleYear || '' %>" list="vehicleYears" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="Type any 4-digit year" required>
+        </label>
+        <label>Problem
+          <select name="problem" required>
+            <option value="">Select service</option>
+            <% ['Tire Change', 'Jump Start', 'Fuel Delivery', 'Lockout Service', 'Tire Inflation', 'Battery Replacement', 'Battery Testing', 'Car Diagnostic Scanner', 'Light Roadside Repairs'].forEach((problem) => { %>
+              <option <%= (form.problem || '') === problem ? 'selected' : '' %>><%= problem %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Current Location
+          <span class="address-field">
+            <input name="currentLocation" value="<%= form.currentLocation || '' %>" placeholder="Enter your current street address" autocomplete="off" data-address-autocomplete required>
+            <span class="address-suggestions" data-address-suggestions hidden></span>
+          </span>
+          <button class="btn ghost location-btn" type="button" data-use-location>Use My Current Location</button>
+        </label>
+        <label>Photo Upload<input type="file" name="photos" accept="image/jpeg,image/png,image/heic,image/heif" multiple data-photo-upload><small>Upload up to 5 JPG, PNG, or HEIC images.</small></label>
+        <label>Preferred Payment Method
+          <select name="preferredPaymentMethod">
+            <option>Card</option><option>Cash</option><option>Cash App</option><option>Zelle</option>
+          </select>
+        </label>
+      </div>
+      <label>Message<textarea name="message" placeholder="Tell us anything helpful: parking lot, side street, tire position, battery issue, etc."><%= form.message || '' %></textarea></label>
+      <section class="quote-panel" data-quote-panel hidden>
+        <p class="eyebrow">Estimated quote</p>
+        <div class="quote-grid">
+          <p><span>Base service</span><strong data-quote-base>$0</strong></p>
+          <p><span>Travel fee</span><strong data-quote-travel>$0</strong></p>
+          <p><span>Total quote</span><strong data-quote-total>$0</strong></p>
+          <p><span>Distance / Time</span><strong data-quote-distance>Estimating...</strong></p>
+        </div>
+        <small>Starting prices include up to 10 miles. If the driving distance is more than 10 miles, the travel fee is added before you confirm.</small>
+      </section>
+      <input type="hidden" name="basePrice" data-quote-field="basePrice">
+      <input type="hidden" name="travelFee" data-quote-field="travelFee">
+      <input type="hidden" name="totalPrice" data-quote-field="totalPrice">
+      <input type="hidden" name="distanceMiles" data-quote-field="distanceMiles">
+      <input type="hidden" name="travelTimeMinutes" data-quote-field="travelTimeMinutes">
+      <input type="hidden" name="estimatedArrivalMinutes" data-quote-field="estimatedArrivalMinutes">
+      <input type="hidden" name="referenceNumber" data-quote-field="referenceNumber">
+      <input type="hidden" name="travelEstimateStatus" data-quote-field="travelEstimateStatus">
+      <section class="confirmation-panel" data-confirmation-panel hidden>
+        <h2>Request received.</h2>
+        <p>Reference number: <strong data-reference-number></strong></p>
+        <p>Estimated arrival time: <strong data-arrival-time></strong></p>
+        <p>Selected payment method: <strong data-confirm-payment></strong></p>
+      </section>
+      <div class="form-actions">
+        <button class="btn primary" type="submit" data-submit-request>Get Quote</button>
+        <button class="btn secondary" type="button" data-confirm-request hidden>Confirm Request</button>
+      </div>
+      <datalist id="vehicleMakes"></datalist>
+      <datalist id="vehicleModels"></datalist>
+      <datalist id="vehicleYears">
+        <% for (let year = 2027; year >= 1980; year--) { %><option value="<%= year %>"><% } %>
+      </datalist>
+    </form>
+  </section>
+</main>
+<%- include('partials/footer') %>

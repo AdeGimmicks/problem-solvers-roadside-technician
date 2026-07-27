@@ -1,0 +1,49 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <h1><%= currentStatus || 'Service Requests' %></h1>
+    <a class="btn secondary" href="/dashboard/requests">All Requests</a>
+  </div>
+  <section class="dashboard-panel">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Customer</th><th>Phone</th><th>Vehicle</th><th>Problem</th><th>Location</th><th>Distance</th><th>Quote</th><th>Payment</th><th>Status</th><th>Update</th></tr></thead>
+        <tbody>
+          <% items.forEach((item) => { %>
+            <tr>
+              <td><%= item.customerName %></td>
+              <td><a href="tel:<%= item.phone %>"><%= item.phone %></a></td>
+              <td><%= item.vehicleYear %> <%= item.vehicleMake %> <%= item.vehicleModel %></td>
+              <td><%= item.problem %></td>
+              <td><a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(item.currentLocation) %>">Open Map</a></td>
+              <td>
+                <%= item.distanceMiles ? `${item.distanceMiles} mi` : 'Not estimated' %>
+                <% if (item.travelTimeMinutes) { %><br><small><%= item.travelTimeMinutes %> min</small><% } %>
+              </td>
+              <td>
+                <%= item.totalPrice ? `$${item.totalPrice}` : 'Not quoted' %>
+                <% if (item.basePrice) { %><br><small>Base $<%= item.basePrice %><% if (item.travelFee) { %> + travel $<%= item.travelFee %><% } %></small><% } %>
+              </td>
+              <td>
+                <%= item.preferredPaymentMethod || 'Not selected' %>
+                <br><small><%= item.paymentStatus || 'Payment Pending' %></small>
+              </td>
+              <td><span class="status-pill"><%= item.status %></span></td>
+              <td>
+                <form class="inline-form" action="/dashboard/requests/<%= item._id %>/status?_method=PATCH" method="post">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <select name="status"><% statuses.forEach((status) => { %><option <%= status === item.status ? 'selected' : '' %>><%= status %></option><% }) %></select>
+                  <input name="note" placeholder="Note">
+                  <button type="submit">Save</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+</body>
+</html>

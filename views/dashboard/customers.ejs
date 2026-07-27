@@ -1,0 +1,11 @@
+<%- include('partials/head') %><%- include('partials/nav') %>
+<main class="dashboard-main">
+  <h1>Customer List</h1>
+  <section class="dashboard-panel table-wrap">
+    <table><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Vehicles</th></tr></thead><tbody>
+      <% items.forEach((item) => { %>
+        <tr><td><%= item.name %></td><td><%= item.phone %></td><td><%= item.email || '' %></td><td><%= (item.vehicles || []).map((v) => `${v.year || ''} ${v.make || ''} ${v.model || ''}`).join(', ') %></td></tr>
+      <% }) %>
+    </tbody></table>
+  </section>
+</main></body></html>

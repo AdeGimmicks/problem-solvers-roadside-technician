@@ -1,0 +1,16 @@
+<aside class="dashboard-nav">
+  <a class="brand dashboard-brand" href="/dashboard"><span class="brand-mark">PS</span><span>Dashboard</span></a>
+  <a href="/dashboard">Overview</a>
+  <a href="/dashboard/requests">Requests</a>
+  <a href="/dashboard/requests?status=Pending">Pending Requests</a>
+  <a href="/dashboard/requests?status=Accepted">Accepted Jobs</a>
+  <a href="/dashboard/requests?status=Completed">Completed Jobs</a>
+  <a href="/dashboard/requests?status=Cancelled">Cancelled Jobs</a>
+  <a href="/dashboard/customers">Customer List</a>
+  <a href="/dashboard/payments">Payments</a>
+  <a href="/dashboard/settings">Reviews / Photos / Settings</a>
+  <form action="/dashboard/logout" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit">Logout</button>
+  </form>
+</aside>

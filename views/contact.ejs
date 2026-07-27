@@ -1,0 +1,33 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main>
+  <section class="page-hero">
+    <p class="eyebrow">Contact</p>
+    <h1>Call, text, or send the details</h1>
+    <p>Share your vehicle, problem, and location so help can be coordinated quickly.</p>
+  </section>
+  <section class="form-layout">
+    <div class="contact-block">
+      <h2>Contact Info</h2>
+      <p><strong>Phone:</strong> <a href="tel:<%= settings.phoneNumber %>"><%= settings.phoneNumber %></a></p>
+      <p><strong>Email:</strong> <a href="mailto:<%= settings.email %>"><%= settings.email %></a></p>
+      <p><strong>Hours:</strong> <%= settings.businessHours %></p>
+      <p><strong>Area:</strong> <%= settings.serviceArea %></p>
+      <div class="map-wrap small">
+        <% if (settings.googleMapsEmbedUrl) { %><iframe src="<%= settings.googleMapsEmbedUrl %>" loading="lazy" title="Google map"></iframe><% } else { %><div class="map-placeholder">Google Map</div><% } %>
+      </div>
+    </div>
+    <form class="form-card" action="/contact" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <%- include('partials/form-errors', { errors }) %>
+      <label>Name<input name="name" value="<%= form.name || '' %>" required></label>
+      <label>Phone<input name="phone" value="<%= form.phone || '' %>" required></label>
+      <label>Vehicle<input name="vehicle" value="<%= form.vehicle || '' %>"></label>
+      <label>Problem<input name="problem" value="<%= form.problem || '' %>" required></label>
+      <label>Location<input name="location" value="<%= form.location || '' %>" required></label>
+      <label>Message<textarea name="message"><%= form.message || '' %></textarea></label>
+      <button class="btn primary" type="submit">Send Message</button>
+    </form>
+  </section>
+</main>
+<%- include('partials/footer') %>

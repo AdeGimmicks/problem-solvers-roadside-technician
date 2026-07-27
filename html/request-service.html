@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request Roadside Assistance | Problem Solvers Roadside Technician</title>
+  <meta name="description" content="Request mobile roadside assistance for tire changes, jump starts, lockouts, fuel delivery, and battery service across Illinois.">
+  <meta name="keywords" content="Roadside Assistance Illinois, Jump Start Illinois, Flat Tire Illinois, Battery Replacement Illinois, Fuel Delivery Illinois, Car Lockout Illinois, Emergency Roadside Assistance">
+  <meta property="og:title" content="Request Roadside Assistance">
+  <meta property="og:description" content="Request mobile roadside assistance for tire changes, jump starts, lockouts, fuel delivery, and battery service across Illinois.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="/request-service">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="./request-service.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AutomotiveBusiness",
+    "name": "Problem Solvers Roadside Technician",
+    "telephone": "+13129007711",
+    "email": "help@example.com",
+    "areaServed": "Illinois",
+    "description": "Mobile roadside assistance across Illinois.",
+    "url": ""
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="brand" href="./index.html" aria-label="Problem Solvers Roadside Technician home">
+    <img class="brand-logo" src="./images/problem-solvers-icon.png" alt="" aria-hidden="true">
+    <span>Problem Solvers Roadside Technician</span>
+  </a>
+  <div class="header-contact" aria-label="Call or text Problem Solvers">
+    <a class="header-phone" href="tel:+13129007711">(312) 900-7711</a>
+    <span class="header-contact-actions">
+      <a href="tel:+13129007711">Call</a>
+      <a href="sms:+13129007711">Text</a>
+    </span>
+  </div>
+  <button class="nav-toggle" type="button" aria-label="Open navigation" data-nav-toggle>☰</button>
+  <nav class="site-nav" data-nav>
+    <a href="./services.html">Services</a>
+    <a href="./about.html">About</a>
+    <a href="./contact.html">Contact</a>
+    <a class="nav-cta" href="./request-service.html">Request Service</a>
+  </nav>
+</header>
+
+<main>
+  <section class="page-hero request-hero">
+    <p>Fill this out and keep your phone nearby. We will call or text to confirm the job.</p>
+  </section>
+  <section class="form-layout single request-layout">
+    <form class="form-card wide request-card" action="#" method="post" enctype="multipart/form-data" data-request-form>
+      <input type="hidden" data-name="_csrf" value="static-preview">
+      
+
+      <div class="form-grid">
+        <label>Customer Name<input name="customerName" value="" placeholder="Your name" required></label>
+        <label>Phone<input type="tel" name="phone" value="" placeholder="Your phone number" required></label>
+        <label>Email<input type="email" name="email" value="" placeholder="Optional"></label>
+        <label>Vehicle Make
+          <input name="vehicleMake" value="" list="vehicleMakes" placeholder="Start typing make" autocomplete="new-password" autocapitalize="words" data-vehicle-make required>
+        </label>
+        <label>Vehicle Model
+          <input name="vehicleModel" value="" list="vehicleModels" placeholder="Choose make first, then type model" autocomplete="new-password" autocapitalize="words" data-vehicle-model required>
+        </label>
+        <label>Vehicle Year
+          <input name="vehicleYear" value="" list="vehicleYears" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="Type any 4-digit year" required>
+        </label>
+        <label>Problem
+          <select name="problem" required>
+            <option value="">Select service</option>
+            <option>Tire Change</option>
+            <option>Jump Start</option>
+            <option>Fuel Delivery</option>
+            <option>Lockout Service</option>
+            <option>Tire Inflation</option>
+            <option>Battery Replacement</option>
+            <option>Battery Testing</option>
+            <option>Car Diagnostic Scanner</option>
+            <option>Light Roadside Repairs</option>
+          </select>
+        </label>
+        <label>Current Location
+          <span class="address-field">
+            <input name="currentLocation" value="" placeholder="Enter your current street address" autocomplete="off" data-address-autocomplete required>
+            <span class="address-suggestions" data-address-suggestions hidden></span>
+          </span>
+          <button class="btn ghost location-btn" type="button" data-use-location>Use My Current Location</button>
+        </label>
+        <label>Photo Upload<input type="file" name="photos" accept="image/jpeg,image/png,image/heic,image/heif" multiple data-photo-upload><small>Upload up to 5 JPG, PNG, or HEIC images.</small></label>
+        <label>Preferred Payment Method
+          <select name="preferredPaymentMethod">
+            <option>Card</option><option>Cash</option><option>Cash App</option><option>Zelle</option>
+          </select>
+        </label>
+      </div>
+      <label>Message<textarea name="message" placeholder="Tell us anything helpful: parking lot, side street, tire position, battery issue, etc."></textarea></label>
+      <section class="quote-panel" data-quote-panel hidden>
+        <p class="eyebrow">Estimated quote</p>
+        <div class="quote-grid">
+          <p><span>Base service</span><strong data-quote-base>$0</strong></p>
+          <p><span>Travel fee</span><strong data-quote-travel>$0</strong></p>
+          <p><span>Total quote</span><strong data-quote-total>$0</strong></p>
+          <p><span>Distance / Time</span><strong data-quote-distance>Estimating...</strong></p>
+        </div>
+        <small>Starting prices include up to 10 miles. If the driving distance is more than 10 miles, the travel fee is added before you confirm.</small>
+      </section>
+      <input type="hidden" name="basePrice" data-quote-field="basePrice">
+      <input type="hidden" name="travelFee" data-quote-field="travelFee">
+      <input type="hidden" name="totalPrice" data-quote-field="totalPrice">
+      <input type="hidden" name="distanceMiles" data-quote-field="distanceMiles">
+      <input type="hidden" name="travelTimeMinutes" data-quote-field="travelTimeMinutes">
+      <input type="hidden" name="estimatedArrivalMinutes" data-quote-field="estimatedArrivalMinutes">
+      <input type="hidden" name="referenceNumber" data-quote-field="referenceNumber">
+      <input type="hidden" name="travelEstimateStatus" data-quote-field="travelEstimateStatus">
+      <section class="confirmation-panel" data-confirmation-panel hidden>
+        <h2>Request received.</h2>
+        <p>Reference number: <strong data-reference-number></strong></p>
+        <p>Estimated arrival time: <strong data-arrival-time></strong></p>
+        <p>Selected payment method: <strong data-confirm-payment></strong></p>
+      </section>
+      <div class="form-actions">
+        <button class="btn primary" type="submit" data-submit-request>Get Quote</button>
+        <button class="btn secondary" type="button" data-confirm-request hidden>Confirm Request</button>
+      </div>
+      <datalist id="vehicleMakes"></datalist>
+      <datalist id="vehicleModels"></datalist>
+      <datalist id="vehicleYears">
+        <option value="2027"><option value="2026"><option value="2025"><option value="2024"><option value="2023"><option value="2022"><option value="2021"><option value="2020"><option value="2019"><option value="2018"><option value="2017"><option value="2016"><option value="2015"><option value="2014"><option value="2013"><option value="2012"><option value="2011"><option value="2010"><option value="2009"><option value="2008"><option value="2007"><option value="2006"><option value="2005"><option value="2004"><option value="2003"><option value="2002"><option value="2001"><option value="2000"><option value="1999"><option value="1998"><option value="1997"><option value="1996"><option value="1995"><option value="1994"><option value="1993"><option value="1992"><option value="1991"><option value="1990"><option value="1989"><option value="1988"><option value="1987"><option value="1986"><option value="1985"><option value="1984"><option value="1983"><option value="1982"><option value="1981"><option value="1980">
+      </datalist>
+    </form>
+  </section>
+</main>
+<footer class="site-footer">
+  <div>
+    <strong>Problem Solvers Roadside Technician</strong>
+    <p>Mobile roadside assistance at your location. No storefront. We come to you.</p>
+  </div>
+  <div>
+    <p><a href="tel:+13129007711">(312) 900-7711</a></p>
+    <p><a href="mailto:help@example.com">help@example.com</a></p>
+    <p>Mon-Sun 6:00 AM - 11:00 PM</p>
+  </div>
+  <div>
+    <a href="./services.html">Services</a>
+    <a href="./request-service.html">Request Service</a>
+    <a href="./dashboard-login.html">Admin</a>
+  </div>
+</footer>
+<script src="./js/main.js?v=vehicle-model-20260726-2" defer></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+
+<main>
+  <section class="image-feature home-banner">
+    <img src="/images/brand/ps-hero-clean.png" alt="Problem Solvers Roadside Assistance hero banner with technician, service vehicle, and we come to you message">
+  </section>
+
+  <section class="service-choice-heading">
+    <p class="eyebrow">Request roadside help</p>
+    <h2>Choose Your Service</h2>
+    <p>Tap the service you need and fill out the form for fast roadside help.</p>
+  </section>
+
+  <section class="home-service-strip" aria-label="Roadside services">
+    <% [
+      ['Tire Change', '◎', 'Tire', 'Changes', 'Starting at $70', 'Flat tire swap with your spare.'],
+      ['Jump Start', '⚡', 'Jump', 'Starts', 'Starting at $60', 'Battery boost at your location.'],
+      ['Fuel Delivery', '⛽', 'Fuel', 'Delivery', 'Starting at $60 + fuel', 'Emergency fuel brought to you.'],
+      ['Lockout Service', '▣', 'Lockout', 'Service', 'Starting at $65', 'Help getting back into your vehicle.'],
+      ['Tire Inflation', '✚', 'Tire', 'Inflation', 'Starting at $35', 'Air-up support for low tires.'],
+      ['Battery Replacement', '▤', 'Battery', 'Replacement', 'Starting at $75 labor', 'Labor quote for battery install.'],
+      ['Battery Testing', '⌁', 'Battery', 'Testing', 'Starting at $35', 'Check battery and charging issue.'],
+      ['Car Diagnostic Scanner', '⌁', 'Car', 'Diagnostic', 'Starting at $50', 'Scanner check for warning lights.'],
+      ['Light Roadside Repairs', '✦', 'Light', 'Repairs', 'Starting at $75', 'Minor roadside repair help.']
+    ].forEach((item) => { %>
+      <a class="service-chip" href="/request-service?service=<%= encodeURIComponent(item[0]) %>">
+        <span class="service-icon"><%= item[1] %></span>
+        <span class="service-copy"><%= item[2] %><br><%= item[3] %> <small><%= item[4] %></small><em><%= item[5] %></em><b>Select Service</b></span>
+      </a>
+    <% }) %>
+  </section>
+  <section class="price-note" aria-label="Pricing note">
+    <strong>Prices shown are starting prices.</strong>
+    <span>Travel charges may apply based on your location.</span>
+  </section>
+
+  <section class="road-info-strip" aria-label="Service information">
+    <div class="road-info-item">
+      <span class="road-info-icon">⌖</span>
+      <strong>Serving Illinois</strong>
+      <span>statewide roadside help</span>
+    </div>
+    <a class="road-info-item road-info-phone" href="tel:<%= settings.phoneNumber %>">
+      <span class="road-info-icon">☎</span>
+      <strong>(312) 900-7711</strong>
+      <span>Call or text</span>
+    </a>
+    <div class="road-info-item payment-icons">
+      <strong>Payment Accepted</strong>
+      <span>Card • Cash App • Zelle • Cash</span>
+    </div>
+    <div class="road-info-item road-slogan">
+      <strong>We get you</strong>
+      <span>back on the road!</span>
+    </div>
+  </section>
+
+  <section class="hero cta-strip home-action-strip">
+    <div class="hero-actions cta-actions">
+      <a class="btn primary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
+      <a class="btn secondary" href="sms:<%= settings.textNumber %>">Text Now</a>
+      <a class="btn ghost" href="/request-service">Request Service</a>
+    </div>
+  </section>
+
+  <section class="section home-panel-section">
+    <div class="section-heading">
+      <p class="eyebrow">Reviews</p>
+      <h2>Customer feedback</h2>
+    </div>
+    <div class="review-grid">
+      <% const fallbackReviews = reviews.length ? reviews : [
+        { customerName: 'Illinois Driver', quote: 'Fast response and professional service when my battery died.', rating: 5 },
+        { customerName: 'South Side Customer', quote: 'Helped with a flat tire at my location and got me moving again.', rating: 5 },
+        { customerName: 'Suburban Driver', quote: 'Clear communication, reliable arrival, and friendly roadside help.', rating: 5 }
+      ]; %>
+      <% fallbackReviews.forEach((review) => { %>
+        <article class="review">
+          <div class="stars"><%= '★'.repeat(review.rating || 5) %></div>
+          <p>“<%= review.quote %>”</p>
+          <strong><%= review.customerName %></strong>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/footer') %>

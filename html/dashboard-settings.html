@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Business Settings | Dashboard</title>
+  <meta name="description" content="Business settings.">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="dashboard-body">
+<aside class="dashboard-nav">
+  <a class="brand dashboard-brand" href="./dashboard.html"><span class="brand-mark">PS</span><span>Dashboard</span></a>
+  <a href="./dashboard.html">Overview</a>
+  <a href="./dashboard-requests.html">Requests</a>
+  <a href="/dashboard/requests?status=Pending">Pending Requests</a>
+  <a href="/dashboard/requests?status=Accepted">Accepted Jobs</a>
+  <a href="/dashboard/requests?status=Completed">Completed Jobs</a>
+  <a href="/dashboard/requests?status=Cancelled">Cancelled Jobs</a>
+  <a href="./dashboard-customers.html">Customer List</a>
+  <a href="./dashboard-payments.html">Payments</a>
+  <a href="./dashboard-settings.html">Reviews / Photos / Settings</a>
+  <form action="#" method="post">
+    <input type="hidden" data-name="_csrf" value="static-preview">
+    <button type="submit">Logout</button>
+  </form>
+</aside>
+
+<main class="dashboard-main">
+  <h1>Business Settings</h1>
+  <section class="dashboard-panel">
+    <h2>Technician Starting Location</h2>
+    <p class="muted-copy">Set where you are starting from now. Quotes use this location against the customer's address or GPS location.</p>
+    <div class="dispatch-location-tool">
+      <button class="btn primary" type="button" data-set-dispatch-location>Use My Current Location as Starting Point</button>
+      <strong data-dispatch-location-status>Starting point not set</strong>
+    </div>
+  </section>
+  <section class="dashboard-panel">
+    <form class="settings-form" action="#" method="post">
+      <input type="hidden" data-name="_csrf" value="static-preview">
+      <label>Business Name<input name="businessName" value="Problem Solvers Roadside Technician"></label>
+      <label>Phone Number<input name="phoneNumber" value="+13129007711"></label>
+      <label>Text Number<input name="textNumber" value="+13129007711"></label>
+      <label>Email<input name="email" value="help@example.com"></label>
+      <label>Business Hours<input name="businessHours" value="Mon-Sun 6:00 AM - 11:00 PM"></label>
+      <label>Service Area<input name="serviceArea" value="Chicago and surrounding suburbs"></label>
+      <label>Dispatch Latitude<input name="dispatchLat" value="" data-dispatch-lat></label>
+      <label>Dispatch Longitude<input name="dispatchLng" value="" data-dispatch-lng></label>
+      <label>Included Miles<input name="includedMiles" type="number" min="0" step="1" value="10"></label>
+      <label>Travel Fee Per Extra Mile<input name="travelFeePerExtraMile" type="number" min="0" step="0.01" value="2"></label>
+      <label>Google Map Embed URL<input name="googleMapsEmbedUrl" value=""></label>
+      <label>Google Review Link<input name="googleReviewUrl" value=""></label>
+      <label>Meta Title<input name="metaTitle" value=""></label>
+      <label>Meta Description<input name="metaDescription" value=""></label>
+      <label>Keywords<input name="keywords" value=""></label>
+      <div class="checkbox-row">
+        
+          <label><input type="checkbox" name="card" checked> card</label>
+        
+          <label><input type="checkbox" name="applePay" checked> applePay</label>
+        
+          <label><input type="checkbox" name="googlePay" checked> googlePay</label>
+        
+          <label><input type="checkbox" name="cash" checked> cash</label>
+        
+          <label><input type="checkbox" name="cashApp" checked> cashApp</label>
+        
+          <label><input type="checkbox" name="zelle" checked> zelle</label>
+        
+      </div>
+      <button class="btn primary" type="submit">Save Settings</button>
+    </form>
+  </section>
+  <section class="dashboard-grid">
+    <div class="dashboard-panel" id="reviews">
+      <h2>Reviews</h2>
+      <form action="#" method="post" class="mini-form">
+        <input type="hidden" data-name="_csrf" value="static-preview">
+        <input name="customerName" placeholder="Customer name" required>
+        <input name="rating" type="number" min="1" max="5" value="5">
+        <textarea name="quote" placeholder="Review" required></textarea>
+        <input name="source" placeholder="Source" value="Google">
+        <button type="submit">Add Review</button>
+      </form>
+      <p><strong>Chicago Driver:</strong> Fast response and professional service when my battery died.</p><p><strong>South Side Customer:</strong> Helped with a flat tire at my location and got me moving again.</p><p><strong>Suburban Driver:</strong> Clear communication, reliable arrival, and friendly roadside help.</p>
+    </div>
+    <div class="dashboard-panel" id="photos">
+      <h2>Photos</h2>
+      <form action="#" method="post" enctype="multipart/form-data" class="mini-form">
+        <input type="hidden" data-name="_csrf" value="static-preview">
+        <input name="title" placeholder="Title" required>
+        <input type="file" name="photo" accept="image/*">
+        <input name="url" placeholder="Cloudinary URL or image path">
+        <input name="alt" placeholder="Alt text">
+        <button type="submit">Add Photo</button>
+      </form>
+      
+    </div>
+    <div class="dashboard-panel" id="pricing">
+      <h2>Pricing</h2>
+      <form action="#" method="post" class="mini-form">
+        <input type="hidden" data-name="_csrf" value="static-preview">
+        <input name="serviceName" placeholder="Service" required>
+        <input name="startingPrice" type="number" step="0.01" placeholder="Starting price" required>
+        <input name="description" placeholder="Description">
+        <button type="submit">Add Price</button>
+      </form>
+      <p>Tire Change: $75</p><p>Jump Start: $65</p><p>Battery Testing: $45</p><p>Battery Replacement: $125</p><p>Lockout: $85</p><p>Fuel Delivery: $75</p><p>Tire Inflation: $50</p><p>Light Roadside Repairs: $95</p>
+    </div>
+    <div class="dashboard-panel" id="areas">
+      <h2>Service Areas</h2>
+      <form action="#" method="post" class="mini-form">
+        <input type="hidden" data-name="_csrf" value="static-preview">
+        <input name="name" placeholder="Area name" required>
+        <input name="priority" type="number" value="0">
+        <button type="submit">Add Area</button>
+      </form>
+      <p>Chicago</p><p>Cicero</p><p>Oak Park</p><p>Berwyn</p><p>Evanston</p><p>Skokie</p>
+    </div>
+  </section>
+</main></body></html>

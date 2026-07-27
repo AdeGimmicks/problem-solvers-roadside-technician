@@ -1,0 +1,28 @@
+<footer class="site-footer">
+  <div>
+    <strong><%= settings.businessName %></strong>
+    <p>Mobile roadside assistance at your location. No storefront. We come to you.</p>
+  </div>
+  <div>
+    <p><a href="tel:<%= settings.phoneNumber %>"><%= settings.phoneNumber %></a></p>
+    <p><a href="mailto:<%= settings.email %>"><%= settings.email %></a></p>
+    <p><%= settings.businessHours %></p>
+  </div>
+  <div>
+    <a href="/services">Services</a>
+    <a href="/request-service">Request Service</a>
+    <a href="/dashboard/login">Admin</a>
+  </div>
+</footer>
+<% if (settings.dispatchLocation?.lat && settings.dispatchLocation?.lng) { %>
+  <script>
+    window.problemSolversDispatchCenter = {
+      lat: <%- JSON.stringify(settings.dispatchLocation.lat) %>,
+      lng: <%- JSON.stringify(settings.dispatchLocation.lng) %>
+    };
+    window.problemSolversQuoteConfig = <%- JSON.stringify(settings.quoteConfig || {}) %>;
+  </script>
+<% } %>
+<script src="/js/main.js?v=vehicle-model-20260726-2" defer></script>
+</body>
+</html>
