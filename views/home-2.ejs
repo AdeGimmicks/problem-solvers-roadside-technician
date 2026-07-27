@@ -1,0 +1,59 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+
+<main>
+  <section class="landing-home">
+    <div class="landing-map-bg" aria-hidden="true"></div>
+    <div class="landing-home-inner">
+      <p class="eyebrow">Roadside assistance in Illinois</p>
+      <h1>Reliable roadside help when you need it fast</h1>
+      <p class="landing-lede">Get help for flat tires, jump starts, lockouts, fuel delivery, battery service, and more. No account needed to start.</p>
+      <div class="landing-actions">
+        <a class="btn primary landing-primary" href="/choose-service">Get Help Now</a>
+        <a class="btn ghost landing-call" href="tel:<%= settings.phoneNumber %>">Call (312) 900-7711</a>
+      </div>
+      <p class="landing-note">Choose your service, enter your location, and keep your phone nearby.</p>
+    </div>
+  </section>
+
+  <section class="landing-trust" aria-label="Roadside assistance highlights">
+    <div>
+      <strong>Fast response</strong>
+      <span>Help starts with a simple request.</span>
+    </div>
+    <div>
+      <strong>We come to you</strong>
+      <span>Roadside help at your location.</span>
+    </div>
+    <div>
+      <strong>Call or text</strong>
+      <span>Speak directly if you prefer.</span>
+    </div>
+  </section>
+
+  <section class="landing-how section">
+    <div class="section-heading">
+      <p class="eyebrow">How it works</p>
+      <h2>Get back on the road</h2>
+    </div>
+    <div class="landing-steps">
+      <article>
+        <span>01</span>
+        <h3>Choose your service</h3>
+        <p>Select the roadside help you need, like tire change, jump start, lockout, or fuel delivery.</p>
+      </article>
+      <article>
+        <span>02</span>
+        <h3>Tell us where you are</h3>
+        <p>Use your current location or type your address so the request has the right pickup spot.</p>
+      </article>
+      <article>
+        <span>03</span>
+        <h3>Confirm and stay ready</h3>
+        <p>Review the service details, submit the request, and keep your phone nearby for confirmation.</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/footer') %>

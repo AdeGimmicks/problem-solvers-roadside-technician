@@ -22,6 +22,17 @@ async function home(req, res) {
   });
 }
 
+function home2(req, res) {
+  res.render('home-2', {
+    title: 'Fast Roadside Assistance When You Need Help',
+    metaDescription: 'Problem Solvers Roadside Technician helps stranded drivers request fast roadside assistance, get service details, and call or text for help.'
+  });
+}
+
+async function chooseService(req, res) {
+  return home(req, res);
+}
+
 function services(req, res) {
   res.render('services', {
     title: 'Roadside Assistance Services in Chicago',
@@ -65,4 +76,4 @@ function sitemap(req, res) {
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((url) => `  <url><loc>${baseUrl}${url}</loc></url>`).join('\n')}\n</urlset>`);
 }
 
-module.exports = { home, services, about, contact, requestService, robots, sitemap };
+module.exports = { home, home2, chooseService, services, about, contact, requestService, robots, sitemap };
