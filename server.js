@@ -61,7 +61,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: isProduction ? '7d' : 0,
   etag: true
 }));
-app.get(['/index.html', '/home.html'], (req, res) => res.redirect(301, '/'));
+app.get(['/index.html', '/home.html', '/home'], (req, res) => res.redirect(301, '/'));
 app.get(['/services.html', '/about.html', '/contact.html', '/request-service.html'], (req, res) => {
   const cleanPath = req.path.replace(/\.html$/, '');
   const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
