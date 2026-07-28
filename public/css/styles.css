@@ -806,6 +806,28 @@ main > section {
   margin: 0 auto clamp(26px, 4vw, 48px);
 }
 
+@media (max-width: 520px) {
+
+  .services-landing {
+    padding: 0;
+  }
+
+  .image-feature {
+    padding: 0;
+  }
+
+  .services-landing-banner {
+    margin: 0;
+  }
+
+  .image-feature img {
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+  }
+
+}
+
 .services-landing-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
