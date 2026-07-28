@@ -2314,7 +2314,7 @@ td {
 
 @media (max-width: 430px) {
   .home-banner {
-    display: none;
+    display: block;
   }
 
   .service-choice-heading {
