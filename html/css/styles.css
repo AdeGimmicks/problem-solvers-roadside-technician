@@ -1188,6 +1188,10 @@ textarea {
     #050506;
 }
 
+.request-quote-panel {
+  margin: 0 0 14px;
+}
+
 .quote-panel[hidden],
 .confirmation-panel[hidden] {
   display: none;

@@ -618,6 +618,21 @@ function money(value) {
   return `$${Math.round(value)}`;
 }
 
+function buildBaseQuote(problem) {
+  const basePrice = servicePricing[problem] || 75;
+
+  return {
+    basePrice,
+    travelFee: 0,
+    totalPrice: basePrice,
+    distanceMiles: null,
+    travelTimeMinutes: null,
+    estimatedArrivalMinutes: null,
+    travelEstimateStatus: 'needs-location',
+    referenceNumber: `PS-${Date.now().toString().slice(-6)}`
+  };
+}
+
 function parseCoordinates(value) {
   const match = String(value || '').match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
   return match ? { lat: Number(match[1]), lng: Number(match[2]) } : null;
@@ -782,19 +797,36 @@ async function calculateQuote(form) {
 }
 
 function renderQuote(quote) {
+  const quotePanel = document.querySelector('[data-quote-panel]');
+  const submitButton = document.querySelector('[data-submit-request]');
+  if (!quotePanel) return;
+
+  const needsLocation = quote.travelEstimateStatus === 'needs-location';
+  const needsConfirmation = quote.travelEstimateStatus === 'needs-confirmation';
   document.querySelector('[data-quote-base]').textContent = money(quote.basePrice);
-  document.querySelector('[data-quote-travel]').textContent = quote.travelEstimateStatus === 'estimated' ? money(quote.travelFee) : 'To be confirmed';
+  document.querySelector('[data-quote-travel]').textContent = quote.travelEstimateStatus === 'estimated'
+    ? money(quote.travelFee)
+    : needsLocation
+      ? 'After location'
+      : 'To be confirmed';
   document.querySelector('[data-quote-total]').textContent = money(quote.totalPrice);
   document.querySelector('[data-quote-distance]').textContent = quote.travelEstimateStatus === 'estimated'
     ? `${quote.distanceMiles} miles / ${quote.travelTimeMinutes} min`
-    : 'Confirmed by phone/text';
-  document.querySelector('[data-quote-panel]').hidden = false;
-  document.querySelector('[data-confirm-request]').hidden = false;
-  document.querySelector('[data-submit-request]').textContent = 'Recalculate Quote';
+    : needsLocation
+      ? 'Enter location'
+      : 'Confirmed by phone/text';
+  quotePanel.hidden = false;
+  if (submitButton) submitButton.textContent = 'Pay Now';
   Object.entries(quote).forEach(([key, value]) => {
     const field = document.querySelector(`[data-quote-field="${key}"]`);
     if (field) field.value = value ?? '';
   });
+}
+
+function showSelectedServiceQuote() {
+  if (!problemInput?.value) return;
+  latestQuote = buildBaseQuote(problemInput.value);
+  renderQuote(latestQuote);
 }
 
 function showCustomerConfirmation(request) {
@@ -896,56 +928,35 @@ async function startStripeCheckout(request) {
 function setupStaticRequestSave() {
   const form = document.querySelector('[data-request-form]');
   if (!form) return;
+  const submitButton = document.querySelector('[data-submit-request]');
+
+  showSelectedServiceQuote();
+  problemInput?.addEventListener('change', showSelectedServiceQuote);
 
   form.addEventListener('submit', async (event) => {
-    if (form.dataset.quoteConfirmed === 'true') return;
     event.preventDefault();
-    const submitButton = document.querySelector('[data-submit-request]');
-    const submitText = submitButton?.textContent || 'Get Quote';
     if (!validateVehicleSelection()) {
       vehicleModelInput?.reportValidity();
       return;
     }
     if (!validatePhotoUpload(form)) return;
-    try {
-      if (submitButton) {
-        submitButton.disabled = true;
-        submitButton.textContent = 'Calculating Quote...';
-      }
-      latestQuote = await calculateQuote(form);
-      renderQuote(latestQuote);
-    } catch (error) {
-      alert(error.message || 'Unable to calculate the quote. Please try again.');
-    } finally {
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = latestQuote ? 'Recalculate Quote' : submitText;
-      }
-    }
-  });
 
-  document.querySelector('[data-confirm-request]')?.addEventListener('click', async () => {
-    if (!latestQuote) return;
-    const confirmButton = document.querySelector('[data-confirm-request]');
-    const originalText = confirmButton?.textContent || 'Confirm Request';
     let savedRequest = null;
 
     try {
-      if (!validateVehicleSelection()) {
-        vehicleModelInput?.reportValidity();
-        return;
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Calculating Final Quote...';
       }
-      if (!validatePhotoUpload(form)) return;
+      latestQuote = await calculateQuote(form);
+      renderQuote(latestQuote);
 
-      if (confirmButton) {
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'Submitting...';
-      }
-
+      if (submitButton) submitButton.textContent = 'Preparing Payment...';
       savedRequest = await createServiceRequest(form);
+
       const data = new FormData(form);
       if (data.get('preferredPaymentMethod') === 'Card') {
-        if (confirmButton) confirmButton.textContent = 'Opening Payment...';
+        if (submitButton) submitButton.textContent = 'Opening Payment...';
         await startStripeCheckout(savedRequest);
         return;
       }
@@ -953,11 +964,11 @@ function setupStaticRequestSave() {
       showCustomerConfirmation(savedRequest);
     } catch (error) {
       if (savedRequest) showCustomerConfirmation(savedRequest);
-      alert(error.message);
+      alert(error.message || 'Unable to complete the request. Please try again.');
     } finally {
-      if (confirmButton) {
-        confirmButton.disabled = false;
-        confirmButton.textContent = originalText;
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Pay Now';
       }
     }
   });
