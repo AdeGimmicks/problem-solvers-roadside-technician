@@ -387,6 +387,7 @@ const demoRequests = [
     vehicleYear: '2018',
     vehicleMake: 'Toyota',
     vehicleModel: 'Camry',
+    vehicleColor: 'Gray',
     problem: 'Tire Change',
     currentLocation: '100 Main, Greenfield, IL, 62044, USA',
     message: 'Front passenger tire is flat. Parked near the entrance.',
@@ -411,10 +412,11 @@ const demoRequests = [
     vehicleYear: '2020',
     vehicleMake: 'Honda',
     vehicleModel: 'Accord',
+    vehicleColor: 'Black',
     problem: 'Jump Start',
     currentLocation: 'Oak Park, IL, USA',
     message: 'Battery died after lights were left on.',
-    preferredPaymentMethod: 'Cash App',
+    preferredPaymentMethod: 'Card',
     status: 'Accepted',
     paymentStatus: 'Payment Pending',
     distanceMiles: 12,
@@ -478,6 +480,7 @@ function requestMatches(request, search, status) {
     request.vehicleYear,
     request.vehicleMake,
     request.vehicleModel,
+    request.vehicleColor,
     request.problem,
     request.currentLocation,
     request.status,
@@ -489,7 +492,7 @@ function requestMatches(request, search, status) {
 }
 
 function requestCardHtml(request, compact = false) {
-  const vehicle = [request.vehicleYear, request.vehicleMake, request.vehicleModel].filter(Boolean).join(' ');
+  const vehicle = [request.vehicleYear, request.vehicleColor, request.vehicleMake, request.vehicleModel].filter(Boolean).join(' ');
   const photoText = request.photos?.length ? request.photos.join(', ') : 'No photo uploaded';
   return `
     <article class="manager-request-card" data-request-id="${escapeHtml(request.id)}">
@@ -929,12 +932,19 @@ function setupStaticRequestSave() {
   const form = document.querySelector('[data-request-form]');
   if (!form) return;
   const submitButton = document.querySelector('[data-submit-request]');
+  const contactStep = form.querySelector('[data-request-step="contact"]');
 
   showSelectedServiceQuote();
   problemInput?.addEventListener('change', showSelectedServiceQuote);
+  setupRequestSteps(form);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (contactStep?.hidden) {
+      form.querySelector('[data-next-request-step]')?.click();
+      return;
+    }
+
     if (!validateVehicleSelection()) {
       vehicleModelInput?.reportValidity();
       return;
@@ -954,14 +964,8 @@ function setupStaticRequestSave() {
       if (submitButton) submitButton.textContent = 'Preparing Payment...';
       savedRequest = await createServiceRequest(form);
 
-      const data = new FormData(form);
-      if (data.get('preferredPaymentMethod') === 'Card') {
-        if (submitButton) submitButton.textContent = 'Opening Payment...';
-        await startStripeCheckout(savedRequest);
-        return;
-      }
-
-      showCustomerConfirmation(savedRequest);
+      if (submitButton) submitButton.textContent = 'Opening Payment...';
+      await startStripeCheckout(savedRequest);
     } catch (error) {
       if (savedRequest) showCustomerConfirmation(savedRequest);
       alert(error.message || 'Unable to complete the request. Please try again.');
@@ -971,6 +975,39 @@ function setupStaticRequestSave() {
         submitButton.textContent = 'Pay Now';
       }
     }
+  });
+}
+
+function setupRequestSteps(form) {
+  const vehicleStep = form.querySelector('[data-request-step="vehicle"]');
+  const contactStep = form.querySelector('[data-request-step="contact"]');
+  const nextButton = form.querySelector('[data-next-request-step]');
+  if (!vehicleStep || !contactStep || !nextButton) return;
+  const contactFields = Array.from(contactStep.querySelectorAll('input, select, textarea, button'));
+  contactFields.forEach((field) => {
+    field.disabled = contactStep.hidden;
+  });
+
+  nextButton.addEventListener('click', () => {
+    if (!validateVehicleSelection()) {
+      vehicleModelInput?.reportValidity();
+      return;
+    }
+
+    const fields = Array.from(vehicleStep.querySelectorAll('input, select, textarea'));
+    const invalidField = fields.find((field) => !field.checkValidity());
+
+    if (invalidField) {
+      invalidField.reportValidity();
+      return;
+    }
+
+    vehicleStep.hidden = true;
+    contactStep.hidden = false;
+    contactFields.forEach((field) => {
+      field.disabled = false;
+    });
+    contactStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
 

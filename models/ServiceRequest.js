@@ -15,6 +15,7 @@ const serviceRequestSchema = new mongoose.Schema({
   email: { type: String, trim: true, lowercase: true },
   vehicleMake: { type: String, required: true, trim: true },
   vehicleModel: { type: String, required: true, trim: true },
+  vehicleColor: { type: String, required: true, trim: true },
   vehicleYear: { type: String, required: true, trim: true },
   problem: { type: String, required: true, trim: true },
   currentLocation: { type: String, required: true, trim: true },

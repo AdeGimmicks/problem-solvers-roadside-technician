@@ -46,7 +46,7 @@ async function submitRequest(req, res, next) {
         name: data.customerName,
         phone: data.phone,
         email: data.email,
-        vehicles: [{ make: data.vehicleMake, model: data.vehicleModel, year: data.vehicleYear }]
+        vehicles: [{ make: data.vehicleMake, model: data.vehicleModel, color: data.vehicleColor, year: data.vehicleYear }]
       });
     }
 
@@ -58,11 +58,12 @@ async function submitRequest(req, res, next) {
       email: data.email,
       vehicleMake: data.vehicleMake,
       vehicleModel: data.vehicleModel,
+      vehicleColor: data.vehicleColor,
       vehicleYear: data.vehicleYear,
       problem: data.problem,
       currentLocation: data.currentLocation,
       message: data.message,
-      preferredPaymentMethod: data.preferredPaymentMethod,
+      preferredPaymentMethod: 'Card',
       basePrice: data.basePrice,
       travelFee: data.travelFee,
       totalPrice: data.totalPrice || data.estimatedPrice,

@@ -1243,6 +1243,23 @@ main > section {
   gap: 9px;
 }
 
+.request-step {
+  display: grid;
+  gap: 10px;
+}
+
+.request-step[hidden] {
+  display: none;
+}
+
+.step-label {
+  margin: 0;
+  color: var(--yellow);
+  font-family: var(--display-font);
+  font-size: clamp(1rem, 1.4vw, 1.25rem);
+  text-transform: uppercase;
+}
+
 label {
   display: grid;
   gap: 4px;

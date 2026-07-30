@@ -12,6 +12,7 @@ const requestValidators = [
   body('phone').trim().isLength({ min: 7 }).withMessage('Phone number is required.'),
   body('vehicleMake').trim().notEmpty().withMessage('Vehicle make is required.'),
   body('vehicleModel').trim().notEmpty().withMessage('Vehicle model is required.'),
+  body('vehicleColor').trim().notEmpty().withMessage('Vehicle color is required.'),
   body('vehicleYear').trim().isLength({ min: 4, max: 4 }).withMessage('Vehicle year is required.'),
   body('problem').trim().notEmpty().withMessage('Problem is required.'),
   body('currentLocation').trim().notEmpty().withMessage('Current location is required.')

@@ -7,6 +7,7 @@ const customerSchema = new mongoose.Schema({
   vehicles: [{
     make: String,
     model: String,
+    color: String,
     year: String
   }],
   notes: String
