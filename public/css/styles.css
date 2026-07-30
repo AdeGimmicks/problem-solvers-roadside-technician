@@ -1429,6 +1429,10 @@ textarea {
   gap: 7px;
 }
 
+.quote-grid.total-only {
+  grid-template-columns: 1fr;
+}
+
 .quote-grid p,
 .confirmation-panel p {
   margin: 0;
@@ -1447,6 +1451,18 @@ textarea {
 .quote-grid strong,
 .confirmation-panel strong {
   color: var(--yellow);
+}
+
+.quote-grid.total-only p {
+  padding: 14px;
+  text-align: center;
+}
+
+.quote-grid.total-only strong {
+  display: block;
+  margin-top: 2px;
+  font-size: clamp(2.2rem, 7vw, 4.5rem);
+  line-height: 1;
 }
 
 .confirmation-panel h2 {
@@ -1527,6 +1543,23 @@ textarea {
   font-family: var(--display-font);
   font-size: 1.1rem;
   text-transform: uppercase;
+}
+
+.request-card .btn.ghost {
+  min-height: 46px;
+  border: 1px solid rgba(255, 210, 31, 0.72);
+  color: var(--yellow);
+  background: #050506;
+  font-family: var(--display-font);
+  font-size: 1.05rem;
+  text-transform: uppercase;
+}
+
+.request-card .btn.ghost:hover,
+.request-card .btn.ghost:focus-visible {
+  color: var(--black);
+  background: var(--yellow);
+  border-color: var(--yellow);
 }
 
 textarea {

@@ -910,33 +910,13 @@ function renderQuote(quote) {
   const submitButton = document.querySelector('[data-submit-request]');
   if (!quotePanel) return;
 
-  const needsLocation = quote.travelEstimateStatus === 'needs-location';
-  const needsConfirmation = quote.travelEstimateStatus === 'needs-confirmation';
-  document.querySelector('[data-quote-base]').textContent = money(quote.basePrice);
-  document.querySelector('[data-quote-travel]').textContent = quote.travelEstimateStatus === 'estimated'
-    ? money(quote.travelFee)
-    : needsLocation
-      ? 'After location'
-      : 'To be confirmed';
   document.querySelector('[data-quote-total]').textContent = money(quote.totalPrice);
-  document.querySelector('[data-quote-distance]').textContent = quote.travelEstimateStatus === 'estimated'
-    ? `${quote.distanceMiles} miles / ${quote.travelTimeMinutes} min`
-    : needsLocation
-      ? 'Enter location'
-      : 'Confirmed by phone/text';
   quotePanel.hidden = false;
   if (submitButton) submitButton.textContent = 'Pay Now';
   Object.entries(quote).forEach(([key, value]) => {
     const field = document.querySelector(`[data-quote-field="${key}"]`);
     if (field) field.value = value ?? '';
   });
-}
-
-function showSelectedServiceQuote() {
-  if (!problemInput?.value) return;
-  latestQuote = buildBaseQuote(problemInput.value);
-  renderQuote(latestQuote);
-  renderSelectedServiceDetails();
 }
 
 function questionFieldName(question) {
@@ -1056,7 +1036,7 @@ function updateRequestSummary(form) {
   if (arrivalElement) {
     arrivalElement.textContent = latestQuote?.estimatedArrivalMinutes
       ? `${latestQuote.estimatedArrivalMinutes} minutes`
-      : 'Confirmed by phone/text';
+      : 'Calculated at review';
   }
 }
 
@@ -1066,7 +1046,7 @@ function showCustomerConfirmation(request) {
   document.querySelector('[data-reference-number]').textContent = request.referenceNumber;
   document.querySelector('[data-arrival-time]').textContent = request.estimatedArrivalMinutes
     ? `${request.estimatedArrivalMinutes} minutes`
-    : 'Confirmed by phone/text';
+    : 'Calculated after dispatch';
   document.querySelector('[data-confirm-payment]').textContent = request.preferredPaymentMethod;
   panel.hidden = false;
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1163,9 +1143,8 @@ function setupStaticRequestSave() {
   const summaryStep = form.querySelector('[data-request-step="summary"]');
 
   renderSelectedServiceDetails();
-  showSelectedServiceQuote();
   problemInput?.addEventListener('change', () => {
-    showSelectedServiceQuote();
+    renderSelectedServiceDetails();
     collectServiceDetails(form);
   });
   setupRequestSteps(form);
@@ -1245,7 +1224,6 @@ function setupRequestSteps(form) {
     if (activeName === 'service') {
       if (!validateStepFields(activeStep)) return;
       renderSelectedServiceDetails();
-      showSelectedServiceQuote();
     }
 
     if (activeName === 'details') {

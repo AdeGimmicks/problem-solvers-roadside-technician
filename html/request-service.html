@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/styles.css?v=request-wizard-20260729-1">
+  <link rel="stylesheet" href="./css/styles.css?v=request-wizard-20260729-2">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -66,23 +66,12 @@
         <li data-progress-step="contact"><span>4</span><strong>Contact</strong></li>
         <li data-progress-step="summary"><span>5</span><strong>Pay</strong></li>
       </ol>
-      <section class="quote-panel request-quote-panel" data-quote-panel hidden>
-        <p class="eyebrow">Estimated quote</p>
-        <div class="quote-grid">
-          <p><span>Base service</span><strong data-quote-base>$0</strong></p>
-          <p><span>Travel fee</span><strong data-quote-travel>$0</strong></p>
-          <p><span>Total quote</span><strong data-quote-total>$0</strong></p>
-          <p><span>Distance / Time</span><strong data-quote-distance>Enter location</strong></p>
-        </div>
-        <small>Starting prices include up to 10 miles. If the driving distance is more than 10 miles, the travel fee is added before you pay.</small>
-      </section>
-
       <input type="hidden" name="preferredPaymentMethod" value="Card">
       <input type="hidden" name="serviceDetails" data-service-details-field>
       <section class="request-step" data-request-step="service">
         <div class="request-step-heading">
           <p class="step-label">Choose your service</p>
-          <p>Select the roadside help you need. The starting quote appears right away.</p>
+          <p>Select the roadside help you need. Your estimate will show before payment.</p>
         </div>
         <label>Service
           <select name="problem" required>
@@ -177,11 +166,18 @@
           <p class="step-label">Service summary</p>
           <p>Review the request, then continue to secure payment.</p>
         </div>
+        <section class="quote-panel request-quote-panel" data-quote-panel hidden>
+          <p class="eyebrow">Estimated quote</p>
+          <div class="quote-grid total-only">
+            <p><span>Total estimate</span><strong data-quote-total>$0</strong></p>
+          </div>
+          <small>This total is calculated before payment based on the selected service and service location.</small>
+        </section>
         <div class="request-summary-grid">
           <p><span>Service</span><strong data-summary-service>Service</strong></p>
           <p><span>Vehicle</span><strong data-summary-vehicle>Vehicle</strong></p>
           <p><span>Location</span><strong data-summary-location>Location</strong></p>
-          <p><span>Estimated Arrival</span><strong data-summary-arrival>Confirmed by phone/text</strong></p>
+          <p><span>Estimated Arrival</span><strong data-summary-arrival>Calculated at review</strong></p>
         </div>
         <div class="form-actions">
           <button class="btn ghost" type="button" data-step-back>Go Back</button>
@@ -229,6 +225,6 @@
     <a href="/store-manager/login">Store Manager</a>
   </div>
 </footer>
-<script src="./js/main.js?v=request-wizard-20260729-1" defer></script>
+<script src="./js/main.js?v=request-wizard-20260729-2" defer></script>
 </body>
 </html>
