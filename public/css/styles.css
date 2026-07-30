@@ -398,7 +398,18 @@ main > section {
 }
 
 .mobile-roadside-hero {
-  display: none;
+  display: block;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: clamp(48px, 8vw, 92px) clamp(18px, 5vw, 72px);
+  border-bottom: 1px solid rgba(255, 210, 31, 0.28);
+  background:
+    linear-gradient(25deg, transparent 0 22%, rgba(255, 210, 31, 0.07) 22% 23%, transparent 23% 100%),
+    linear-gradient(115deg, transparent 0 34%, rgba(255, 255, 255, 0.07) 34% 35%, transparent 35% 100%),
+    radial-gradient(circle at 50% 34%, rgba(255, 210, 31, 0.14), transparent 38%),
+    #050506;
+  background-size: 280px 230px, 320px 260px, auto, auto;
+  text-align: center;
 }
 
 .mobile-roadside-logo {
@@ -2284,26 +2295,15 @@ td {
 }
 
 @media (max-width: 520px) {
-  .desktop-roadside-banner {
-    display: none;
-  }
-
   .home-landing-shell,
   .services-landing {
     padding: 0;
   }
 
   .mobile-roadside-hero {
-    display: block;
+    max-width: none;
     padding: 38px 18px 42px;
-    border-bottom: 1px solid rgba(255, 210, 31, 0.28);
-    background:
-      linear-gradient(25deg, transparent 0 22%, rgba(255, 210, 31, 0.07) 22% 23%, transparent 23% 100%),
-      linear-gradient(115deg, transparent 0 34%, rgba(255, 255, 255, 0.07) 34% 35%, transparent 35% 100%),
-      radial-gradient(circle at 50% 34%, rgba(255, 210, 31, 0.14), transparent 38%),
-      #050506;
     background-size: 220px 190px, 260px 210px, auto, auto;
-    text-align: center;
   }
 
   .mobile-roadside-logo {
