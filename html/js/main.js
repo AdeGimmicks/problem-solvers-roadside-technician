@@ -900,13 +900,28 @@ function setupStaticRequestSave() {
   form.addEventListener('submit', async (event) => {
     if (form.dataset.quoteConfirmed === 'true') return;
     event.preventDefault();
+    const submitButton = document.querySelector('[data-submit-request]');
+    const submitText = submitButton?.textContent || 'Get Quote';
     if (!validateVehicleSelection()) {
       vehicleModelInput?.reportValidity();
       return;
     }
     if (!validatePhotoUpload(form)) return;
-    latestQuote = await calculateQuote(form);
-    renderQuote(latestQuote);
+    try {
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Calculating Quote...';
+      }
+      latestQuote = await calculateQuote(form);
+      renderQuote(latestQuote);
+    } catch (error) {
+      alert(error.message || 'Unable to calculate the quote. Please try again.');
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = latestQuote ? 'Recalculate Quote' : submitText;
+      }
+    }
   });
 
   document.querySelector('[data-confirm-request]')?.addEventListener('click', async () => {
