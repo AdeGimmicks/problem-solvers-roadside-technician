@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/styles.css?v=request-steps-20260729-1">
+  <link rel="stylesheet" href="./css/styles.css?v=request-wizard-20260729-1">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -57,8 +57,15 @@
     <p>Fill this out and keep your phone nearby. We will call or text to confirm the job.</p>
   </section>
   <section class="form-layout single request-layout">
-    <form class="form-card wide request-card" action="/api/service-requests" method="post" enctype="multipart/form-data" data-request-form>
+    <form class="form-card wide request-card" action="/api/service-requests" method="post" enctype="multipart/form-data" data-request-form novalidate>
       <input type="hidden" data-name="_csrf" value="static-preview">
+      <ol class="request-progress" data-request-progress aria-label="Request progress">
+        <li class="is-active" data-progress-step="service"><span>1</span><strong>Service</strong></li>
+        <li data-progress-step="details"><span>2</span><strong>Details</strong></li>
+        <li data-progress-step="vehicle"><span>3</span><strong>Vehicle</strong></li>
+        <li data-progress-step="contact"><span>4</span><strong>Contact</strong></li>
+        <li data-progress-step="summary"><span>5</span><strong>Pay</strong></li>
+      </ol>
       <section class="quote-panel request-quote-panel" data-quote-panel hidden>
         <p class="eyebrow">Estimated quote</p>
         <div class="quote-grid">
@@ -71,7 +78,58 @@
       </section>
 
       <input type="hidden" name="preferredPaymentMethod" value="Card">
-      <section class="request-step" data-request-step="vehicle">
+      <input type="hidden" name="serviceDetails" data-service-details-field>
+      <section class="request-step" data-request-step="service">
+        <div class="request-step-heading">
+          <p class="step-label">Choose your service</p>
+          <p>Select the roadside help you need. The starting quote appears right away.</p>
+        </div>
+        <label>Service
+          <select name="problem" required>
+            <option value="">Select service</option>
+            <option>Tire Change</option>
+            <option>Jump Start</option>
+            <option>Fuel Delivery</option>
+            <option>Lockout Service</option>
+            <option>Tire Inflation</option>
+            <option>Battery Replacement</option>
+            <option>Battery Testing</option>
+            <option>Car Diagnostic Scanner</option>
+            <option>Light Roadside Repairs</option>
+          </select>
+        </label>
+        <div class="selected-service-card">
+          <span data-selected-service-icon>◎</span>
+          <div>
+            <strong data-selected-service-name>Select a service</strong>
+            <p data-selected-service-copy>Choose the service so we can ask the right questions.</p>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="button" data-step-next>Continue</button>
+        </div>
+      </section>
+
+      <section class="request-step" data-request-step="details" hidden>
+        <div class="request-step-heading">
+          <p class="step-label">Describe the situation</p>
+          <p>Answer a few quick questions so the technician knows what to bring.</p>
+        </div>
+        <div class="selected-service-card compact">
+          <span data-selected-service-icon>◎</span>
+          <div>
+            <strong data-selected-service-name>Select a service</strong>
+            <p data-selected-service-copy>Choose the service so we can ask the right questions.</p>
+          </div>
+        </div>
+        <div class="service-question-list" data-service-questions></div>
+        <div class="form-actions">
+          <button class="btn ghost" type="button" data-step-back>Go Back</button>
+          <button class="btn primary" type="button" data-step-next>Continue</button>
+        </div>
+      </section>
+
+      <section class="request-step" data-request-step="vehicle" hidden>
         <p class="step-label">Vehicle details</p>
         <div class="form-grid">
           <label>Vehicle Make
@@ -84,23 +142,11 @@
           <label>Vehicle Year
             <input name="vehicleYear" value="" list="vehicleYears" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="Type any 4-digit year" required>
           </label>
-          <label>Service
-            <select name="problem" required>
-              <option value="">Select service</option>
-              <option>Tire Change</option>
-              <option>Jump Start</option>
-              <option>Fuel Delivery</option>
-              <option>Lockout Service</option>
-              <option>Tire Inflation</option>
-              <option>Battery Replacement</option>
-              <option>Battery Testing</option>
-              <option>Car Diagnostic Scanner</option>
-              <option>Light Roadside Repairs</option>
-            </select>
-          </label>
+          <label>Selected Service<input value="" data-selected-service-readonly readonly></label>
         </div>
         <div class="form-actions">
-          <button class="btn primary" type="button" data-next-request-step>Next</button>
+          <button class="btn ghost" type="button" data-step-back>Go Back</button>
+          <button class="btn primary" type="button" data-step-next>Continue</button>
         </div>
       </section>
 
@@ -121,6 +167,24 @@
         </div>
         <label>Message<textarea name="message" placeholder="Tell us anything helpful: parking lot, side street, tire position, battery issue, etc."></textarea></label>
         <div class="form-actions">
+          <button class="btn ghost" type="button" data-step-back>Go Back</button>
+          <button class="btn primary" type="button" data-step-next>Review Quote</button>
+        </div>
+      </section>
+
+      <section class="request-step" data-request-step="summary" hidden>
+        <div class="request-step-heading">
+          <p class="step-label">Service summary</p>
+          <p>Review the request, then continue to secure payment.</p>
+        </div>
+        <div class="request-summary-grid">
+          <p><span>Service</span><strong data-summary-service>Service</strong></p>
+          <p><span>Vehicle</span><strong data-summary-vehicle>Vehicle</strong></p>
+          <p><span>Location</span><strong data-summary-location>Location</strong></p>
+          <p><span>Estimated Arrival</span><strong data-summary-arrival>Confirmed by phone/text</strong></p>
+        </div>
+        <div class="form-actions">
+          <button class="btn ghost" type="button" data-step-back>Go Back</button>
           <button class="btn primary" type="submit" data-submit-request>Pay Now</button>
         </div>
         <div class="payment-reassurance">
@@ -165,6 +229,6 @@
     <a href="/store-manager/login">Store Manager</a>
   </div>
 </footer>
-<script src="./js/main.js?v=request-steps-20260729-1" defer></script>
+<script src="./js/main.js?v=request-wizard-20260729-1" defer></script>
 </body>
 </html>

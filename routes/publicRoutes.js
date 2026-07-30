@@ -15,6 +15,7 @@ const requestValidators = [
   body('vehicleColor').trim().notEmpty().withMessage('Vehicle color is required.'),
   body('vehicleYear').trim().isLength({ min: 4, max: 4 }).withMessage('Vehicle year is required.'),
   body('problem').trim().notEmpty().withMessage('Problem is required.'),
+  body('serviceDetails').optional({ checkFalsy: true }).isString().withMessage('Service details must be valid.'),
   body('currentLocation').trim().notEmpty().withMessage('Current location is required.')
 ];
 

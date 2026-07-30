@@ -378,6 +378,89 @@ const servicePricing = {
   'Car Diagnostic Scanner': 50,
   'Light Roadside Repairs': 75
 };
+const serviceDetailsConfig = {
+  'Tire Change': {
+    icon: '◎',
+    copy: 'Flat tire swap with your spare at your location.',
+    questions: [
+      { key: 'spareTire', label: 'Do you have a spare tire?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'wheelLocks', label: 'Do you have wheel locks?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'moreThanOneFlat', label: 'Do you have more than one flat tire?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Jump Start': {
+    icon: '⚡',
+    copy: 'Battery boost at your location.',
+    questions: [
+      { key: 'lightsLeftOn', label: 'Were lights or accessories left on?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'safeAccess', label: 'Is the vehicle in a safe, accessible place?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'hybridElectric', label: 'Is the vehicle hybrid or electric?', type: 'radio', options: ['Yes', 'No', 'Not sure'] }
+    ]
+  },
+  'Fuel Delivery': {
+    icon: '⛽',
+    copy: 'Emergency fuel brought to you.',
+    questions: [
+      { key: 'fuelType', label: 'What fuel do you need?', type: 'radio', options: ['Gas', 'Diesel'] },
+      { key: 'gallons', label: 'How many gallons should we bring?', type: 'select', options: ['1 gallon', '2 gallons', '3 gallons', '4 gallons', '5 gallons'] },
+      { key: 'safeAccess', label: 'Is the vehicle reachable safely?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Lockout Service': {
+    icon: '▣',
+    copy: 'Help getting back into your vehicle.',
+    questions: [
+      { key: 'keysVisible', label: 'Are the keys visible inside?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'vehicleRunning', label: 'Is the vehicle running?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'proofAvailable', label: 'Do you have ID or proof of ownership?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Tire Inflation': {
+    icon: '✚',
+    copy: 'Low tire pressure support at your location.',
+    questions: [
+      { key: 'whichTires', label: 'Which tire needs air?', type: 'select', options: ['Front driver', 'Front passenger', 'Rear driver', 'Rear passenger', 'Multiple tires'] },
+      { key: 'visiblePuncture', label: 'Do you see a nail, puncture, or leak?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'safeLocation', label: 'Are you parked in a safe location?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Battery Replacement': {
+    icon: '▣',
+    copy: 'Battery replacement labor at your location.',
+    questions: [
+      { key: 'batteryAccessible', label: 'Is the battery easy to access?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'batterySizeKnown', label: 'Do you know the battery size?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'needBatterySupplied', label: 'Do you need us to supply the battery?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Battery Testing': {
+    icon: '▤',
+    copy: 'Battery health testing with a meter.',
+    questions: [
+      { key: 'startsSometimes', label: 'Does the vehicle start sometimes?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'warningLights', label: 'Are any warning lights on?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'batteryAgeKnown', label: 'Do you know the battery age?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Car Diagnostic Scanner': {
+    icon: '⚙',
+    copy: 'Scanner check for warning lights and codes.',
+    questions: [
+      { key: 'checkEngineLight', label: 'Is the check engine light on?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'driveabilityIssue', label: 'Is the vehicle shaking, stalling, or losing power?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'vehicleStarts', label: 'Does the vehicle start?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Light Roadside Repairs': {
+    icon: '✦',
+    copy: 'Minor roadside repair help when possible.',
+    questions: [
+      { key: 'repairNeeded', label: 'What repair do you need?', type: 'text', placeholder: 'Briefly describe the repair' },
+      { key: 'partsAvailable', label: 'Do you already have the part?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'safeLocation', label: 'Are you parked in a safe location?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  }
+};
 const demoRequests = [
   {
     id: 'demo-1',
@@ -494,6 +577,7 @@ function requestMatches(request, search, status) {
 function requestCardHtml(request, compact = false) {
   const vehicle = [request.vehicleYear, request.vehicleColor, request.vehicleMake, request.vehicleModel].filter(Boolean).join(' ');
   const photoText = request.photos?.length ? request.photos.join(', ') : 'No photo uploaded';
+  const serviceDetails = formatServiceDetails(request.serviceDetails);
   return `
     <article class="manager-request-card" data-request-id="${escapeHtml(request.id)}">
       <div class="request-card-head">
@@ -516,6 +600,7 @@ function requestCardHtml(request, compact = false) {
       <p class="request-location"><span>Reference</span><strong>${escapeHtml(request.referenceNumber || 'Pending')}</strong></p>
       <p class="request-location"><span>Location</span><strong>${escapeHtml(request.currentLocation || 'No location')}</strong></p>
       ${compact ? '' : `<p class="request-message">${escapeHtml(request.message || 'No extra message.')}</p>`}
+      ${compact || !serviceDetails ? '' : `<p class="request-message"><span>Service details</span><br>${serviceDetails}</p>`}
       ${compact ? '' : `<p class="request-photo"><span>Photo</span> ${escapeHtml(photoText)}</p>`}
       <div class="request-actions">
         <a class="btn primary" href="tel:${escapeHtml(request.phone || '')}">Call</a>
@@ -535,6 +620,27 @@ function requestCardHtml(request, compact = false) {
       `}
     </article>
   `;
+}
+
+function formatServiceDetails(details) {
+  if (!details) return '';
+  let parsed = details;
+  if (typeof details === 'string') {
+    try {
+      parsed = JSON.parse(details);
+    } catch (error) {
+      return escapeHtml(details);
+    }
+  }
+  if (!parsed || typeof parsed !== 'object') return '';
+
+  return Object.entries(parsed)
+    .filter(([, value]) => value)
+    .map(([key, value]) => {
+      const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
+      return `${escapeHtml(label)}: ${escapeHtml(value)}`;
+    })
+    .join('<br>');
 }
 
 function renderManagerRequests() {
@@ -830,6 +936,128 @@ function showSelectedServiceQuote() {
   if (!problemInput?.value) return;
   latestQuote = buildBaseQuote(problemInput.value);
   renderQuote(latestQuote);
+  renderSelectedServiceDetails();
+}
+
+function questionFieldName(question) {
+  return `serviceDetail_${question.key}`;
+}
+
+function renderQuestion(question, serviceName, index) {
+  const fieldName = questionFieldName(question);
+  const id = `${fieldName}_${index}`;
+
+  if (question.type === 'radio') {
+    return `
+      <fieldset class="service-question" data-service-question-group="${escapeHtml(question.key)}">
+        <legend>${escapeHtml(question.label)}</legend>
+        <div class="choice-row">
+          ${question.options.map((option, optionIndex) => `
+            <label class="choice-pill">
+              <input type="radio" name="${escapeHtml(fieldName)}" value="${escapeHtml(option)}" data-service-question="${escapeHtml(question.key)}" ${optionIndex === 0 ? 'required' : ''}>
+              <span>${escapeHtml(option)}</span>
+            </label>
+          `).join('')}
+        </div>
+      </fieldset>
+    `;
+  }
+
+  if (question.type === 'select') {
+    return `
+      <label class="service-question" for="${escapeHtml(id)}">${escapeHtml(question.label)}
+        <select id="${escapeHtml(id)}" name="${escapeHtml(fieldName)}" data-service-question="${escapeHtml(question.key)}" required>
+          <option value="">Choose one</option>
+          ${question.options.map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join('')}
+        </select>
+      </label>
+    `;
+  }
+
+  return `
+    <label class="service-question" for="${escapeHtml(id)}">${escapeHtml(question.label)}
+      <input id="${escapeHtml(id)}" name="${escapeHtml(fieldName)}" data-service-question="${escapeHtml(question.key)}" placeholder="${escapeHtml(question.placeholder || `Details for ${serviceName}`)}" required>
+    </label>
+  `;
+}
+
+function renderSelectedServiceDetails() {
+  if (!problemInput) return;
+  const serviceName = problemInput.value;
+  const config = serviceDetailsConfig[serviceName];
+  const nameText = serviceName || 'Select a service';
+  const copyText = config?.copy || 'Choose the service so we can ask the right questions.';
+  const iconText = config?.icon || '◎';
+
+  document.querySelectorAll('[data-selected-service-name]').forEach((element) => {
+    element.textContent = nameText;
+  });
+  document.querySelectorAll('[data-selected-service-copy]').forEach((element) => {
+    element.textContent = copyText;
+  });
+  document.querySelectorAll('[data-selected-service-icon]').forEach((element) => {
+    element.textContent = iconText;
+  });
+  document.querySelectorAll('[data-selected-service-readonly]').forEach((element) => {
+    element.value = nameText;
+  });
+
+  const questionRoot = document.querySelector('[data-service-questions]');
+  if (questionRoot) {
+    questionRoot.innerHTML = config?.questions?.length
+      ? config.questions.map((question, index) => renderQuestion(question, serviceName, index)).join('')
+      : '<p class="summary-note">Choose a service to continue.</p>';
+  }
+}
+
+function collectServiceDetails(form) {
+  const details = {};
+  form.querySelectorAll('[data-service-question]').forEach((field) => {
+    if (field.type === 'radio' && !field.checked) return;
+    details[field.dataset.serviceQuestion] = field.value;
+  });
+
+  const hiddenField = form.querySelector('[data-service-details-field]');
+  if (hiddenField) hiddenField.value = JSON.stringify(details);
+  return details;
+}
+
+function validateStepFields(step) {
+  const fields = Array.from(step.querySelectorAll('input, select, textarea'))
+    .filter((field) => field.type !== 'hidden' && !field.disabled);
+  const invalidField = fields.find((field) => !field.checkValidity());
+
+  if (invalidField) {
+    invalidField.reportValidity();
+    return false;
+  }
+
+  return true;
+}
+
+function updateRequestSummary(form) {
+  const data = new FormData(form);
+  const vehicle = [
+    data.get('vehicleYear'),
+    data.get('vehicleColor'),
+    data.get('vehicleMake'),
+    data.get('vehicleModel')
+  ].filter(Boolean).join(' ');
+  const location = data.get('currentLocation') || 'Location';
+
+  const serviceElement = document.querySelector('[data-summary-service]');
+  const vehicleElement = document.querySelector('[data-summary-vehicle]');
+  const locationElement = document.querySelector('[data-summary-location]');
+  const arrivalElement = document.querySelector('[data-summary-arrival]');
+
+  if (serviceElement) serviceElement.textContent = data.get('problem') || 'Service';
+  if (vehicleElement) vehicleElement.textContent = vehicle || 'Vehicle';
+  if (locationElement) locationElement.textContent = location;
+  if (arrivalElement) {
+    arrivalElement.textContent = latestQuote?.estimatedArrivalMinutes
+      ? `${latestQuote.estimatedArrivalMinutes} minutes`
+      : 'Confirmed by phone/text';
+  }
 }
 
 function showCustomerConfirmation(request) {
@@ -932,16 +1160,20 @@ function setupStaticRequestSave() {
   const form = document.querySelector('[data-request-form]');
   if (!form) return;
   const submitButton = document.querySelector('[data-submit-request]');
-  const contactStep = form.querySelector('[data-request-step="contact"]');
+  const summaryStep = form.querySelector('[data-request-step="summary"]');
 
+  renderSelectedServiceDetails();
   showSelectedServiceQuote();
-  problemInput?.addEventListener('change', showSelectedServiceQuote);
+  problemInput?.addEventListener('change', () => {
+    showSelectedServiceQuote();
+    collectServiceDetails(form);
+  });
   setupRequestSteps(form);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (contactStep?.hidden) {
-      form.querySelector('[data-next-request-step]')?.click();
+    if (summaryStep?.hidden) {
+      form.querySelector('.request-step:not([hidden]) [data-step-next]')?.click();
       return;
     }
 
@@ -950,16 +1182,18 @@ function setupStaticRequestSave() {
       return;
     }
     if (!validatePhotoUpload(form)) return;
+    collectServiceDetails(form);
 
     let savedRequest = null;
 
     try {
       if (submitButton) {
         submitButton.disabled = true;
-        submitButton.textContent = 'Calculating Final Quote...';
+        submitButton.textContent = 'Checking Quote...';
       }
       latestQuote = await calculateQuote(form);
       renderQuote(latestQuote);
+      updateRequestSummary(form);
 
       if (submitButton) submitButton.textContent = 'Preparing Payment...';
       savedRequest = await createServiceRequest(form);
@@ -979,36 +1213,90 @@ function setupStaticRequestSave() {
 }
 
 function setupRequestSteps(form) {
-  const vehicleStep = form.querySelector('[data-request-step="vehicle"]');
-  const contactStep = form.querySelector('[data-request-step="contact"]');
-  const nextButton = form.querySelector('[data-next-request-step]');
-  if (!vehicleStep || !contactStep || !nextButton) return;
-  const contactFields = Array.from(contactStep.querySelectorAll('input, select, textarea, button'));
-  contactFields.forEach((field) => {
-    field.disabled = contactStep.hidden;
-  });
+  const stepNames = ['service', 'details', 'vehicle', 'contact', 'summary'];
+  const steps = stepNames
+    .map((name) => form.querySelector(`[data-request-step="${name}"]`))
+    .filter(Boolean);
+  if (!steps.length) return;
 
-  nextButton.addEventListener('click', () => {
-    if (!validateVehicleSelection()) {
-      vehicleModelInput?.reportValidity();
-      return;
-    }
+  let currentIndex = Math.max(0, steps.findIndex((step) => !step.hidden));
+  if (currentIndex < 0) currentIndex = 0;
 
-    const fields = Array.from(vehicleStep.querySelectorAll('input, select, textarea'));
-    const invalidField = fields.find((field) => !field.checkValidity());
-
-    if (invalidField) {
-      invalidField.reportValidity();
-      return;
-    }
-
-    vehicleStep.hidden = true;
-    contactStep.hidden = false;
-    contactFields.forEach((field) => {
-      field.disabled = false;
+  const showStep = (index) => {
+    currentIndex = Math.max(0, Math.min(index, steps.length - 1));
+    steps.forEach((step, stepIndex) => {
+      step.hidden = stepIndex !== currentIndex;
     });
-    contactStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const currentName = steps[currentIndex].dataset.requestStep;
+    document.querySelectorAll('[data-progress-step]').forEach((item) => {
+      const itemIndex = stepNames.indexOf(item.dataset.progressStep);
+      item.classList.toggle('is-active', itemIndex === currentIndex);
+      item.classList.toggle('is-complete', itemIndex >= 0 && itemIndex < currentIndex);
+    });
+    if (currentName === 'summary') updateRequestSummary(form);
+    steps[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const advance = async () => {
+    const activeStep = steps[currentIndex];
+    const activeName = activeStep.dataset.requestStep;
+
+    if (activeName === 'service') {
+      if (!validateStepFields(activeStep)) return;
+      renderSelectedServiceDetails();
+      showSelectedServiceQuote();
+    }
+
+    if (activeName === 'details') {
+      if (!validateStepFields(activeStep)) return;
+      collectServiceDetails(form);
+    }
+
+    if (activeName === 'vehicle') {
+      if (!validateVehicleSelection()) {
+        vehicleModelInput?.reportValidity();
+        return;
+      }
+      if (!validateStepFields(activeStep)) return;
+    }
+
+    if (activeName === 'contact') {
+      if (!validateStepFields(activeStep) || !validatePhotoUpload(form)) return;
+      const nextButton = activeStep.querySelector('[data-step-next]');
+      try {
+        if (nextButton) {
+          nextButton.disabled = true;
+          nextButton.textContent = 'Calculating Quote...';
+        }
+        latestQuote = await calculateQuote(form);
+        renderQuote(latestQuote);
+        updateRequestSummary(form);
+      } catch (error) {
+        alert(error.message || 'Unable to calculate the quote. Please try again.');
+        return;
+      } finally {
+        if (nextButton) {
+          nextButton.disabled = false;
+          nextButton.textContent = 'Review Quote';
+        }
+      }
+    }
+
+    showStep(currentIndex + 1);
+  };
+
+  form.querySelectorAll('[data-step-next]').forEach((button) => {
+    button.addEventListener('click', () => {
+      advance();
+    });
   });
+
+  form.querySelectorAll('[data-step-back]').forEach((button) => {
+    button.addEventListener('click', () => showStep(currentIndex - 1));
+  });
+
+  showStep(currentIndex);
 }
 
 setupStaticRequestSave();

@@ -18,6 +18,7 @@ const serviceRequestSchema = new mongoose.Schema({
   vehicleColor: { type: String, required: true, trim: true },
   vehicleYear: { type: String, required: true, trim: true },
   problem: { type: String, required: true, trim: true },
+  serviceDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
   currentLocation: { type: String, required: true, trim: true },
   message: String,
   preferredPaymentMethod: { type: String, default: 'Card' },

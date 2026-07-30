@@ -1,5 +1,17 @@
 <%- include('partials/head') %>
 <%- include('partials/nav') %>
+<%
+  const formatDetails = (details) => {
+    if (!details || typeof details !== 'object') return '';
+    return Object.entries(details)
+      .filter(([, value]) => value)
+      .map(([key, value]) => {
+        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
+        return `${label}: ${value}`;
+      })
+      .join(' | ');
+  };
+%>
 <main class="dashboard-main">
   <div class="dashboard-topline">
     <h1><%= currentStatus || 'Service Requests' %></h1>
@@ -15,7 +27,11 @@
               <td><%= item.customerName %></td>
               <td><a href="tel:<%= item.phone %>"><%= item.phone %></a></td>
               <td><%= item.vehicleYear %> <%= item.vehicleColor || '' %> <%= item.vehicleMake %> <%= item.vehicleModel %></td>
-              <td><%= item.problem %></td>
+              <td>
+                <%= item.problem %>
+                <% const serviceDetailText = formatDetails(item.serviceDetails); %>
+                <% if (serviceDetailText) { %><br><small><%= serviceDetailText %></small><% } %>
+              </td>
               <td><a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(item.currentLocation) %>">Open Map</a></td>
               <td>
                 <%= item.distanceMiles ? `${item.distanceMiles} mi` : 'Not estimated' %>

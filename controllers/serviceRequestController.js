@@ -23,6 +23,18 @@ function serializeRequest(serviceRequest) {
   };
 }
 
+function parseServiceDetails(value) {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
 async function submitRequest(req, res, next) {
   try {
     const errors = validationResult(req);
@@ -61,6 +73,7 @@ async function submitRequest(req, res, next) {
       vehicleColor: data.vehicleColor,
       vehicleYear: data.vehicleYear,
       problem: data.problem,
+      serviceDetails: parseServiceDetails(data.serviceDetails),
       currentLocation: data.currentLocation,
       message: data.message,
       preferredPaymentMethod: 'Card',
