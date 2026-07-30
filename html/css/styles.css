@@ -396,6 +396,48 @@ main > section {
   box-shadow: 0 26px 70px rgba(0, 0, 0, 0.46);
 }
 
+.mobile-roadside-hero {
+  display: none;
+}
+
+.mobile-roadside-logo {
+  display: block;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 12px 32px rgba(255, 210, 31, 0.18);
+}
+
+.mobile-roadside-hero h1 {
+  max-width: 780px;
+  margin: 0 auto;
+  color: var(--white);
+  font-size: clamp(3.15rem, 7vw, 5.4rem);
+  line-height: 0.92;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.mobile-roadside-copy,
+.mobile-roadside-note {
+  max-width: 680px;
+  margin: 18px auto 0;
+  color: var(--muted);
+  font-family: var(--body-font);
+  font-weight: 800;
+  line-height: 1.38;
+  text-align: center;
+}
+
+.mobile-roadside-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
 .home-service-strip {
   max-width: 1360px;
   margin: 0 auto;
@@ -781,6 +823,12 @@ main > section {
   display: grid;
   grid-template-columns: repeat(3, minmax(220px, 1fr));
   gap: 16px;
+}
+
+.services-page-grid {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 clamp(18px, 5vw, 72px) clamp(36px, 6vw, 70px);
 }
 
 .service-request-btn {
@@ -1879,15 +1927,59 @@ td {
 }
 
 @media (max-width: 520px) {
-  .home-banner {
-    overflow: hidden;
-    padding: 22px 10px 0;
+  .desktop-roadside-banner {
+    display: none;
   }
 
-  .home-banner img {
-    width: clamp(720px, 210vw, 880px);
-    max-width: none;
-    margin: 0;
+  .home-landing-shell,
+  .services-landing {
+    padding: 0;
+  }
+
+  .mobile-roadside-hero {
+    display: block;
+    padding: 38px 18px 42px;
+    border-bottom: 1px solid rgba(255, 210, 31, 0.28);
+    background:
+      linear-gradient(25deg, transparent 0 22%, rgba(255, 210, 31, 0.07) 22% 23%, transparent 23% 100%),
+      linear-gradient(115deg, transparent 0 34%, rgba(255, 255, 255, 0.07) 34% 35%, transparent 35% 100%),
+      radial-gradient(circle at 50% 34%, rgba(255, 210, 31, 0.14), transparent 38%),
+      #050506;
+    background-size: 220px 190px, 260px 210px, auto, auto;
+    text-align: center;
+  }
+
+  .mobile-roadside-logo {
+    width: 82px;
+    height: 82px;
+    margin-bottom: 16px;
+  }
+
+  .mobile-roadside-hero h1 {
+    font-size: clamp(3rem, 14vw, 4.2rem);
+    line-height: 0.94;
+  }
+
+  .mobile-roadside-copy {
+    font-size: 1.08rem;
+  }
+
+  .mobile-roadside-note {
+    margin-top: 16px;
+    font-size: 0.96rem;
+  }
+
+  .mobile-roadside-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .mobile-roadside-actions .btn {
+    width: 100%;
+    min-height: 58px;
+    justify-content: center;
   }
 
   .services-landing {
@@ -1967,12 +2059,8 @@ td {
 }
 
 @media (max-width: 430px) {
-  .home-banner {
-    display: block;
-  }
-
-  .home-banner img {
-    width: clamp(700px, 218vw, 850px);
+  .mobile-roadside-hero {
+    padding: 32px 14px 38px;
   }
 
   .service-choice-heading {
