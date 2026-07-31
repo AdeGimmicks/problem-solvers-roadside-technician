@@ -383,17 +383,17 @@ const serviceDetailsConfig = {
     icon: '◎',
     copy: 'Flat tire swap with your spare at your location.',
     questions: [
+      { key: 'location', label: 'Is your vehicle currently on the roadside?', type: 'radio', options: ['Yes', 'No'] },
       { key: 'spareTire', label: 'Do you have a spare tire?', type: 'radio', options: ['Yes', 'No'] },
-      { key: 'wheelLocks', label: 'Do you have wheel locks?', type: 'radio', options: ['Yes', 'No'] },
-      { key: 'moreThanOneFlat', label: 'Do you have more than one flat tire?', type: 'radio', options: ['Yes', 'No'] }
+      { key: 'wheelLocks', label: 'Does your vehicle have a locking wheel nut?', type: 'radio', options: ['Yes', 'No'] },
     ]
   },
   'Jump Start': {
     icon: '⚡',
     copy: 'Battery boost at your location.',
     questions: [
-      { key: 'lightsLeftOn', label: 'Were lights or accessories left on?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
-      { key: 'safeAccess', label: 'Is the vehicle in a safe, accessible place?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'location', label: 'Is your vehicle currently on the roadside?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'batteryAgeKnown', label: 'Do you know the battery age?', type: 'radio', options: ['Yes', 'No'] }
       { key: 'hybridElectric', label: 'Is the vehicle hybrid or electric?', type: 'radio', options: ['Yes', 'No', 'Not sure'] }
     ]
   },
@@ -401,18 +401,18 @@ const serviceDetailsConfig = {
     icon: '⛽',
     copy: 'Emergency fuel brought to you.',
     questions: [
+      { key: 'location', label: 'Is your vehicle currently on the roadside?', type: 'radio', options: ['Yes', 'No'] },
       { key: 'fuelType', label: 'What fuel do you need?', type: 'radio', options: ['Gas', 'Diesel'] },
-      { key: 'gallons', label: 'How many gallons should we bring?', type: 'select', options: ['1 gallon', '2 gallons', '3 gallons', '4 gallons', '5 gallons'] },
-      { key: 'safeAccess', label: 'Is the vehicle reachable safely?', type: 'radio', options: ['Yes', 'No'] }
+      { key: 'gallons', label: 'How many gallons should we bring?', type: 'select', options: ['1 gallon', '2 gallons'] },
     ]
   },
   'Lockout Service': {
     icon: '▣',
     copy: 'Help getting back into your vehicle.',
     questions: [
+      { key: 'location', label: 'Is your vehicle currently on the roadside?', type: 'radio', options: ['Yes', 'No'] },
       { key: 'keysVisible', label: 'Are the keys visible inside?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
       { key: 'vehicleRunning', label: 'Is the vehicle running?', type: 'radio', options: ['Yes', 'No'] },
-      { key: 'proofAvailable', label: 'Do you have ID or proof of ownership?', type: 'radio', options: ['Yes', 'No'] }
     ]
   },
   'Tire Inflation': {
@@ -429,7 +429,7 @@ const serviceDetailsConfig = {
     copy: 'Battery replacement labor at your location.',
     questions: [
       { key: 'batteryAccessible', label: 'Is the battery easy to access?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
-      { key: 'batterySizeKnown', label: 'Do you know the battery size?', type: 'radio', options: ['Yes', 'No'] },
+            { key: 'location', label: 'Is your vehicle currently on the roadside?', type: 'radio', options: ['Yes', 'No'] },
       { key: 'needBatterySupplied', label: 'Do you need us to supply the battery?', type: 'radio', options: ['Yes', 'No'] }
     ]
   },
