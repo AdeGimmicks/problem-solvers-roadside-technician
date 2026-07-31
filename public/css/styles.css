@@ -1606,7 +1606,7 @@ textarea {
 }
 
 .policy-hero {
-  padding-bottom: 22px;
+    padding: 32px clamp(18px, 5vw, 72px) 20px;
 }
 
 .policy-section {
