@@ -1,8 +1,11 @@
+const path = require('path');
 const Review = require('../models/Review');
 const Photo = require('../models/Photo');
 const ServiceArea = require('../models/ServiceArea');
 const { SERVICES } = require('../utils/constants');
 const { hasDatabase } = require('../utils/dbState');
+
+const POLICY_HTML_DIR = path.join(__dirname, '..', 'html');
 
 const POLICIES = {
   'privacy-policy': {
@@ -240,10 +243,10 @@ function policy(req, res, next) {
     return next();
   }
 
-  return res.render('policy', {
-    title: policyPage.title,
-    metaDescription: policyPage.metaDescription,
-    policy: policyPage
+  return res.sendFile(path.join(POLICY_HTML_DIR, `${req.params.slug}.html`), (error) => {
+    if (error) {
+      next(error);
+    }
   });
 }
 

@@ -26,7 +26,14 @@ const htmlPages = {
   '/services': 'services.html',
   '/about': 'about.html',
   '/contact': 'contact.html',
-  '/request-service': 'request-service.html'
+  '/request-service': 'request-service.html',
+  '/privacy-policy': 'privacy-policy.html',
+  '/terms-of-service': 'terms-of-service.html',
+  '/payment-policy': 'payment-policy.html',
+  '/cancellation-policy': 'cancellation-policy.html',
+  '/refund-policy': 'refund-policy.html',
+  '/service-disclaimer': 'service-disclaimer.html',
+  '/service-area': 'service-area.html'
 };
 
 connectDB();
