@@ -393,8 +393,9 @@ const serviceDetailsConfig = {
     copy: 'Battery boost at your location.',
     questions: [
       { key: 'location', label: 'Is your vehicle currently on the roadside?', type: 'radio', options: ['Yes', 'No'] },
-      { key: 'batteryAgeKnown', label: 'Do you know the battery age?', type: 'radio', options: ['Yes', 'No'] }
-      { key: 'hybridElectric', label: 'Is the vehicle hybrid or electric?', type: 'radio', options: ['Yes', 'No', 'Not sure'] }
+      { key: 'batteryAgeKnown', label: 'Do you know the battery age?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'hybridElectric', label: 'Is the vehicle hybrid or electric?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'batteryReplacement', label: 'If our technician determines that your battery needs to be replaced, would you like us to replace it?', type: 'radio', options: ['Yes', 'No', 'Not sure'] }
     ]
   },
   'Fuel Delivery': {
