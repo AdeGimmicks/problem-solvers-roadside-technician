@@ -1581,7 +1581,7 @@ textarea {
 
 .site-footer {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 0.7fr;
+  grid-template-columns: 1.2fr 1fr 0.75fr 0.85fr;
   gap: 24px;
   padding: 34px clamp(18px, 5vw, 72px);
   background:
@@ -1597,11 +1597,41 @@ textarea {
   color: var(--white);
   text-decoration: none;
   font-weight: 700;
+  margin-top: 6px;
 }
 
 .site-footer strong {
   color: var(--yellow);
   font-size: 1.25rem;
+}
+
+.policy-hero {
+  padding-bottom: 22px;
+}
+
+.policy-section {
+  display: grid;
+  gap: 16px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 clamp(18px, 5vw, 72px) 56px;
+}
+
+.policy-card {
+  padding: 22px;
+  border: 1px solid rgba(255, 204, 24, 0.35);
+  border-radius: var(--radius);
+  background: rgba(18, 18, 20, 0.92);
+}
+
+.policy-card h2 {
+  margin-bottom: 8px;
+  color: var(--yellow);
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+}
+
+.policy-card p {
+  color: var(--muted);
 }
 
 .home-panel-section {

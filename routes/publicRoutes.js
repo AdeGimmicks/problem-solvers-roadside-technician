@@ -41,6 +41,7 @@ router.get('/services', publicController.services);
 router.get('/about', publicController.about);
 router.get('/contact', publicController.contact);
 router.post('/contact', contactValidators, requestController.submitContact);
+router.get('/:slug(privacy-policy|terms-of-service|payment-policy|cancellation-policy|refund-policy|service-disclaimer|service-area)', publicController.policy);
 router.get('/request-service', publicController.requestService);
 router.post('/request-service', upload.array('photos', 5), requestValidators, requestController.submitRequest);
 router.post('/api/service-requests', upload.array('photos', 5), requestValidators, requestController.submitRequest);
