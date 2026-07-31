@@ -128,13 +128,4 @@ app.use(attachBusinessSettings);
 
 app.use('/', publicRoutes);
 app.use('/dashboard', dashboardRoutes);
-app.use('/store-manager', dashboardRoutes);
-app.use('/payments', paymentRoutes);
-app.use(notFound);
-app.use(errorHandler);
-
-const port = process.env.PORT || 3000;
-const host = process.env.HOST || (isProduction ? '0.0.0.0' : '127.0.0.1');
-app.listen(port, host, () => {
-  console.log(`Problem Solvers Roadside Technician running at http://${host}:${port}`);
-});
+app.use('/store-manager', dashboardRo
