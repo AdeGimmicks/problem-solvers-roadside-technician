@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Website CMS</title>
+
+<link rel="stylesheet" href="./css/styles.css">
+
+<style>
+
+.cms-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+gap:24px;
+margin-top:30px;
+}
+
+.cms-card{
+
+background:#161616;
+
+border:1px solid #2d2d2d;
+
+border-radius:18px;
+
+padding:25px;
+
+transition:.25s;
+
+}
+
+.cms-card:hover{
+
+border-color:#f2c230;
+
+transform:translateY(-3px);
+
+}
+
+.cms-card h3{
+
+margin-bottom:10px;
+
+font-size:28px;
+
+color:#fff;
+
+}
+
+.cms-card p{
+
+color:#bdbdbd;
+
+margin-bottom:18px;
+
+}
+
+.cms-card a{
+
+display:inline-block;
+
+padding:10px 22px;
+
+background:#f2c230;
+
+color:#000;
+
+font-weight:700;
+
+border-radius:8px;
+
+text-decoration:none;
+
+}
+
+</style>
+
+</head>
+
+<body class="dashboard-body">
+
+<aside class="dashboard-nav">
+
+<a class="brand dashboard-brand" href="./dashboard.html">
+
+<span class="brand-mark">PS</span>
+
+<span>Dashboard</span>
+
+</a>
+
+<a href="./dashboard.html">Overview</a>
+
+<a href="./dashboard-requests.html">Requests</a>
+
+<a href="./dashboard-customers.html">Customer List</a>
+
+<a href="./dashboard-payments.html">Payments</a>
+
+<a class="active" href="./dashboard-cms.html">Website CMS</a>
+
+<a href="./dashboard-settings.html">Reviews / Photos / Settings</a>
+
+</aside>
+
+<main class="dashboard-main">
+
+<section class="manager-hero">
+
+<p class="eyebrow">Website Management</p>
+
+<h1>Website CMS</h1>
+
+<p>Edit your website without opening VS Code.</p>
+
+</section>
+
+<div class="cms-grid">
+
+<div class="cms-card">
+<h3>Homepage</h3>
+<p>Edit hero title, buttons, text and homepage content.</p>
+<a href="/dashboard/cms/homepage">Edit</a>
+</div>
+
+<div class="cms-card">
+<h3>Services</h3>
+<p>Edit service names, prices and descriptions.</p>
+<a href="/dashboard/cms/services">Edit</a>
+</div>
+
+<div class="cms-card">
+<h3>About Us</h3>
+<p>Edit company information.</p>
+<a href="/dashboard/cms/about">Edit</a>
+</div>
+
+<div class="cms-card">
+<h3>Policies</h3>
+<p>Edit Privacy Policy, Terms, Refund Policy and more.</p>
+<a href="/dashboard/cms/policies">Edit</a>
+</div>
+
+<div class="cms-card">
+<h3>SEO</h3>
+<p>Edit title, keywords, favicon and meta description.</p>
+<a href="/dashboard/cms/seo">Edit</a>
+</div>
+
+<div class="cms-card">
+<h3>Header & Footer</h3>
+<p>Edit phone number, menu and footer.</p>
+<a href="/dashboard/cms/header-footer">Edit</a>
+</div>
+
+<div class="cms-card">
+<h3>Images</h3>
+<p>Upload homepage banners, logo and gallery images.</p>
+<a href="/dashboard/cms/images">Edit</a>
+</div>
+
+<div class="cms-card">
+<h3>Contact</h3>
+<p>Edit email, hours, Google Map and social links.</p>
+<a href="/dashboard/cms/contact">Edit</a>
+</div>
+
+</div>
+
+</main>
+
+</body>
+</html>
