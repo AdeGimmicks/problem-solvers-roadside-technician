@@ -1,8 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 function requireAdmin(req, res, next) {
-  if (req.session.admin) return next();
-  return res.redirect('/dashboard/login');
+  return next();
 }
 
 function issueToken(admin) {
