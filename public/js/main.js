@@ -1058,7 +1058,8 @@ function collectServiceDetails(form) {
   return details;
 }
 
-function validateServiceBusinessRules(form, showMessage = true) {
+function validateServiceBusinessRules(form, options = {}) {
+  const { showMessage = true, lockButton = true } = options;
   const details = collectServiceDetails(form);
   const blocked = problemInput?.value === 'Tire Change' && String(details.spareTire || '').toLowerCase() === 'no';
   const blockMessage = form.querySelector('[data-service-block-message]');
@@ -1069,7 +1070,7 @@ function validateServiceBusinessRules(form, showMessage = true) {
     blockMessage.textContent = blocked && showMessage ? tireChangeNoSpareMessage : '';
     blockMessage.hidden = !blocked || !showMessage;
   }
-  if (detailsNext) {
+  if (detailsNext && (lockButton || !blocked)) {
     detailsNext.disabled = blocked;
     detailsNext.setAttribute('aria-disabled', blocked ? 'true' : 'false');
   }
@@ -1221,11 +1222,11 @@ function setupStaticRequestSave() {
   problemInput?.addEventListener('change', () => {
     renderSelectedServiceDetails();
     collectServiceDetails(form);
-    validateServiceBusinessRules(form, false);
+    validateServiceBusinessRules(form, { showMessage: false, lockButton: false });
   });
   setupRequestSteps(form);
   form.querySelector('[data-service-questions]')?.addEventListener('change', () => {
-    validateServiceBusinessRules(form);
+    validateServiceBusinessRules(form, { showMessage: false, lockButton: false });
   });
 
   form.addEventListener('submit', async (event) => {
@@ -1241,7 +1242,7 @@ function setupStaticRequestSave() {
     }
     if (!validatePhotoUpload(form)) return;
     collectServiceDetails(form);
-    if (!validateServiceBusinessRules(form)) return;
+    if (!validateServiceBusinessRules(form, { showMessage: false, lockButton: true })) return;
 
     let savedRequest = null;
 
@@ -1261,6 +1262,7 @@ function setupStaticRequestSave() {
       await startStripeCheckout(savedRequest);
     } catch (error) {
       if (savedRequest) showCustomerConfirmation(savedRequest);
+      if (String(error.message || '').includes('usable spare tire')) return;
       alert(error.message || 'Unable to complete the request. Please try again.');
     } finally {
       if (submitButton) {
@@ -1309,7 +1311,7 @@ function setupRequestSteps(form) {
     if (activeName === 'details') {
       if (!validateStepFields(activeStep)) return;
       collectServiceDetails(form);
-      if (!validateServiceBusinessRules(form)) return;
+      if (!validateServiceBusinessRules(form, { showMessage: true, lockButton: true })) return;
     }
 
     if (activeName === 'vehicle') {
