@@ -850,6 +850,7 @@ function setupLiveLocationTool() {
   const startButton = panel.querySelector('[data-live-location-start]');
   const stopButton = panel.querySelector('[data-live-location-stop]');
   const statusText = panel.querySelector('[data-live-location-status]');
+  const onlineText = panel.querySelector('[data-live-location-online]');
   const currentText = panel.querySelector('[data-live-location-current]');
   const updatedText = panel.querySelector('[data-live-location-updated]');
   let watchId = null;
@@ -859,17 +860,14 @@ function setupLiveLocationTool() {
     if (statusText) statusText.textContent = message;
   };
 
-  async function saveLiveLocation(position) {
-    const now = Date.now();
-    if (now - lastSaveAt < 25000) return;
-    lastSaveAt = now;
+  const setOnlineState = (isOnline) => {
+    if (onlineText) onlineText.textContent = isOnline ? 'Online' : 'Offline';
+    if (startButton) startButton.disabled = isOnline;
+    if (stopButton) stopButton.disabled = !isOnline;
+  };
 
+  async function postLiveLocation(payload) {
     const csrfToken = await getCsrfToken();
-    const payload = {
-      lat: position.coords.latitude,
-      lng: position.coords.longitude,
-      accuracy: position.coords.accuracy
-    };
     const response = await fetch('/dashboard/live-location', {
       method: 'POST',
       credentials: 'same-origin',
@@ -881,8 +879,24 @@ function setupLiveLocationTool() {
       body: JSON.stringify(payload)
     });
     if (!response.ok) throw new Error('Could not save live location.');
+    return response.json();
+  }
+
+  async function saveLiveLocation(position, force = false) {
+    const now = Date.now();
+    if (!force && now - lastSaveAt < 25000) return;
+    lastSaveAt = now;
+
+    const payload = {
+      online: true,
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+      accuracy: position.coords.accuracy
+    };
+    await postLiveLocation(payload);
     if (currentText) currentText.textContent = `${payload.lat.toFixed(5)}, ${payload.lng.toFixed(5)}`;
     if (updatedText) updatedText.textContent = new Date().toLocaleString();
+    setOnlineState(true);
     setStatus('Live location is active.');
   }
 
@@ -893,13 +907,28 @@ function setupLiveLocationTool() {
     }
 
     setStatus('Requesting location permission...');
-    startButton.disabled = true;
+    if (startButton) startButton.disabled = true;
+    lastSaveAt = 0;
+    navigator.geolocation.getCurrentPosition((position) => {
+      saveLiveLocation(position, true).catch((error) => {
+        setOnlineState(false);
+        setStatus(error.message || 'Could not save live location.');
+      });
+    }, () => {
+      setOnlineState(false);
+      setStatus('Could not get your location. Allow location access and try again.');
+    }, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    });
+
     watchId = navigator.geolocation.watchPosition((position) => {
       saveLiveLocation(position).catch((error) => {
         setStatus(error.message || 'Could not save live location.');
       });
     }, () => {
-      startButton.disabled = false;
+      setOnlineState(false);
       setStatus('Could not get your location. Allow location access and try again.');
     }, {
       enableHighAccuracy: true,
@@ -908,13 +937,20 @@ function setupLiveLocationTool() {
     });
   }
 
-  function stopSharing() {
+  async function stopSharing() {
     if (watchId !== null) navigator.geolocation.clearWatch(watchId);
     watchId = null;
-    startButton.disabled = false;
-    setStatus('Live sharing stopped on this device.');
+    try {
+      await postLiveLocation({ online: false });
+      setOnlineState(false);
+      setStatus('You are offline. Customer quotes will not use this device as an online technician.');
+    } catch (error) {
+      setOnlineState(false);
+      setStatus(error.message || 'Live sharing stopped on this device, but the server could not be updated.');
+    }
   }
 
+  setOnlineState(panel.dataset.liveLocationInitialOnline === 'true');
   startButton?.addEventListener('click', startSharing);
   stopButton?.addEventListener('click', stopSharing);
 }
@@ -1006,6 +1042,7 @@ async function calculateQuote(form) {
   const googleEstimate = await estimateWithGoogleMaps(dispatchCenter, destination);
   let distanceMiles = googleEstimate?.distanceMiles;
   let travelTimeMinutes = googleEstimate?.travelTimeMinutes;
+  let travelEstimateSource = googleEstimate?.originSource || null;
 
   if (!googleEstimate && dispatchCenter && destination) {
     const routeEstimate = await estimateWithOpenRoute(dispatchCenter, destination);
@@ -1013,10 +1050,12 @@ async function calculateQuote(form) {
     if (routeEstimate) {
       distanceMiles = routeEstimate.distanceMiles;
       travelTimeMinutes = routeEstimate.travelTimeMinutes;
+      travelEstimateSource = 'browser-route-fallback';
     } else {
       const straightLineMiles = distanceMilesBetween(dispatchCenter, destination);
       distanceMiles = Math.max(1, Math.round(straightLineMiles * 1.25));
       travelTimeMinutes = Math.max(10, Math.round(distanceMiles * 1.9));
+      travelEstimateSource = 'browser-distance-fallback';
     }
   }
 
@@ -1033,6 +1072,7 @@ async function calculateQuote(form) {
     travelTimeMinutes: hasTravelEstimate ? travelTimeMinutes : null,
     estimatedArrivalMinutes: hasTravelEstimate ? travelTimeMinutes + quoteConfig.dispatchBufferMinutes : null,
     travelEstimateStatus: hasTravelEstimate ? 'estimated' : 'needs-confirmation',
+    travelEstimateSource: hasTravelEstimate ? travelEstimateSource : '',
     referenceNumber: `PS-${Date.now().toString().slice(-6)}`
   };
 }

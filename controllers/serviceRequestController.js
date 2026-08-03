@@ -20,7 +20,8 @@ function serializeRequest(serviceRequest) {
     travelFee: serviceRequest.travelFee,
     totalPrice: serviceRequest.totalPrice,
     distanceMiles: serviceRequest.distanceMiles,
-    travelTimeMinutes: serviceRequest.travelTimeMinutes
+    travelTimeMinutes: serviceRequest.travelTimeMinutes,
+    travelEstimateSource: serviceRequest.travelEstimateSource
   };
 }
 
@@ -102,6 +103,7 @@ async function submitRequest(req, res, next) {
       distanceMiles: data.distanceMiles,
       travelTimeMinutes: data.travelTimeMinutes,
       estimatedArrivalMinutes: data.estimatedArrivalMinutes,
+      travelEstimateSource: data.travelEstimateSource,
       referenceNumber: data.referenceNumber,
       paymentStatus: data.paymentStatus || 'Payment Pending',
       photoPaths

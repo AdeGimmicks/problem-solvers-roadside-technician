@@ -42,6 +42,7 @@ const serviceRequestSchema = new mongoose.Schema({
   distanceMiles: Number,
   travelTimeMinutes: Number,
   estimatedArrivalMinutes: Number,
+  travelEstimateSource: String,
   referenceNumber: { type: String, index: true },
   paymentStatus: { type: String, enum: ['Payment Pending', 'Paid'], default: 'Payment Pending' },
   assignedTechnician: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },

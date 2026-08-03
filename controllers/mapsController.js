@@ -1,4 +1,5 @@
 const BusinessSettings = require('../models/BusinessSettings');
+const TechnicianLocation = require('../models/TechnicianLocation');
 const { fallbackSettings } = require('../middleware/settings');
 const { hasDatabase } = require('../utils/dbState');
 
@@ -14,14 +15,43 @@ function hasMapsKey(res) {
   return false;
 }
 
-async function getDispatchLocation() {
+function distanceMilesBetween(start, end) {
+  if (!start?.lat || !start?.lng || !end?.lat || !end?.lng) return Number.POSITIVE_INFINITY;
+  const earthRadiusMiles = 3958.8;
+  const toRadians = (value) => value * Math.PI / 180;
+  const dLat = toRadians(end.lat - start.lat);
+  const dLng = toRadians(end.lng - start.lng);
+  const lat1 = toRadians(start.lat);
+  const lat2 = toRadians(end.lat);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function getDispatchLocation(destination) {
   if (!hasDatabase()) return fallbackSettings.dispatchLocation;
-  const settings = await BusinessSettings.findOne().lean();
-  const liveLocation = settings?.liveTechnicianLocation;
-  if (liveLocation?.lat && liveLocation?.lng) {
-    return liveLocation;
+  const [onlineTechnicians, settings] = await Promise.all([
+    TechnicianLocation.find({ online: true, 'location.lat': { $type: 'number' }, 'location.lng': { $type: 'number' } })
+      .sort({ 'location.updatedAt': -1 })
+      .lean(),
+    BusinessSettings.findOne().lean()
+  ]);
+  const onlineTechnician = onlineTechnicians
+    .map((technician) => ({
+      ...technician,
+      distanceToCustomer: distanceMilesBetween(technician.location, destination)
+    }))
+    .sort((a, b) => a.distanceToCustomer - b.distanceToCustomer || new Date(b.location.updatedAt || 0) - new Date(a.location.updatedAt || 0))[0];
+
+  if (onlineTechnician?.location?.lat && onlineTechnician?.location?.lng) {
+    return {
+      ...onlineTechnician.location,
+      source: 'online-technician',
+      technicianId: onlineTechnician.technician
+    };
   }
-  return settings?.dispatchLocation || fallbackSettings.dispatchLocation;
+  const dispatchLocation = settings?.dispatchLocation || fallbackSettings.dispatchLocation;
+  return dispatchLocation ? { ...dispatchLocation, source: 'dispatch-location' } : null;
 }
 
 async function fetchGoogle(path, params) {
@@ -124,7 +154,7 @@ async function distance(req, res, next) {
     if (!Number.isFinite(destinationLat) || !Number.isFinite(destinationLng)) {
       return res.status(400).json({ error: 'Destination coordinates are required.' });
     }
-    const dispatchLocation = await getDispatchLocation();
+    const dispatchLocation = await getDispatchLocation({ lat: destinationLat, lng: destinationLng });
     if (!dispatchLocation?.lat || !dispatchLocation?.lng) {
       return res.status(400).json({ error: 'Dispatch location is not configured.' });
     }
@@ -137,7 +167,8 @@ async function distance(req, res, next) {
     if (!element || element.status !== 'OK') return res.json({ distanceMiles: null, travelTimeMinutes: null });
     res.json({
       distanceMiles: Math.max(1, Math.round(element.distance.value / 1609.344)),
-      travelTimeMinutes: Math.max(5, Math.round(element.duration.value / 60))
+      travelTimeMinutes: Math.max(5, Math.round(element.duration.value / 60)),
+      originSource: dispatchLocation.source || 'dispatch-location'
     });
   } catch (error) {
     next(error);

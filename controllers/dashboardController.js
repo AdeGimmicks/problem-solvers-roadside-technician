@@ -7,6 +7,7 @@ const Pricing = require('../models/Pricing');
 const Review = require('../models/Review');
 const ServiceArea = require('../models/ServiceArea');
 const ServiceRequest = require('../models/ServiceRequest');
+const TechnicianLocation = require('../models/TechnicianLocation');
 const { issueToken } = require('../middleware/auth');
 const { REQUEST_STATUSES } = require('../utils/constants');
 const { cleanObject } = require('../utils/sanitize');
@@ -211,23 +212,50 @@ async function payments(req, res) {
 }
 
 async function liveLocation(req, res) {
-  const businessSettings = await BusinessSettings.findOne().lean();
+  const technicianId = req.session?.admin?.id || null;
+  const [businessSettings, technicianLocation] = await Promise.all([
+    BusinessSettings.findOne().lean(),
+    TechnicianLocation.findOne(technicianId ? { technician: technicianId } : { technician: null }).lean()
+  ]);
   res.render('dashboard/live-location', {
     title: 'Live Technician Location',
     metaDescription: 'Share live technician location for quote distance and ETA.',
-    businessSettings
+    businessSettings,
+    technicianLocation
   });
 }
 
 async function updateLiveLocation(req, res, next) {
   try {
+    const online = req.body.online !== false && req.body.online !== 'false';
+    const technicianId = req.session?.admin?.id || null;
+    const label = req.session?.admin?.name || 'Store Manager';
+    if (!online) {
+      const query = technicianId ? { technician: technicianId } : { technician: null };
+      const offline = await TechnicianLocation.findOneAndUpdate(query, {
+        technician: technicianId,
+        label,
+        online: false,
+        source: 'dashboard-live-location'
+      }, { upsert: true, new: true });
+      return res.json({ ok: true, online: false, location: offline.location });
+    }
+
     const lat = Number(req.body.lat);
     const lng = Number(req.body.lng);
     const accuracy = Number(req.body.accuracy || 0);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return res.status(422).json({ error: 'Valid latitude and longitude are required.' });
     }
-    const settings = await BusinessSettings.findOneAndUpdate({}, {
+    const location = {
+      lat,
+      lng,
+      accuracy: Number.isFinite(accuracy) ? accuracy : undefined,
+      updatedAt: new Date()
+    };
+    const query = technicianId ? { technician: technicianId } : { technician: null };
+    const [settings, technicianLocation] = await Promise.all([
+      BusinessSettings.findOneAndUpdate({}, {
       liveTechnicianLocation: {
         lat,
         lng,
@@ -235,11 +263,20 @@ async function updateLiveLocation(req, res, next) {
         source: 'dashboard-live-location',
         updatedAt: new Date()
       }
-    }, { upsert: true, new: true });
+      }, { upsert: true, new: true }),
+      TechnicianLocation.findOneAndUpdate(query, {
+        technician: technicianId,
+        label,
+        online: true,
+        location,
+        source: 'dashboard-live-location'
+      }, { upsert: true, new: true })
+    ]);
 
     res.json({
       ok: true,
-      location: settings.liveTechnicianLocation
+      online: true,
+      location: technicianLocation.location || settings.liveTechnicianLocation
     });
   } catch (error) {
     next(error);

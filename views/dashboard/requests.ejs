@@ -81,7 +81,7 @@
             <div class="request-metric-row">
               <p><span>Distance</span><strong><%= item.distanceMiles ? `${item.distanceMiles} mi` : 'Not estimated' %></strong></p>
               <p><span>Drive Time</span><strong><%= item.travelTimeMinutes ? `${item.travelTimeMinutes} min` : 'Not estimated' %></strong></p>
-              <p><span>ETA</span><strong><%= item.estimatedArrivalMinutes ? `${item.estimatedArrivalMinutes} min` : 'Review needed' %></strong></p>
+              <p><span>ETA</span><strong><%= item.estimatedArrivalMinutes ? `${item.estimatedArrivalMinutes} min` : 'Review needed' %></strong><small><%= item.travelEstimateSource === 'online-technician' ? 'Live technician' : item.travelEstimateSource ? 'Dispatch estimate' : '' %></small></p>
               <p><span>Quote</span><strong><%= item.totalPrice ? `$${item.totalPrice}` : 'Not quoted' %></strong><small><% if (item.basePrice) { %>Base $<%= item.basePrice %><% if (item.travelFee) { %> + travel $<%= item.travelFee %><% } %><% } %></small></p>
               <p><span>Payment</span><strong><%= item.preferredPaymentMethod || 'Not selected' %></strong><small><%= item.paymentStatus || 'Payment Pending' %></small></p>
             </div>
