@@ -32,7 +32,15 @@
   <section class="request-manager-list" aria-label="Service request list">
     <% items.forEach((item) => { %>
       <% const serviceDetailText = formatDetails(item.serviceDetails); %>
-      <article class="request-manager-card">
+      <details class="request-manager-card">
+        <summary class="request-manager-summary">
+          <span class="request-summary-customer"><%= item.customerName %></span>
+          <span class="request-summary-id"><%= item.requestId || item.referenceNumber || item._id %></span>
+          <span class="request-summary-service"><%= item.problem %></span>
+          <span class="request-summary-payment <%= item.paymentStatus === 'Paid' ? 'is-paid' : 'is-unpaid' %>"><%= item.paymentStatus === 'Paid' ? 'Paid' : 'Unpaid' %></span>
+          <span class="request-summary-date"><%= formatDateTime(item.createdAt) %></span>
+        </summary>
+
         <div class="request-manager-head">
           <div>
             <span class="request-manager-label">Request</span>
@@ -113,7 +121,7 @@
             </form>
           </aside>
         </div>
-      </article>
+      </details>
     <% }) %>
   </section>
 </main>

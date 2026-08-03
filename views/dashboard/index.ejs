@@ -3,12 +3,22 @@
 <main class="dashboard-main">
   <h1>Dashboard Overview</h1>
   <div class="stat-grid">
-    <% statuses.forEach((status) => { %>
-      <a class="stat-card" href="/dashboard/requests?status=<%= encodeURIComponent(status) %>">
-        <span><%= status %></span>
-        <strong><%= statusCounts[status] || 0 %></strong>
-      </a>
-    <% }) %>
+    <a class="stat-card" href="/dashboard/requests">
+      <span>All Requests</span>
+      <strong><%= Object.values(statusCounts).reduce((total, count) => total + count, 0) %></strong>
+    </a>
+    <a class="stat-card" href="/dashboard/requests?payment=unpaid">
+      <span>Unpaid Requests</span>
+      <strong><%= Object.entries(paymentStatusCounts).filter(([status]) => status !== 'Paid').reduce((total, [, count]) => total + count, 0) %></strong>
+    </a>
+    <a class="stat-card" href="/dashboard/requests?payment=paid">
+      <span>Paid Requests</span>
+      <strong><%= paymentStatusCounts.Paid || 0 %></strong>
+    </a>
+    <a class="stat-card" href="/dashboard/requests?status=Completed">
+      <span>Completed Jobs</span>
+      <strong><%= statusCounts.Completed || 0 %></strong>
+    </a>
   </div>
   <section class="dashboard-panel">
     <h2>Recent Requests</h2>

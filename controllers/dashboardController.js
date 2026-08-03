@@ -105,16 +105,19 @@ function logout(req, res) {
 }
 
 async function overview(req, res) {
-  const [counts, recentRequests, payments] = await Promise.all([
+  const [counts, paymentCounts, recentRequests, payments] = await Promise.all([
     ServiceRequest.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+    ServiceRequest.aggregate([{ $group: { _id: '$paymentStatus', count: { $sum: 1 } } }]),
     ServiceRequest.find().sort({ createdAt: -1 }).limit(8).lean(),
     Payment.find().sort({ createdAt: -1 }).limit(6).populate('serviceRequest').lean()
   ]);
   const statusCounts = Object.fromEntries(counts.map((item) => [item._id, item.count]));
+  const paymentStatusCounts = Object.fromEntries(paymentCounts.map((item) => [item._id || 'Payment Pending', item.count]));
   res.render('dashboard/index', {
     title: 'Dashboard Overview',
     metaDescription: 'Admin dashboard overview.',
     statusCounts,
+    paymentStatusCounts,
     recentRequests,
     payments,
     statuses: REQUEST_STATUSES
@@ -123,14 +126,23 @@ async function overview(req, res) {
 
 async function requests(req, res) {
   const status = req.query.status;
-  const query = status ? { status } : {};
+  const payment = req.query.payment;
+  const query = {};
+  if (status) query.status = status;
+  if (payment === 'paid') query.paymentStatus = 'Paid';
+  if (payment === 'unpaid') query.paymentStatus = { $ne: 'Paid' };
   const items = await ServiceRequest.find(query).sort({ createdAt: -1 }).populate('customer payment').lean();
+  const title = payment === 'paid'
+    ? 'Paid Requests'
+    : payment === 'unpaid'
+      ? 'Unpaid Requests'
+      : status ? `${status} Requests` : 'Service Requests';
   res.render('dashboard/requests', {
-    title: status ? `${status} Requests` : 'Service Requests',
+    title,
     metaDescription: 'Manage roadside assistance requests.',
     items,
     statuses: REQUEST_STATUSES,
-    currentStatus: status || ''
+    currentStatus: title
   });
 }
 
