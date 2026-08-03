@@ -862,8 +862,8 @@ function setupLiveLocationTool() {
 
   const setOnlineState = (isOnline) => {
     if (onlineText) onlineText.textContent = isOnline ? 'Online' : 'Offline';
-    if (startButton) startButton.disabled = isOnline;
-    if (stopButton) stopButton.disabled = !isOnline;
+    if (startButton) startButton.disabled = false;
+    if (stopButton) stopButton.disabled = !isOnline && watchId === null;
   };
 
   async function postLiveLocation(payload) {
@@ -906,6 +906,8 @@ function setupLiveLocationTool() {
       return;
     }
 
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    watchId = null;
     setStatus('Requesting location permission...');
     if (startButton) startButton.disabled = true;
     lastSaveAt = 0;
