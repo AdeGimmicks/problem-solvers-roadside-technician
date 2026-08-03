@@ -1972,6 +1972,17 @@ textarea {
   text-decoration: none;
 }
 
+.dashboard-main > .stat-grid {
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.dashboard-main > .stat-grid .stat-card {
+  min-width: 170px;
+  border-radius: 8px;
+}
+
 .stat-card strong {
   font-size: 2.2rem;
 }
@@ -2580,18 +2591,20 @@ td {
   }
 
   .request-manager-body,
-  .request-manager-summary,
   .request-info-grid,
   .request-metric-row {
     grid-template-columns: 1fr;
   }
 
   .request-manager-summary {
-    gap: 7px;
+    grid-template-columns: 140px 126px 120px 86px 152px 70px;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: thin;
   }
 
   .request-manager-summary::after {
-    justify-self: start;
+    justify-self: end;
   }
 
   .request-manager-head {

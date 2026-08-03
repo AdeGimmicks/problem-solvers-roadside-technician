@@ -152,9 +152,17 @@ async function updateRequestStatus(req, res) {
   if (req.body.status && req.body.status !== item.status) {
     item.setStatus(req.body.status, req.session.admin.id, req.body.note);
   }
+  if (['Payment Pending', 'Paid'].includes(req.body.paymentStatus)) {
+    item.paymentStatus = req.body.paymentStatus;
+  }
   item.internalNotes = req.body.internalNotes;
   await item.save();
-  res.redirect('/dashboard/requests');
+
+  if (req.body.paymentStatus === 'Paid') return res.redirect('/dashboard/requests?payment=paid');
+  if (req.body.status === 'Accepted') return res.redirect('/dashboard/requests?status=Accepted');
+  if (req.body.status === 'Completed') return res.redirect('/dashboard/requests?status=Completed');
+  if (req.body.status === 'Cancelled') return res.redirect('/dashboard/requests?status=Cancelled');
+  res.redirect('/dashboard/requests?payment=unpaid');
 }
 
 async function customers(req, res) {

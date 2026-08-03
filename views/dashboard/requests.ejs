@@ -111,6 +111,13 @@
               <label>Status
                 <select name="status"><% statuses.forEach((status) => { %><option <%= status === item.status ? 'selected' : '' %>><%= status %></option><% }) %></select>
               </label>
+              <label>Payment
+                <select name="paymentStatus">
+                  <% ['Payment Pending', 'Paid'].forEach((paymentStatus) => { %>
+                    <option value="<%= paymentStatus %>" <%= (item.paymentStatus || 'Payment Pending') === paymentStatus ? 'selected' : '' %>><%= paymentStatus === 'Payment Pending' ? 'Unpaid' : 'Paid' %></option>
+                  <% }) %>
+                </select>
+              </label>
               <label>Update note
                 <input name="note" placeholder="Note for this update">
               </label>
