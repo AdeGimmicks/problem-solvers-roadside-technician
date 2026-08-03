@@ -9,6 +9,7 @@ const statusEventSchema = new mongoose.Schema({
 }, { _id: false });
 
 const serviceRequestSchema = new mongoose.Schema({
+  requestId: { type: String, unique: true, sparse: true, index: true },
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
   customerName: { type: String, required: true, trim: true },
   phone: { type: String, required: true, trim: true },
@@ -20,7 +21,13 @@ const serviceRequestSchema = new mongoose.Schema({
   problem: { type: String, required: true, trim: true },
   serviceDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
   currentLocation: { type: String, required: true, trim: true },
+  location: {
+    address: { type: String, trim: true },
+    lat: Number,
+    lng: Number
+  },
   message: String,
+  internalNotes: String,
   preferredPaymentMethod: { type: String, default: 'Card' },
   photoPaths: [String],
   status: { type: String, enum: REQUEST_STATUSES, default: 'Pending', index: true },
@@ -40,6 +47,19 @@ const serviceRequestSchema = new mongoose.Schema({
   assignedTechnician: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
   payment: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }
 }, { timestamps: true });
+
+serviceRequestSchema.pre('validate', async function assignRequestId(next) {
+  if (this.requestId) return next();
+
+  const now = this.createdAt || new Date();
+  const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  const count = await this.constructor.countDocuments({ createdAt: { $gte: start, $lt: end } });
+  this.requestId = `PS-${datePart}-${String(count + 1).padStart(4, '0')}`;
+  next();
+});
 
 serviceRequestSchema.methods.setStatus = function setStatus(status, adminId, note) {
   this.status = status;

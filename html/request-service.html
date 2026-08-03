@@ -82,10 +82,6 @@
             <option>Fuel Delivery</option>
             <option>Lockout Service</option>
             <option>Tire Inflation</option>
-            <option>Battery Replacement</option>
-            <option>Battery Testing</option>
-            <option>Car Diagnostic Scanner</option>
-            <option>Light Roadside Repairs</option>
           </select>
         </label>
         <div class="selected-service-card">
@@ -113,6 +109,7 @@
           </div>
         </div>
         <div class="service-question-list" data-service-questions></div>
+        <div class="service-block-message" data-service-block-message hidden></div>
         <div class="form-actions">
           <button class="btn ghost" type="button" data-step-back>Go Back</button>
           <button class="btn primary" type="button" data-step-next>Continue</button>
@@ -173,6 +170,7 @@
             <p><span>Total estimate</span><strong data-quote-total>$0</strong></p>
           </div>
           <small>This total is calculated before payment based on the selected service and service location.</small>
+          <small>Final pricing is based on the information provided. Additional charges may apply if the actual situation differs from the information submitted during the request.</small>
         </section>
         <div class="request-summary-grid">
           <p><span>Service</span><strong data-summary-service>Service</strong></p>
@@ -196,6 +194,8 @@
       <input type="hidden" name="estimatedArrivalMinutes" data-quote-field="estimatedArrivalMinutes">
       <input type="hidden" name="referenceNumber" data-quote-field="referenceNumber">
       <input type="hidden" name="travelEstimateStatus" data-quote-field="travelEstimateStatus">
+      <input type="hidden" name="locationLat" data-location-lat>
+      <input type="hidden" name="locationLng" data-location-lng>
       <section class="confirmation-panel" data-confirmation-panel hidden>
         <h2>Request received.</h2>
         <p>Reference number: <strong data-reference-number></strong></p>

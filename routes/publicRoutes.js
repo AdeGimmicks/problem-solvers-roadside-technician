@@ -3,7 +3,9 @@ const { body } = require('express-validator');
 const publicController = require('../controllers/publicController');
 const requestController = require('../controllers/serviceRequestController');
 const technicianController = require('../controllers/technicianController');
+const mapsController = require('../controllers/mapsController');
 const upload = require('../middleware/upload');
+const { PUBLIC_SERVICE_NAMES } = require('../utils/constants');
 
 const router = express.Router();
 
@@ -14,9 +16,11 @@ const requestValidators = [
   body('vehicleModel').trim().notEmpty().withMessage('Vehicle model is required.'),
   body('vehicleColor').trim().notEmpty().withMessage('Vehicle color is required.'),
   body('vehicleYear').trim().isLength({ min: 4, max: 4 }).withMessage('Vehicle year is required.'),
-  body('problem').trim().notEmpty().withMessage('Problem is required.'),
+  body('problem').trim().isIn(PUBLIC_SERVICE_NAMES).withMessage('Choose an available public roadside service.'),
   body('serviceDetails').optional({ checkFalsy: true }).isString().withMessage('Service details must be valid.'),
-  body('currentLocation').trim().notEmpty().withMessage('Current location is required.')
+  body('currentLocation').trim().notEmpty().withMessage('Current location is required.'),
+  body('locationLat').optional({ checkFalsy: true }).isFloat({ min: -90, max: 90 }).withMessage('Latitude must be valid.'),
+  body('locationLng').optional({ checkFalsy: true }).isFloat({ min: -180, max: 180 }).withMessage('Longitude must be valid.')
 ];
 
 const contactValidators = [
@@ -45,6 +49,11 @@ router.get('/:slug(privacy-policy|terms-of-service|payment-policy|cancellation-p
 router.get('/request-service', publicController.requestService);
 router.post('/request-service', upload.array('photos', 5), requestValidators, requestController.submitRequest);
 router.post('/api/service-requests', upload.array('photos', 5), requestValidators, requestController.submitRequest);
+router.get('/api/maps/reverse-geocode', mapsController.reverseGeocode);
+router.get('/api/maps/geocode', mapsController.geocode);
+router.get('/api/maps/autocomplete', mapsController.autocomplete);
+router.get('/api/maps/place-details', mapsController.placeDetails);
+router.get('/api/maps/distance', mapsController.distance);
 router.get('/technicians/apply', technicianController.applyPage);
 router.post('/technicians/apply', upload.array('photos', 5), technicianValidators, technicianController.submitApplication);
 router.get('/robots.txt', publicController.robots);

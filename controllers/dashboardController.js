@@ -137,7 +137,10 @@ async function requests(req, res) {
 async function updateRequestStatus(req, res) {
   const item = await ServiceRequest.findById(req.params.id);
   if (!item) return res.redirect('/dashboard/requests');
-  item.setStatus(req.body.status, req.session.admin.id, req.body.note);
+  if (req.body.status && req.body.status !== item.status) {
+    item.setStatus(req.body.status, req.session.admin.id, req.body.note);
+  }
+  item.internalNotes = req.body.internalNotes;
   await item.save();
   res.redirect('/dashboard/requests');
 }
@@ -175,7 +178,7 @@ async function recordPayment(req, res) {
     recordedBy: req.session.admin.id
   });
   request.payment = payment._id;
-  request.setStatus('Payment Recorded', req.session.admin.id, 'Payment was recorded.');
+  request.paymentStatus = payment.status || 'Paid';
   await request.save();
   res.redirect('/dashboard/payments');
 }

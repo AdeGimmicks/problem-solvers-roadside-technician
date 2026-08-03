@@ -11,7 +11,8 @@ function wantsJson(req) {
 function serializeRequest(serviceRequest) {
   return {
     id: serviceRequest._id.toString(),
-    referenceNumber: serviceRequest.referenceNumber,
+    requestId: serviceRequest.requestId,
+    referenceNumber: serviceRequest.referenceNumber || serviceRequest.requestId,
     preferredPaymentMethod: serviceRequest.preferredPaymentMethod,
     paymentStatus: serviceRequest.paymentStatus,
     estimatedArrivalMinutes: serviceRequest.estimatedArrivalMinutes,
@@ -52,6 +53,18 @@ async function submitRequest(req, res, next) {
     }
 
     const data = cleanObject(req.body);
+    const serviceDetails = parseServiceDetails(data.serviceDetails);
+    if (data.problem === 'Tire Change' && String(serviceDetails.spareTire || '').toLowerCase() === 'no') {
+      const message = 'A tire change requires that you already have a usable spare tire. Unfortunately, we cannot complete this service without one.';
+      if (wantsJson(req)) return res.status(422).json({ error: message });
+      return res.status(422).render('request-service', {
+        title: 'Request Roadside Assistance',
+        metaDescription: 'Request mobile roadside assistance in Chicago.',
+        form,
+        errors: [{ msg: message }]
+      });
+    }
+
     let customer = await Customer.findOne({ phone: data.phone });
     if (!customer) {
       customer = await Customer.create({
@@ -73,8 +86,13 @@ async function submitRequest(req, res, next) {
       vehicleColor: data.vehicleColor,
       vehicleYear: data.vehicleYear,
       problem: data.problem,
-      serviceDetails: parseServiceDetails(data.serviceDetails),
+      serviceDetails,
       currentLocation: data.currentLocation,
+      location: {
+        address: data.currentLocation,
+        lat: data.locationLat ? Number(data.locationLat) : undefined,
+        lng: data.locationLng ? Number(data.locationLng) : undefined
+      },
       message: data.message,
       preferredPaymentMethod: 'Card',
       basePrice: data.basePrice,

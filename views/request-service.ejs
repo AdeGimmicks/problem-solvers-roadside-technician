@@ -25,7 +25,7 @@
         <label>Service
           <select name="problem" required>
             <option value="">Select service</option>
-            <% ['Tire Change', 'Jump Start', 'Fuel Delivery', 'Lockout Service', 'Tire Inflation', 'Battery Replacement', 'Battery Testing', 'Car Diagnostic Scanner', 'Light Roadside Repairs'].forEach((problem) => { %>
+            <% ['Tire Change', 'Jump Start', 'Fuel Delivery', 'Lockout Service', 'Tire Inflation'].forEach((problem) => { %>
               <option <%= (form.problem || '') === problem ? 'selected' : '' %>><%= problem %></option>
             <% }) %>
           </select>
@@ -55,6 +55,7 @@
           </div>
         </div>
         <div class="service-question-list" data-service-questions></div>
+        <div class="service-block-message" data-service-block-message hidden></div>
         <div class="form-actions">
           <button class="btn ghost" type="button" data-step-back>Go Back</button>
           <button class="btn primary" type="button" data-step-next>Continue</button>
@@ -111,6 +112,7 @@
             <p><span>Total estimate</span><strong data-quote-total>$0</strong></p>
           </div>
           <small>This total is calculated before payment based on the selected service and service location.</small>
+          <small>Final pricing is based on the information provided. Additional charges may apply if the actual situation differs from the information submitted during the request.</small>
         </section>
         <div class="request-summary-grid">
           <p><span>Service</span><strong data-summary-service>Service</strong></p>
@@ -134,6 +136,8 @@
       <input type="hidden" name="estimatedArrivalMinutes" data-quote-field="estimatedArrivalMinutes">
       <input type="hidden" name="referenceNumber" data-quote-field="referenceNumber">
       <input type="hidden" name="travelEstimateStatus" data-quote-field="travelEstimateStatus">
+      <input type="hidden" name="locationLat" data-location-lat>
+      <input type="hidden" name="locationLng" data-location-lng>
       <section class="confirmation-panel" data-confirmation-panel hidden>
         <h2>Request received.</h2>
         <p>Reference number: <strong data-reference-number></strong></p>

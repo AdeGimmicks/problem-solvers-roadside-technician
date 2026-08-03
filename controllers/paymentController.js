@@ -34,9 +34,6 @@ async function recordStripeCheckoutPayment(session) {
 
   request.payment = payment._id;
   request.paymentStatus = payment.status === 'Paid' ? 'Paid' : 'Payment Pending';
-  if (payment.status === 'Paid' && request.status !== 'Payment Recorded') {
-    request.setStatus('Payment Recorded', null, 'Stripe payment completed.');
-  }
   await request.save();
 
   return { request, payment };
@@ -60,7 +57,7 @@ async function createCheckoutSession(req, res, next) {
       business: STRIPE_BUSINESS_TYPE,
       service: selectedService,
       serviceRequestId: serviceRequest._id.toString(),
-      referenceNumber: serviceRequest.referenceNumber || ''
+      referenceNumber: serviceRequest.referenceNumber || serviceRequest.requestId || ''
     };
 
     const session = await stripe.checkout.sessions.create({

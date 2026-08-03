@@ -185,7 +185,7 @@ async function home(req, res) {
     : [[], [], []];
   res.render('home', {
     title: 'Fast Mobile Roadside Assistance in Chicago',
-    metaDescription: 'Problem Solvers Roadside Technician provides tire changes, jump starts, lockouts, fuel delivery, battery service, and light roadside repairs in Chicago.',
+    metaDescription: 'Problem Solvers Roadside Technician provides tire changes, jump starts, lockouts, fuel delivery, and tire inflation in Chicago.',
     services: SERVICES,
     reviews,
     photos,
@@ -207,8 +207,8 @@ async function chooseService(req, res) {
 function services(req, res) {
   res.render('services', {
     title: 'Roadside Assistance Services in Chicago',
-    metaDescription: 'Mobile tire change, jump start, battery testing, battery replacement, lockout, fuel delivery, tire inflation, and light roadside repair services.',
-    services: SERVICES
+    metaDescription: 'Mobile tire change, jump start, lockout, fuel delivery, and tire inflation services.',
+    services: SERVICES.filter((service) => service.publicRequest)
   });
 }
 

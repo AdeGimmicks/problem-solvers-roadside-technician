@@ -9,14 +9,11 @@ if (toggle && nav) {
 
 async function reverseGeocodeCoordinates(lat, lng) {
   try {
-    const params = new URLSearchParams({
-      f: 'json',
-      location: `${lng},${lat}`
-    });
-    const response = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?${params}`);
+    const params = new URLSearchParams({ lat, lng });
+    const response = await fetch(`/api/maps/reverse-geocode?${params}`, { headers: { Accept: 'application/json' } });
     if (!response.ok) return '';
     const data = await response.json();
-    return data.address?.LongLabel || data.address?.Match_addr || '';
+    return data.address || '';
   } catch (error) {
     return '';
   }
@@ -37,6 +34,10 @@ document.querySelectorAll('[data-use-location]').forEach((button) => {
         input.value = address || coordinates;
         input.dataset.coordinates = coordinates;
       }
+      const latField = document.querySelector('[data-location-lat]');
+      const lngField = document.querySelector('[data-location-lng]');
+      if (latField) latField.value = position.coords.latitude;
+      if (lngField) lngField.value = position.coords.longitude;
 
       button.textContent = address ? 'Location Added' : 'GPS Location Added';
       button.disabled = false;
@@ -257,7 +258,15 @@ function hideAddressSuggestions() {
 
 function showAddressSuggestions(addresses) {
   if (!addressSuggestions) return;
-  const uniqueAddresses = [...new Set(addresses.filter(Boolean))].slice(0, 6);
+  const normalized = addresses
+    .map((address) => (typeof address === 'string' ? { label: address } : address))
+    .filter((address) => address?.label);
+  const seen = new Set();
+  const uniqueAddresses = normalized.filter((address) => {
+    if (seen.has(address.label)) return false;
+    seen.add(address.label);
+    return true;
+  }).slice(0, 6);
 
   if (!uniqueAddresses.length) {
     hideAddressSuggestions();
@@ -269,10 +278,27 @@ function showAddressSuggestions(addresses) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'address-suggestion';
-      button.textContent = address;
-      button.addEventListener('click', () => {
-        addressInput.value = address;
+      button.textContent = address.label;
+      button.addEventListener('click', async () => {
+        addressInput.value = address.label;
         hideAddressSuggestions();
+        if (!address.placeId) return;
+        try {
+          const params = new URLSearchParams({ placeId: address.placeId });
+          const response = await fetch(`/api/maps/place-details?${params}`, { headers: { Accept: 'application/json' } });
+          if (!response.ok) return;
+          const details = await response.json();
+          if (details.address) addressInput.value = details.address;
+          if (Number.isFinite(details.lat) && Number.isFinite(details.lng)) {
+            addressInput.dataset.coordinates = `${details.lat}, ${details.lng}`;
+            const latField = document.querySelector('[data-location-lat]');
+            const lngField = document.querySelector('[data-location-lng]');
+            if (latField) latField.value = details.lat;
+            if (lngField) lngField.value = details.lng;
+          }
+        } catch (error) {
+          // Keep the typed address if coordinate lookup is unavailable.
+        }
       });
       return button;
     })
@@ -282,17 +308,15 @@ function showAddressSuggestions(addresses) {
 
 async function lookupArcgisAddresses(query, signal) {
   const params = new URLSearchParams({
-    f: 'json',
-    text: buildAddressQuery(query),
-    countryCode: 'USA',
-    category: 'Address',
-    searchExtent: '-91.5131,36.9701,-87.0199,42.5083',
-    maxSuggestions: '8'
+    input: buildAddressQuery(query)
   });
-  const response = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?${params}`, { signal });
+  const response = await fetch(`/api/maps/autocomplete?${params}`, { signal, headers: { Accept: 'application/json' } });
   if (!response.ok) return [];
   const data = await response.json();
-  return (data.suggestions || []).map((suggestion) => suggestion.text);
+  return (data.predictions || []).map((prediction) => ({
+    label: prediction.description,
+    placeId: prediction.placeId
+  }));
 }
 
 async function lookupNominatimAddresses(query, signal) {
@@ -308,12 +332,17 @@ async function lookupNominatimAddresses(query, signal) {
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, { signal });
   if (!response.ok) return [];
   const results = await response.json();
-  return results.map((result) => result.display_name);
+  return results.map((result) => ({ label: result.display_name }));
 }
 
 if (addressInput && addressSuggestions) {
   addressInput.addEventListener('input', () => {
     const typedAddress = addressInput.value.trim();
+    addressInput.dataset.coordinates = '';
+    const latField = document.querySelector('[data-location-lat]');
+    const lngField = document.querySelector('[data-location-lng]');
+    if (latField) latField.value = '';
+    if (lngField) lngField.value = '';
     clearTimeout(addressLookupTimer);
 
     if (addressLookupController) {
@@ -462,6 +491,7 @@ const serviceDetailsConfig = {
     ]
   }
 };
+const tireChangeNoSpareMessage = 'A tire change requires that you already have a usable spare tire. Unfortunately, we cannot complete this service without one. Please contact a towing company or another provider if you do not have a spare tire available.';
 const demoRequests = [
   {
     id: 'demo-1',
@@ -484,7 +514,7 @@ const demoRequests = [
     travelFee: 15,
     totalPrice: 85,
     referenceNumber: 'PS-1001',
-    note: '',
+    internalNotes: '',
     photos: ['flat-tire-photo.jpg'],
     createdAt: new Date().toISOString()
   },
@@ -509,7 +539,7 @@ const demoRequests = [
     travelFee: 10,
     totalPrice: 70,
     referenceNumber: 'PS-1002',
-    note: 'Call before arrival.',
+    internalNotes: 'Call before arrival.',
     photos: [],
     createdAt: new Date(Date.now() - 1000 * 60 * 46).toISOString()
   }
@@ -577,14 +607,24 @@ function requestMatches(request, search, status) {
 
 function requestCardHtml(request, compact = false) {
   const vehicle = [request.vehicleYear, request.vehicleColor, request.vehicleMake, request.vehicleModel].filter(Boolean).join(' ');
-  const photoText = request.photos?.length ? request.photos.join(', ') : 'No photo uploaded';
+  const photoList = [...(request.photoPaths || []), ...(request.photos || [])];
+  const photoHtml = photoList.length
+    ? `<div class="dashboard-photo-list">${photoList.map((photo) => {
+      const source = String(photo).startsWith('/') ? photo : `/uploads/${photo}`;
+      return `<a href="${escapeHtml(source)}" target="_blank" rel="noreferrer"><img src="${escapeHtml(source)}" alt="Customer uploaded service photo"></a>`;
+    }).join('')}</div>`
+    : 'No photos';
   const serviceDetails = formatServiceDetails(request.serviceDetails);
+  const mapDestination = request.location?.lat && request.location?.lng
+    ? `${request.location.lat},${request.location.lng}`
+    : request.currentLocation;
   return `
     <article class="manager-request-card" data-request-id="${escapeHtml(request.id)}">
       <div class="request-card-head">
         <div>
           <span class="status-pill manager-status">${escapeHtml(request.status || 'New')}</span>
           <h3>${escapeHtml(request.problem || 'Roadside Request')}</h3>
+          <p>${escapeHtml(request.requestId || request.referenceNumber || 'Request ID pending')}</p>
         </div>
         <time>${escapeHtml(formatDate(request.createdAt || new Date().toISOString()))}</time>
       </div>
@@ -596,27 +636,28 @@ function requestCardHtml(request, compact = false) {
         <p><span>Payment Status</span><strong>${escapeHtml(request.paymentStatus || 'Payment Pending')}</strong></p>
         <p><span>Distance</span><strong>${escapeHtml(request.distanceMiles ? `${request.distanceMiles} miles` : 'Not estimated')}</strong></p>
         <p><span>Drive Time</span><strong>${escapeHtml(request.travelTimeMinutes ? `${request.travelTimeMinutes} min` : 'Not estimated')}</strong></p>
+        <p><span>ETA</span><strong>${escapeHtml(request.estimatedArrivalMinutes ? `${request.estimatedArrivalMinutes} min` : 'Not estimated')}</strong></p>
         <p><span>Total Quote</span><strong>${escapeHtml(request.totalPrice ? `$${request.totalPrice}` : 'Not quoted')}</strong></p>
       </div>
-      <p class="request-location"><span>Reference</span><strong>${escapeHtml(request.referenceNumber || 'Pending')}</strong></p>
       <p class="request-location"><span>Location</span><strong>${escapeHtml(request.currentLocation || 'No location')}</strong></p>
       ${compact ? '' : `<p class="request-message">${escapeHtml(request.message || 'No extra message.')}</p>`}
       ${compact || !serviceDetails ? '' : `<p class="request-message"><span>Service details</span><br>${serviceDetails}</p>`}
-      ${compact ? '' : `<p class="request-photo"><span>Photo</span> ${escapeHtml(photoText)}</p>`}
+      ${compact ? '' : `<div class="request-photo"><span>Photos</span> ${photoHtml}</div>`}
       <div class="request-actions">
         <a class="btn primary" href="tel:${escapeHtml(request.phone || '')}">Call</a>
         <a class="btn secondary" href="sms:${escapeHtml(request.phone || '')}">Text</a>
-        <a class="btn ghost" target="_blank" rel="noreferrer" href="${escapeHtml(mapLink(request.currentLocation))}">Open Map</a>
+        <a class="btn ghost" target="_blank" rel="noreferrer" href="${escapeHtml(mapLink(mapDestination))}">Open Map</a>
+        <a class="btn ghost" target="_blank" rel="noreferrer" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapDestination || '')}">Navigate</a>
       </div>
       ${compact ? '' : `
         <div class="manager-update-row">
           <select data-status-update>
-            ${['Pending', 'Accepted', 'On The Way', 'In Progress', 'Completed', 'Cancelled'].map((status) => `<option ${request.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+            ${['Pending', 'Accepted', 'Technician Assigned', 'En Route', 'Arrived', 'Completed', 'Cancelled'].map((status) => `<option ${request.status === status ? 'selected' : ''}>${status}</option>`).join('')}
           </select>
           <select data-payment-status-update>
             ${['Payment Pending', 'Paid'].map((status) => `<option ${request.paymentStatus === status ? 'selected' : ''}>${status}</option>`).join('')}
           </select>
-          <input data-manager-note value="${escapeHtml(request.note || '')}" placeholder="Internal manager note">
+          <input data-manager-note value="${escapeHtml(request.internalNotes || request.note || '')}" placeholder="Internal manager note">
         </div>
       `}
     </article>
@@ -714,7 +755,7 @@ function setupManagerDashboard() {
       request.paymentStatus = event.target.value;
     }
     if (event.target.matches('[data-manager-note]')) {
-      request.note = event.target.value;
+      request.internalNotes = event.target.value;
     }
 
     saveStoredRequests(requests);
@@ -813,21 +854,17 @@ function distanceMilesBetween(start, end) {
 }
 
 async function estimateWithGoogleMaps(origin, destination) {
-  if (!futureExpansionConfig.googleMapsApiKey || !window.google?.maps?.DirectionsService || !origin || !destination) return null;
+  if (!destination) return null;
 
-  const service = new window.google.maps.DirectionsService();
-  const result = await service.route({
-    origin,
-    destination,
-    travelMode: window.google.maps.TravelMode.DRIVING
+  const params = new URLSearchParams({
+    destinationLat: destination.lat,
+    destinationLng: destination.lng
   });
-  const leg = result?.routes?.[0]?.legs?.[0];
-  if (!leg) return null;
-
-  return {
-    distanceMiles: Math.max(1, Math.round(leg.distance.value / 1609.344)),
-    travelTimeMinutes: Math.max(5, Math.round(leg.duration.value / 60))
-  };
+  const response = await fetch(`/api/maps/distance?${params}`, { headers: { Accept: 'application/json' } });
+  if (!response.ok) return null;
+  const estimate = await response.json();
+  if (!Number.isFinite(estimate.distanceMiles) || !Number.isFinite(estimate.travelTimeMinutes)) return null;
+  return estimate;
 }
 
 async function estimateWithOpenRoute(origin, destination) {
@@ -850,6 +887,24 @@ async function estimateWithOpenRoute(origin, destination) {
 async function geocodeLocation(location) {
   const coordinates = parseCoordinates(location);
   if (coordinates) return coordinates;
+
+  try {
+    const params = new URLSearchParams({ address: buildAddressQuery(location) });
+    const response = await fetch(`/api/maps/geocode?${params}`, { headers: { Accept: 'application/json' } });
+    if (response.ok) {
+      const data = await response.json();
+      if (Number.isFinite(data.lat) && Number.isFinite(data.lng)) {
+        const latField = document.querySelector('[data-location-lat]');
+        const lngField = document.querySelector('[data-location-lng]');
+        if (latField) latField.value = data.lat;
+        if (lngField) lngField.value = data.lng;
+        if (addressInput && data.address) addressInput.value = data.address;
+        return { lat: data.lat, lng: data.lng };
+      }
+    }
+  } catch (error) {
+    // Fall through to the no-key development lookup below.
+  }
 
   const params = new URLSearchParams({
     f: 'json',
@@ -1003,6 +1058,25 @@ function collectServiceDetails(form) {
   return details;
 }
 
+function validateServiceBusinessRules(form, showMessage = true) {
+  const details = collectServiceDetails(form);
+  const blocked = problemInput?.value === 'Tire Change' && String(details.spareTire || '').toLowerCase() === 'no';
+  const blockMessage = form.querySelector('[data-service-block-message]');
+  const detailsStep = form.querySelector('[data-request-step="details"]');
+  const detailsNext = detailsStep?.querySelector('[data-step-next]');
+
+  if (blockMessage) {
+    blockMessage.textContent = blocked && showMessage ? tireChangeNoSpareMessage : '';
+    blockMessage.hidden = !blocked || !showMessage;
+  }
+  if (detailsNext) {
+    detailsNext.disabled = blocked;
+    detailsNext.setAttribute('aria-disabled', blocked ? 'true' : 'false');
+  }
+
+  return !blocked;
+}
+
 function validateStepFields(step) {
   const fields = Array.from(step.querySelectorAll('input, select, textarea'))
     .filter((field) => field.type !== 'hidden' && !field.disabled);
@@ -1147,8 +1221,12 @@ function setupStaticRequestSave() {
   problemInput?.addEventListener('change', () => {
     renderSelectedServiceDetails();
     collectServiceDetails(form);
+    validateServiceBusinessRules(form, false);
   });
   setupRequestSteps(form);
+  form.querySelector('[data-service-questions]')?.addEventListener('change', () => {
+    validateServiceBusinessRules(form);
+  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -1163,6 +1241,7 @@ function setupStaticRequestSave() {
     }
     if (!validatePhotoUpload(form)) return;
     collectServiceDetails(form);
+    if (!validateServiceBusinessRules(form)) return;
 
     let savedRequest = null;
 
@@ -1230,6 +1309,7 @@ function setupRequestSteps(form) {
     if (activeName === 'details') {
       if (!validateStepFields(activeStep)) return;
       collectServiceDetails(form);
+      if (!validateServiceBusinessRules(form)) return;
     }
 
     if (activeName === 'vehicle') {
