@@ -210,6 +210,42 @@ async function payments(req, res) {
   });
 }
 
+async function liveLocation(req, res) {
+  const businessSettings = await BusinessSettings.findOne().lean();
+  res.render('dashboard/live-location', {
+    title: 'Live Technician Location',
+    metaDescription: 'Share live technician location for quote distance and ETA.',
+    businessSettings
+  });
+}
+
+async function updateLiveLocation(req, res, next) {
+  try {
+    const lat = Number(req.body.lat);
+    const lng = Number(req.body.lng);
+    const accuracy = Number(req.body.accuracy || 0);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return res.status(422).json({ error: 'Valid latitude and longitude are required.' });
+    }
+    const settings = await BusinessSettings.findOneAndUpdate({}, {
+      liveTechnicianLocation: {
+        lat,
+        lng,
+        accuracy: Number.isFinite(accuracy) ? accuracy : undefined,
+        source: 'dashboard-live-location',
+        updatedAt: new Date()
+      }
+    }, { upsert: true, new: true });
+
+    res.json({
+      ok: true,
+      location: settings.liveTechnicianLocation
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function recordPayment(req, res) {
   const data = cleanObject(req.body);
   const request = await ServiceRequest.findById(data.serviceRequest);
@@ -322,6 +358,8 @@ module.exports = {
   updateRequestStatus,
   customers,
   payments,
+  liveLocation,
+  updateLiveLocation,
   recordPayment,
   settings,
   updateSettings,

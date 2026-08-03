@@ -14,6 +14,13 @@ const businessSettingsSchema = new mongoose.Schema({
     lng: Number,
     updatedAt: Date
   },
+  liveTechnicianLocation: {
+    lat: Number,
+    lng: Number,
+    accuracy: Number,
+    source: String,
+    updatedAt: Date
+  },
   quoteConfig: {
     includedMiles: { type: Number, default: 10 },
     travelFeePerExtraMile: { type: Number, default: 2 }

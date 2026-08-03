@@ -1,0 +1,29 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <h1>Live Location</h1>
+    <a class="btn secondary" href="/dashboard/requests">Requests</a>
+  </div>
+
+  <section class="dashboard-panel live-location-panel" data-live-location-panel>
+    <div>
+      <p class="eyebrow">Technician location</p>
+      <h2>Share Your Current Location</h2>
+      <p class="muted-copy">Open this page on your phone while you are available. Customer quotes will use this live location for distance, ETA, and travel pricing.</p>
+    </div>
+
+    <div class="live-location-status">
+      <p><span>Current live location</span><strong data-live-location-current><%= businessSettings?.liveTechnicianLocation?.lat ? `${businessSettings.liveTechnicianLocation.lat.toFixed(5)}, ${businessSettings.liveTechnicianLocation.lng.toFixed(5)}` : 'Not sharing yet' %></strong></p>
+      <p><span>Last updated</span><strong data-live-location-updated><%= businessSettings?.liveTechnicianLocation?.updatedAt ? new Date(businessSettings.liveTechnicianLocation.updatedAt).toLocaleString() : 'Not updated yet' %></strong></p>
+      <p><span>Status</span><strong data-live-location-status>Ready</strong></p>
+    </div>
+
+    <div class="live-location-actions">
+      <button class="btn primary" type="button" data-live-location-start>Start Sharing</button>
+      <button class="btn ghost" type="button" data-live-location-stop>Stop</button>
+    </div>
+  </section>
+</main>
+</body>
+</html>

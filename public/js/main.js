@@ -843,6 +843,82 @@ function setupDispatchLocationTool() {
   });
 }
 
+function setupLiveLocationTool() {
+  const panel = document.querySelector('[data-live-location-panel]');
+  if (!panel) return;
+
+  const startButton = panel.querySelector('[data-live-location-start]');
+  const stopButton = panel.querySelector('[data-live-location-stop]');
+  const statusText = panel.querySelector('[data-live-location-status]');
+  const currentText = panel.querySelector('[data-live-location-current]');
+  const updatedText = panel.querySelector('[data-live-location-updated]');
+  let watchId = null;
+  let lastSaveAt = 0;
+
+  const setStatus = (message) => {
+    if (statusText) statusText.textContent = message;
+  };
+
+  async function saveLiveLocation(position) {
+    const now = Date.now();
+    if (now - lastSaveAt < 25000) return;
+    lastSaveAt = now;
+
+    const csrfToken = await getCsrfToken();
+    const payload = {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+      accuracy: position.coords.accuracy
+    };
+    const response = await fetch('/dashboard/live-location', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('Could not save live location.');
+    if (currentText) currentText.textContent = `${payload.lat.toFixed(5)}, ${payload.lng.toFixed(5)}`;
+    if (updatedText) updatedText.textContent = new Date().toLocaleString();
+    setStatus('Live location is active.');
+  }
+
+  function startSharing() {
+    if (!navigator.geolocation) {
+      setStatus('Location is not available in this browser.');
+      return;
+    }
+
+    setStatus('Requesting location permission...');
+    startButton.disabled = true;
+    watchId = navigator.geolocation.watchPosition((position) => {
+      saveLiveLocation(position).catch((error) => {
+        setStatus(error.message || 'Could not save live location.');
+      });
+    }, () => {
+      startButton.disabled = false;
+      setStatus('Could not get your location. Allow location access and try again.');
+    }, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 30000
+    });
+  }
+
+  function stopSharing() {
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    startButton.disabled = false;
+    setStatus('Live sharing stopped on this device.');
+  }
+
+  startButton?.addEventListener('click', startSharing);
+  stopButton?.addEventListener('click', stopSharing);
+}
+
 function distanceMilesBetween(start, end) {
   const radius = 3958.8;
   const toRad = (degree) => degree * Math.PI / 180;
@@ -1363,3 +1439,4 @@ function setupRequestSteps(form) {
 setupStaticRequestSave();
 setupManagerDashboard();
 setupDispatchLocationTool();
+setupLiveLocationTool();

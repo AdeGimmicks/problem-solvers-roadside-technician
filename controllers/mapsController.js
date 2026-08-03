@@ -17,6 +17,11 @@ function hasMapsKey(res) {
 async function getDispatchLocation() {
   if (!hasDatabase()) return fallbackSettings.dispatchLocation;
   const settings = await BusinessSettings.findOne().lean();
+  const liveLocation = settings?.liveTechnicianLocation;
+  const liveLocationAgeMs = liveLocation?.updatedAt ? Date.now() - new Date(liveLocation.updatedAt).getTime() : Infinity;
+  if (liveLocation?.lat && liveLocation?.lng && liveLocationAgeMs < 1000 * 60 * 20) {
+    return liveLocation;
+  }
   return settings?.dispatchLocation || fallbackSettings.dispatchLocation;
 }
 
