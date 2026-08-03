@@ -17,82 +17,104 @@
   const mapQuery = (item) => item.location?.lat && item.location?.lng
     ? `${item.location.lat},${item.location.lng}`
     : item.currentLocation;
+  const vehicleText = (item) => [
+    item.vehicleYear,
+    item.vehicleColor,
+    item.vehicleMake,
+    item.vehicleModel
+  ].filter(Boolean).join(' ');
 %>
 <main class="dashboard-main">
   <div class="dashboard-topline">
     <h1><%= currentStatus || 'Service Requests' %></h1>
     <a class="btn secondary" href="/dashboard/requests">All Requests</a>
   </div>
-  <section class="dashboard-panel">
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Request</th><th>Customer</th><th>Actions</th><th>Vehicle</th><th>Problem</th><th>Location</th><th>Distance / ETA</th><th>Quote</th><th>Payment</th><th>Status</th><th>Photos</th><th>Update</th></tr></thead>
-        <tbody>
-          <% items.forEach((item) => { %>
-            <tr>
-              <td>
-                <strong><%= item.requestId || item.referenceNumber || item._id %></strong>
-                <br><small><%= formatDateTime(item.createdAt) %></small>
-              </td>
-              <td>
-                <%= item.customerName %>
-                <br><a href="tel:<%= item.phone %>"><%= item.phone %></a>
-              </td>
-              <td>
-                <a class="btn secondary dashboard-action-btn" href="tel:<%= item.phone %>">Call</a>
-                <a class="btn ghost dashboard-action-btn" href="sms:<%= item.phone %>">Text</a>
-              </td>
-              <td><%= item.vehicleYear %> <%= item.vehicleColor || '' %> <%= item.vehicleMake %> <%= item.vehicleModel %></td>
-              <td>
-                <%= item.problem %>
-                <% const serviceDetailText = formatDetails(item.serviceDetails); %>
-                <% if (serviceDetailText) { %><br><small><%= serviceDetailText %></small><% } %>
-              </td>
-              <td>
-                <%= item.currentLocation %>
-                <% if (item.location?.lat && item.location?.lng) { %><br><small><%= item.location.lat %>, <%= item.location.lng %></small><% } %>
-                <br><a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(mapQuery(item)) %>">Open Map</a>
-                <br><a target="_blank" rel="noreferrer" href="https://www.google.com/maps/dir/?api=1&destination=<%= encodeURIComponent(mapQuery(item)) %>">Navigate</a>
-              </td>
-              <td>
-                <%= item.distanceMiles ? `${item.distanceMiles} mi` : 'Not estimated' %>
-                <% if (item.travelTimeMinutes) { %><br><small><%= item.travelTimeMinutes %> min</small><% } %>
-                <% if (item.estimatedArrivalMinutes) { %><br><small>ETA <%= item.estimatedArrivalMinutes %> min</small><% } %>
-              </td>
-              <td>
-                <%= item.totalPrice ? `$${item.totalPrice}` : 'Not quoted' %>
-                <% if (item.basePrice) { %><br><small>Base $<%= item.basePrice %><% if (item.travelFee) { %> + travel $<%= item.travelFee %><% } %></small><% } %>
-              </td>
-              <td>
-                <%= item.preferredPaymentMethod || 'Not selected' %>
-                <br><small><%= item.paymentStatus || 'Payment Pending' %></small>
-              </td>
-              <td><span class="status-pill"><%= item.status %></span></td>
-              <td>
-                <% if (item.photoPaths?.length) { %>
-                  <div class="dashboard-photo-list">
-                    <% item.photoPaths.forEach((photoPath) => { %>
-                      <a href="<%= photoPath %>" target="_blank" rel="noreferrer"><img src="<%= photoPath %>" alt="Customer uploaded service photo"></a>
-                    <% }) %>
-                  </div>
-                <% } else { %>
-                  <small>No photos</small>
-                <% } %>
-              </td>
-              <td>
-                <form class="inline-form" action="/dashboard/requests/<%= item._id %>/status?_method=PATCH" method="post">
-                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                  <select name="status"><% statuses.forEach((status) => { %><option <%= status === item.status ? 'selected' : '' %>><%= status %></option><% }) %></select>
-                  <input name="note" placeholder="Note">
-                  <textarea name="internalNotes" placeholder="Internal notes"><%= item.internalNotes || '' %></textarea>
-                  <button type="submit">Save</button>
-                </form>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
+  <section class="request-manager-list" aria-label="Service request list">
+    <% items.forEach((item) => { %>
+      <% const serviceDetailText = formatDetails(item.serviceDetails); %>
+      <article class="request-manager-card">
+        <div class="request-manager-head">
+          <div>
+            <span class="request-manager-label">Request</span>
+            <strong class="request-manager-id"><%= item.requestId || item.referenceNumber || item._id %></strong>
+            <time><%= formatDateTime(item.createdAt) %></time>
+          </div>
+          <span class="status-pill"><%= item.status %></span>
+        </div>
+
+        <div class="request-manager-body">
+          <section class="request-manager-main">
+            <div class="request-info-grid">
+              <div class="request-info-item">
+                <span>Customer</span>
+                <strong><%= item.customerName %></strong>
+                <a href="tel:<%= item.phone %>"><%= item.phone %></a>
+              </div>
+              <div class="request-info-item">
+                <span>Vehicle</span>
+                <strong><%= vehicleText(item) || 'Vehicle not listed' %></strong>
+              </div>
+              <div class="request-info-item">
+                <span>Service</span>
+                <strong><%= item.problem %></strong>
+                <% if (serviceDetailText) { %><small><%= serviceDetailText %></small><% } %>
+              </div>
+              <div class="request-info-item">
+                <span>Location</span>
+                <strong><%= item.currentLocation %></strong>
+                <% if (item.location?.lat && item.location?.lng) { %><small><%= item.location.lat %>, <%= item.location.lng %></small><% } %>
+                <div class="request-link-row">
+                  <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(mapQuery(item)) %>">Open Map</a>
+                  <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/dir/?api=1&destination=<%= encodeURIComponent(mapQuery(item)) %>">Navigate</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="request-metric-row">
+              <p><span>Distance</span><strong><%= item.distanceMiles ? `${item.distanceMiles} mi` : 'Not estimated' %></strong></p>
+              <p><span>Drive Time</span><strong><%= item.travelTimeMinutes ? `${item.travelTimeMinutes} min` : 'Not estimated' %></strong></p>
+              <p><span>ETA</span><strong><%= item.estimatedArrivalMinutes ? `${item.estimatedArrivalMinutes} min` : 'Review needed' %></strong></p>
+              <p><span>Quote</span><strong><%= item.totalPrice ? `$${item.totalPrice}` : 'Not quoted' %></strong><small><% if (item.basePrice) { %>Base $<%= item.basePrice %><% if (item.travelFee) { %> + travel $<%= item.travelFee %><% } %><% } %></small></p>
+              <p><span>Payment</span><strong><%= item.preferredPaymentMethod || 'Not selected' %></strong><small><%= item.paymentStatus || 'Payment Pending' %></small></p>
+            </div>
+
+            <div class="request-manager-actions">
+              <a class="btn secondary dashboard-action-btn" href="tel:<%= item.phone %>">Call Customer</a>
+              <a class="btn ghost dashboard-action-btn" href="sms:<%= item.phone %>">Text Customer</a>
+            </div>
+          </section>
+
+          <aside class="request-manager-side">
+            <div class="request-photo-panel">
+              <span>Photos</span>
+              <% if (item.photoPaths?.length) { %>
+                <div class="dashboard-photo-list">
+                  <% item.photoPaths.forEach((photoPath) => { %>
+                    <a href="<%= photoPath %>" target="_blank" rel="noreferrer"><img src="<%= photoPath %>" alt="Customer uploaded service photo"></a>
+                  <% }) %>
+                </div>
+              <% } else { %>
+                <small>No photos uploaded</small>
+              <% } %>
+            </div>
+
+            <form class="request-update-form" action="/dashboard/requests/<%= item._id %>/status?_method=PATCH" method="post">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <label>Status
+                <select name="status"><% statuses.forEach((status) => { %><option <%= status === item.status ? 'selected' : '' %>><%= status %></option><% }) %></select>
+              </label>
+              <label>Update note
+                <input name="note" placeholder="Note for this update">
+              </label>
+              <label>Internal notes
+                <textarea name="internalNotes" placeholder="Customer parked behind apartment, call before arrival, etc."><%= item.internalNotes || '' %></textarea>
+              </label>
+              <button class="btn primary" type="submit">Save Update</button>
+            </form>
+          </aside>
+        </div>
+      </article>
+    <% }) %>
   </section>
 </main>
 </body>

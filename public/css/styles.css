@@ -1523,6 +1523,159 @@ textarea {
   resize: vertical;
 }
 
+.request-manager-list {
+  display: grid;
+  gap: 18px;
+}
+
+.request-manager-card {
+  overflow: hidden;
+  border: 1px solid rgba(255, 210, 31, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 210, 31, 0.08), transparent 32%),
+    #121216;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+}
+
+.request-manager-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.request-manager-head > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.request-manager-label,
+.request-info-item span,
+.request-metric-row span,
+.request-photo-panel > span,
+.request-update-form label {
+  color: var(--muted);
+  font-family: var(--display-font);
+  text-transform: uppercase;
+}
+
+.request-manager-id {
+  color: var(--white);
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.request-manager-head time {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.request-manager-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 18px;
+  padding: 18px 20px 20px;
+}
+
+.request-manager-main,
+.request-manager-side,
+.request-photo-panel,
+.request-update-form {
+  min-width: 0;
+}
+
+.request-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.request-info-item,
+.request-metric-row p,
+.request-photo-panel {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.request-info-item strong,
+.request-info-item small,
+.request-metric-row strong,
+.request-metric-row small {
+  overflow-wrap: anywhere;
+}
+
+.request-info-item a,
+.request-link-row a {
+  color: var(--white);
+  font-weight: 800;
+}
+
+.request-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.request-metric-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.request-metric-row p {
+  margin: 0;
+}
+
+.request-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.request-manager-side {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.request-update-form {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid rgba(255, 210, 31, 0.18);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.request-update-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.request-update-form input,
+.request-update-form select,
+.request-update-form textarea {
+  width: 100%;
+  min-height: 44px;
+}
+
+.request-update-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
 .payment-reassurance p {
   margin: 0;
   color: var(--muted);
@@ -2330,6 +2483,31 @@ td {
   }
 
   .manager-actions.small .btn {
+    width: 100%;
+  }
+
+  .request-manager-head,
+  .request-manager-body {
+    padding-inline: 14px;
+  }
+
+  .request-manager-body,
+  .request-info-grid,
+  .request-metric-row {
+    grid-template-columns: 1fr;
+  }
+
+  .request-manager-head {
+    flex-direction: column;
+  }
+
+  .request-manager-id {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .request-manager-actions .btn,
+  .request-update-form .btn {
     width: 100%;
   }
 }
