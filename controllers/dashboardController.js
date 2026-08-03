@@ -151,6 +151,7 @@ async function updateRequestStatus(req, res, next) {
     const item = await ServiceRequest.findById(req.params.id).lean();
     if (!item) return res.redirect('/dashboard/requests');
 
+    const adminId = req.session?.admin?.id || null;
     const nextStatus = REQUEST_STATUSES.includes(req.body.status) ? req.body.status : item.status;
     const nextPaymentStatus = ['Payment Pending', 'Paid'].includes(req.body.paymentStatus)
       ? req.body.paymentStatus
@@ -165,12 +166,12 @@ async function updateRequestStatus(req, res, next) {
     if (nextStatus !== item.status) {
       push.statusHistory = {
         status: nextStatus,
-        changedBy: req.session.admin.id,
         note: req.body.note,
         changedAt: new Date()
       };
+      if (adminId) push.statusHistory.changedBy = adminId;
       if (nextStatus === 'Accepted') {
-        update.acceptedBy = req.session.admin.id;
+        if (adminId) update.acceptedBy = adminId;
         update.acceptedAt = new Date();
       }
       if (nextStatus === 'Completed') update.completedAt = new Date();

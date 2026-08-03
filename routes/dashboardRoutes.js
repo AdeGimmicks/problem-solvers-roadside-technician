@@ -13,6 +13,7 @@ router.post('/setup', dashboard.setup);
 router.post('/logout', requireAdmin, dashboard.logout);
 router.get('/', requireAdmin, dashboard.overview);
 router.get('/requests', requireAdmin, dashboard.requests);
+router.post('/requests/:id/status', requireAdmin, dashboard.updateRequestStatus);
 router.patch('/requests/:id/status', requireAdmin, dashboard.updateRequestStatus);
 router.get('/customers', requireAdmin, dashboard.customers);
 router.get('/payments', requireAdmin, dashboard.payments);

@@ -106,7 +106,7 @@
               <% } %>
             </div>
 
-            <form class="request-update-form" action="/dashboard/requests/<%= item._id %>/status?_method=PATCH" method="post">
+            <form class="request-update-form" action="/dashboard/requests/<%= item._id %>/status" method="post">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <label>Status
                 <select name="status"><% statuses.forEach((status) => { %><option <%= status === item.status ? 'selected' : '' %>><%= status %></option><% }) %></select>
