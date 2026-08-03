@@ -832,7 +832,7 @@ function setupDispatchLocationTool() {
       const lngInput = document.querySelector('[data-dispatch-lng]');
       if (latInput) latInput.value = location.lat;
       if (lngInput) lngInput.value = location.lng;
-      status.textContent = `Starting point set: ${formatCoordinateLocation(location)}`;
+      status.textContent = `Starting point added: ${formatCoordinateLocation(location)}. Click Save Settings to keep it.`;
     }, () => {
       status.textContent = 'Could not get your location. Allow location access and try again.';
     }, {

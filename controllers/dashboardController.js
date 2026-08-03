@@ -146,23 +146,49 @@ async function requests(req, res) {
   });
 }
 
-async function updateRequestStatus(req, res) {
-  const item = await ServiceRequest.findById(req.params.id);
-  if (!item) return res.redirect('/dashboard/requests');
-  if (req.body.status && req.body.status !== item.status) {
-    item.setStatus(req.body.status, req.session.admin.id, req.body.note);
-  }
-  if (['Payment Pending', 'Paid'].includes(req.body.paymentStatus)) {
-    item.paymentStatus = req.body.paymentStatus;
-  }
-  item.internalNotes = req.body.internalNotes;
-  await item.save();
+async function updateRequestStatus(req, res, next) {
+  try {
+    const item = await ServiceRequest.findById(req.params.id).lean();
+    if (!item) return res.redirect('/dashboard/requests');
 
-  if (req.body.paymentStatus === 'Paid') return res.redirect('/dashboard/requests?payment=paid');
-  if (req.body.status === 'Accepted') return res.redirect('/dashboard/requests?status=Accepted');
-  if (req.body.status === 'Completed') return res.redirect('/dashboard/requests?status=Completed');
-  if (req.body.status === 'Cancelled') return res.redirect('/dashboard/requests?status=Cancelled');
-  res.redirect('/dashboard/requests?payment=unpaid');
+    const nextStatus = REQUEST_STATUSES.includes(req.body.status) ? req.body.status : item.status;
+    const nextPaymentStatus = ['Payment Pending', 'Paid'].includes(req.body.paymentStatus)
+      ? req.body.paymentStatus
+      : item.paymentStatus || 'Payment Pending';
+    const update = {
+      status: nextStatus,
+      paymentStatus: nextPaymentStatus,
+      internalNotes: req.body.internalNotes || ''
+    };
+    const push = {};
+
+    if (nextStatus !== item.status) {
+      push.statusHistory = {
+        status: nextStatus,
+        changedBy: req.session.admin.id,
+        note: req.body.note,
+        changedAt: new Date()
+      };
+      if (nextStatus === 'Accepted') {
+        update.acceptedBy = req.session.admin.id;
+        update.acceptedAt = new Date();
+      }
+      if (nextStatus === 'Completed') update.completedAt = new Date();
+    }
+
+    await ServiceRequest.updateOne(
+      { _id: item._id },
+      Object.keys(push).length ? { $set: update, $push: push } : { $set: update }
+    );
+
+    if (nextPaymentStatus === 'Paid') return res.redirect('/dashboard/requests?payment=paid');
+    if (nextStatus === 'Accepted') return res.redirect('/dashboard/requests?status=Accepted');
+    if (nextStatus === 'Completed') return res.redirect('/dashboard/requests?status=Completed');
+    if (nextStatus === 'Cancelled') return res.redirect('/dashboard/requests?status=Cancelled');
+    res.redirect('/dashboard/requests?payment=unpaid');
+  } catch (error) {
+    next(error);
+  }
 }
 
 async function customers(req, res) {
