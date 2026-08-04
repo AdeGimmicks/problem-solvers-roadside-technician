@@ -1433,6 +1433,10 @@ textarea {
   grid-template-columns: 1fr;
 }
 
+.quote-grid.quote-breakdown {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .quote-grid p,
 .confirmation-panel p {
   margin: 0;
@@ -1451,6 +1455,15 @@ textarea {
 .quote-grid strong,
 .confirmation-panel strong {
   color: var(--yellow);
+}
+
+.quote-panel small[data-quote-long-distance-message] {
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 210, 31, 0.34);
+  border-radius: 8px;
+  background: rgba(255, 210, 31, 0.1);
+  color: var(--text);
+  font-weight: 900;
 }
 
 .quote-grid.total-only p {

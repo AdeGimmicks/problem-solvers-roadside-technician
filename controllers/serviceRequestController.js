@@ -21,7 +21,9 @@ function serializeRequest(serviceRequest) {
     totalPrice: serviceRequest.totalPrice,
     distanceMiles: serviceRequest.distanceMiles,
     travelTimeMinutes: serviceRequest.travelTimeMinutes,
-    travelEstimateSource: serviceRequest.travelEstimateSource
+    travelEstimateSource: serviceRequest.travelEstimateSource,
+    longDistanceApplies: serviceRequest.longDistanceApplies,
+    travelFeePercent: serviceRequest.travelFeePercent
   };
 }
 
@@ -104,6 +106,10 @@ async function submitRequest(req, res, next) {
       travelTimeMinutes: data.travelTimeMinutes,
       estimatedArrivalMinutes: data.estimatedArrivalMinutes,
       travelEstimateSource: data.travelEstimateSource,
+      longDistanceApplies: data.longDistanceApplies === 'true',
+      longDistanceTier: data.longDistanceTier,
+      travelFeePercent: data.travelFeePercent,
+      longDistanceThresholdMinutes: data.longDistanceThresholdMinutes,
       referenceNumber: data.referenceNumber,
       paymentStatus: data.paymentStatus || 'Payment Pending',
       photoPaths

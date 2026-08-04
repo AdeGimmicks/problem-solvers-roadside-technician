@@ -340,7 +340,14 @@ async function updateSettings(req, res) {
     } : undefined,
     quoteConfig: {
       includedMiles: Number(data.includedMiles || 10),
-      travelFeePerExtraMile: Number(data.travelFeePerExtraMile || 2)
+      travelFeePerExtraMile: Number(data.travelFeePerExtraMile || 2),
+      maxTravelTimeMinutes: Number(data.maxTravelTimeMinutes || 60),
+      longDistanceFee: Number(data.longDistanceFee || 50),
+      standardTravelTimeMaxMinutes: Number(data.standardTravelTimeMaxMinutes || 60),
+      tierOneTravelTimeMaxMinutes: Number(data.tierOneTravelTimeMaxMinutes || 90),
+      tierOneTravelFeePercent: Number(data.tierOneTravelFeePercent || 50),
+      tierTwoTravelTimeMaxMinutes: Number(data.tierTwoTravelTimeMaxMinutes || 120),
+      tierTwoTravelFeePercent: Number(data.tierTwoTravelFeePercent || 100)
     },
     paymentMethods: {
       card: data.card === 'on',

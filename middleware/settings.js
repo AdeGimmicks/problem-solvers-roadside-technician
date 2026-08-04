@@ -16,7 +16,14 @@ const fallbackSettings = {
   } : null,
   quoteConfig: {
     includedMiles: Number(process.env.INCLUDED_MILES || 10),
-    travelFeePerExtraMile: Number(process.env.TRAVEL_FEE_PER_EXTRA_MILE || 2)
+    travelFeePerExtraMile: Number(process.env.TRAVEL_FEE_PER_EXTRA_MILE || 2),
+    maxTravelTimeMinutes: Number(process.env.MAX_TRAVEL_TIME_MINUTES || 60),
+    longDistanceFee: Number(process.env.LONG_DISTANCE_FEE || 50),
+    standardTravelTimeMaxMinutes: Number(process.env.STANDARD_TRAVEL_TIME_MAX_MINUTES || 60),
+    tierOneTravelTimeMaxMinutes: Number(process.env.TIER_ONE_TRAVEL_TIME_MAX_MINUTES || 90),
+    tierOneTravelFeePercent: Number(process.env.TIER_ONE_TRAVEL_FEE_PERCENT || 50),
+    tierTwoTravelTimeMaxMinutes: Number(process.env.TIER_TWO_TRAVEL_TIME_MAX_MINUTES || 120),
+    tierTwoTravelFeePercent: Number(process.env.TIER_TWO_TRAVEL_FEE_PERCENT || 100)
   },
   paymentMethods: {
     card: true,

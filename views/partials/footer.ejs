@@ -27,15 +27,15 @@
     <a href="/contact">Contact</a>
   </div>
 </footer>
-<% if (settings.dispatchLocation?.lat && settings.dispatchLocation?.lng) { %>
-  <script>
+<script>
+  window.problemSolversQuoteConfig = <%- JSON.stringify(settings.quoteConfig || {}) %>;
+  <% if (settings.dispatchLocation?.lat && settings.dispatchLocation?.lng) { %>
     window.problemSolversDispatchCenter = {
       lat: <%- JSON.stringify(settings.dispatchLocation.lat) %>,
       lng: <%- JSON.stringify(settings.dispatchLocation.lng) %>
     };
-    window.problemSolversQuoteConfig = <%- JSON.stringify(settings.quoteConfig || {}) %>;
-  </script>
-<% } %>
-<script src="/js/main.js?v=live-technician-eta-20260803" defer></script>
+  <% } %>
+</script>
+<script src="/js/main.js?v=long-distance-tier-pricing-20260803" defer></script>
 </body>
 </html>

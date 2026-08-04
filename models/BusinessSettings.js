@@ -23,7 +23,14 @@ const businessSettingsSchema = new mongoose.Schema({
   },
   quoteConfig: {
     includedMiles: { type: Number, default: 10 },
-    travelFeePerExtraMile: { type: Number, default: 2 }
+    travelFeePerExtraMile: { type: Number, default: 2 },
+    maxTravelTimeMinutes: { type: Number, default: 60 },
+    longDistanceFee: { type: Number, default: 50 },
+    standardTravelTimeMaxMinutes: { type: Number, default: 60 },
+    tierOneTravelTimeMaxMinutes: { type: Number, default: 90 },
+    tierOneTravelFeePercent: { type: Number, default: 50 },
+    tierTwoTravelTimeMaxMinutes: { type: Number, default: 120 },
+    tierTwoTravelFeePercent: { type: Number, default: 100 }
   },
   logo: String,
   coverImage: String,

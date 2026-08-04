@@ -21,8 +21,15 @@
       <label>Service Area<input name="serviceArea" value="<%= businessSettings?.serviceArea || settings.serviceArea %>"></label>
       <label>Dispatch Latitude<input name="dispatchLat" value="<%= businessSettings?.dispatchLocation?.lat || settings.dispatchLocation?.lat || '' %>" data-dispatch-lat></label>
       <label>Dispatch Longitude<input name="dispatchLng" value="<%= businessSettings?.dispatchLocation?.lng || settings.dispatchLocation?.lng || '' %>" data-dispatch-lng></label>
-      <label>Included Miles<input name="includedMiles" type="number" min="0" step="1" value="<%= businessSettings?.quoteConfig?.includedMiles || settings.quoteConfig?.includedMiles || 10 %>"></label>
-      <label>Travel Fee Per Extra Mile<input name="travelFeePerExtraMile" type="number" min="0" step="0.01" value="<%= businessSettings?.quoteConfig?.travelFeePerExtraMile || settings.quoteConfig?.travelFeePerExtraMile || 2 %>"></label>
+      <label>Standard Price Up To Minutes<input name="standardTravelTimeMaxMinutes" type="number" min="1" step="1" value="<%= businessSettings?.quoteConfig?.standardTravelTimeMaxMinutes ?? settings.quoteConfig?.standardTravelTimeMaxMinutes ?? businessSettings?.quoteConfig?.maxTravelTimeMinutes ?? settings.quoteConfig?.maxTravelTimeMinutes ?? 60 %>"></label>
+      <label>Tier 1 Max Travel Minutes<input name="tierOneTravelTimeMaxMinutes" type="number" min="1" step="1" value="<%= businessSettings?.quoteConfig?.tierOneTravelTimeMaxMinutes ?? settings.quoteConfig?.tierOneTravelTimeMaxMinutes ?? 90 %>"></label>
+      <label>Tier 1 Travel Fee Percent<input name="tierOneTravelFeePercent" type="number" min="0" step="1" value="<%= businessSettings?.quoteConfig?.tierOneTravelFeePercent ?? settings.quoteConfig?.tierOneTravelFeePercent ?? 50 %>"></label>
+      <label>Tier 2 Max Travel Minutes<input name="tierTwoTravelTimeMaxMinutes" type="number" min="1" step="1" value="<%= businessSettings?.quoteConfig?.tierTwoTravelTimeMaxMinutes ?? settings.quoteConfig?.tierTwoTravelTimeMaxMinutes ?? 120 %>"></label>
+      <label>Tier 2 Travel Fee Percent<input name="tierTwoTravelFeePercent" type="number" min="0" step="1" value="<%= businessSettings?.quoteConfig?.tierTwoTravelFeePercent ?? settings.quoteConfig?.tierTwoTravelFeePercent ?? 100 %>"></label>
+      <input name="maxTravelTimeMinutes" type="hidden" value="<%= businessSettings?.quoteConfig?.standardTravelTimeMaxMinutes ?? settings.quoteConfig?.standardTravelTimeMaxMinutes ?? businessSettings?.quoteConfig?.maxTravelTimeMinutes ?? settings.quoteConfig?.maxTravelTimeMinutes ?? 60 %>">
+      <input name="longDistanceFee" type="hidden" value="<%= businessSettings?.quoteConfig?.longDistanceFee || settings.quoteConfig?.longDistanceFee || 50 %>">
+      <input name="includedMiles" type="hidden" value="<%= businessSettings?.quoteConfig?.includedMiles || settings.quoteConfig?.includedMiles || 10 %>">
+      <input name="travelFeePerExtraMile" type="hidden" value="<%= businessSettings?.quoteConfig?.travelFeePerExtraMile || settings.quoteConfig?.travelFeePerExtraMile || 2 %>">
       <label>Google Map Embed URL<input name="googleMapsEmbedUrl" value="<%= businessSettings?.googleMapsEmbedUrl || '' %>"></label>
       <label>Google Review Link<input name="googleReviewUrl" value="<%= businessSettings?.googleReviewUrl || '' %>"></label>
       <label>Meta Title<input name="metaTitle" value="<%= businessSettings?.seo?.metaTitle || '' %>"></label>
