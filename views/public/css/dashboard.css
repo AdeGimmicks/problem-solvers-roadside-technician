@@ -1,0 +1,103 @@
+/* ===========================
+   DASHBOARD THEME
+=========================== */
+
+.dashboard-main {
+    padding: 30px;
+    background: #0d0d0d;
+    min-height: 100vh;
+}
+
+.dashboard-topline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.dashboard-topline h1 {
+    font-size: 56px;
+    color: #fff;
+    margin: 0;
+    font-weight: 800;
+}
+
+.dashboard-panel {
+    background: #161616;
+    border: 1px solid #2b2b2b;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #1f1f1f;
+    position: sticky;
+    top: 0;
+}
+
+th {
+    color: #f3c623;
+    text-align: left;
+    padding: 18px;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+td {
+    color: #fff;
+    padding: 18px;
+    vertical-align: top;
+    border-top: 1px solid #2c2c2c;
+}
+
+tbody tr:hover {
+    background: #202020;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #f3c623;
+    color: #000;
+    font-weight: bold;
+}
+
+.inline-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.inline-form select,
+.inline-form input {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.inline-form button {
+    background: #f3c623;
+    color: #000;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.inline-form button:hover {
+    background: #ffd84d;
+}
