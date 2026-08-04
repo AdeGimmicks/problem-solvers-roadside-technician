@@ -211,6 +211,13 @@ async function payments(req, res) {
   });
 }
 
+async function cms(req, res) {
+  res.render('dashboard/cms', {
+    title: 'Website CMS',
+    metaDescription: 'Website content management hub.'
+  });
+}
+
 async function liveLocation(req, res) {
   const technicianId = req.session?.admin?.id || null;
   const [businessSettings, technicianLocation] = await Promise.all([
@@ -402,6 +409,7 @@ module.exports = {
   updateRequestStatus,
   customers,
   payments,
+  cms,
   liveLocation,
   updateLiveLocation,
   recordPayment,
