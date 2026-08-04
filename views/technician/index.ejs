@@ -1,0 +1,46 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <div>
+      <h1>Technician Portal</h1>
+      <p class="muted-note">Welcome, <%= technician.name %>. Manage your availability and assigned jobs here.</p>
+    </div>
+    <a class="btn secondary" href="/technician/live-location">Live Location</a>
+  </div>
+
+  <section class="dashboard-panel live-location-panel">
+    <div>
+      <p class="eyebrow">Availability</p>
+      <h2><%= location?.online ? 'Online' : 'Offline' %></h2>
+      <p class="muted-copy">Go online before taking jobs so customer quotes can use your current driving ETA.</p>
+    </div>
+    <div class="live-location-status">
+      <p><span>Location</span><strong><%= location?.location?.lat ? `${location.location.lat.toFixed(5)}, ${location.location.lng.toFixed(5)}` : 'Not shared' %></strong></p>
+      <p><span>Last updated</span><strong><%= location?.location?.updatedAt ? new Date(location.location.updatedAt).toLocaleString() : 'Not updated' %></strong></p>
+      <p><span>Assigned jobs</span><strong><%= jobs.length %></strong></p>
+      <p><span>Status</span><strong><%= location?.online ? 'Live ETA active' : 'Go online when available' %></strong></p>
+    </div>
+  </section>
+
+  <section class="dashboard-panel">
+    <h2>Recent Assigned Jobs</h2>
+    <% if (!jobs.length) { %>
+      <p>No assigned jobs yet.</p>
+    <% } %>
+    <div class="manager-request-list compact">
+      <% jobs.forEach((job) => { %>
+        <article class="manager-request-card">
+          <summary class="request-manager-summary">
+            <strong><%= job.customerName %></strong>
+            <span><%= job.problem %></span>
+            <span><%= job.status %></span>
+            <a href="/technician/jobs">View</a>
+          </summary>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</main>
+</body>
+</html>

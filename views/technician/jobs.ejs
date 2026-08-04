@@ -1,0 +1,58 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <div>
+      <h1>Assigned Jobs</h1>
+      <p class="muted-note">Only jobs assigned to your technician account appear here.</p>
+    </div>
+    <a class="btn secondary" href="/technician/live-location">Live Location</a>
+  </div>
+
+  <section class="dashboard-panel">
+    <% if (!items.length) { %>
+      <p>No assigned jobs yet.</p>
+    <% } %>
+    <div class="manager-request-list">
+      <% items.forEach((item) => { %>
+        <article class="manager-request-card technician-job-card">
+          <div class="request-card-head">
+            <div>
+              <h3><%= item.customerName %></h3>
+              <p><%= item.problem %> • <%= item.vehicleYear %> <%= item.vehicleColor %> <%= item.vehicleMake %> <%= item.vehicleModel %></p>
+            </div>
+            <span class="status-pill manager-status"><%= item.status %></span>
+          </div>
+          <div class="request-card-grid">
+            <p><span>Phone</span><a href="tel:<%= item.phone %>"><%= item.phone %></a></p>
+            <p><span>Location</span><strong><%= item.currentLocation %></strong></p>
+            <p><span>ETA</span><strong><%= item.estimatedArrivalMinutes ? `${item.estimatedArrivalMinutes} min` : 'Review needed' %></strong></p>
+            <p><span>Quote</span><strong><%= item.totalPrice ? `$${item.totalPrice}` : 'Not quoted' %></strong></p>
+          </div>
+          <div class="request-link-row">
+            <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(item.currentLocation) %>">Open Map</a>
+            <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/dir/?api=1&destination=<%= encodeURIComponent(item.currentLocation) %>">Navigate</a>
+            <a href="sms:<%= item.phone %>">Text Customer</a>
+          </div>
+          <% if (item.message) { %>
+            <div class="request-message"><span>Customer Note</span><p><%= item.message %></p></div>
+          <% } %>
+          <form class="manager-update-row" action="/technician/jobs/<%= item._id %>/status" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label>Status
+              <select name="status">
+                <% ['Accepted', 'Completed', 'Cancelled'].forEach((status) => { %>
+                  <option <%= status === item.status ? 'selected' : '' %>><%= status %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Note<input name="note" placeholder="Optional update note"></label>
+            <button class="btn primary" type="submit">Update Job</button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</main>
+</body>
+</html>

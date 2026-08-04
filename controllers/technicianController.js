@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const TechnicianApplication = require('../models/TechnicianApplication');
+const TechnicianLocation = require('../models/TechnicianLocation');
 const { cleanObject } = require('../utils/sanitize');
 
 const SERVICE_OPTIONS = [
@@ -68,11 +69,15 @@ async function submitApplication(req, res, next) {
 async function dashboardList(req, res) {
   const status = req.query.status;
   const query = status ? { applicationStatus: status } : {};
-  const items = await TechnicianApplication.find(query).sort({ createdAt: -1 }).lean();
+  const [items, locations] = await Promise.all([
+    TechnicianApplication.find(query).sort({ createdAt: -1 }).lean(),
+    TechnicianLocation.find().sort({ 'location.updatedAt': -1 }).lean()
+  ]);
   res.render('dashboard/technicians', {
     title: 'Technician Applications',
     metaDescription: 'Manage technician applications.',
     items,
+    locations,
     currentStatus: status || '',
     statuses: ['New', 'Reviewing', 'Approved', 'Rejected']
   });

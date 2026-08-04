@@ -860,6 +860,7 @@ function setupLiveLocationTool() {
   const onlineText = panel.querySelector('[data-live-location-online]');
   const currentText = panel.querySelector('[data-live-location-current]');
   const updatedText = panel.querySelector('[data-live-location-updated]');
+  const liveLocationEndpoint = panel.dataset.liveLocationEndpoint || '/dashboard/live-location';
   let watchId = null;
   let lastSaveAt = 0;
 
@@ -875,7 +876,7 @@ function setupLiveLocationTool() {
 
   async function postLiveLocation(payload) {
     const csrfToken = await getCsrfToken();
-    const response = await fetch('/dashboard/live-location', {
+    const response = await fetch(liveLocationEndpoint, {
       method: 'POST',
       credentials: 'same-origin',
       headers: {

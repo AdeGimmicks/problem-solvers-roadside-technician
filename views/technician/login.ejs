@@ -1,0 +1,16 @@
+<%- include('partials/head') %>
+<main class="login-page">
+  <form class="form-card login-card" action="/technician/login" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <span class="brand-mark">PS</span>
+    <h1>Technician Login</h1>
+    <% if (error) { %><div class="form-errors"><p><%= error %></p></div><% } %>
+    <label>Email<input type="email" name="email" required></label>
+    <label>Password<input type="password" name="password" required></label>
+    <button class="btn primary" type="submit">Login</button>
+    <a class="btn ghost" href="/technician/signup">Create Technician Account</a>
+    <a class="btn ghost" href="/technicians/apply">Technician Application</a>
+  </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<aside class="dashboard-nav technician-nav">
+  <a class="brand dashboard-brand" href="/technician"><span class="brand-mark">PS</span><span>Technician</span></a>
+  <a href="/technician">Overview</a>
+  <a href="/technician/jobs">Assigned Jobs</a>
+  <a href="/technician/live-location">Live Location</a>
+  <a href="/technicians/apply">Application</a>
+  <form action="/technician/logout" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit">Logout</button>
+  </form>
+</aside>

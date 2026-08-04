@@ -6,8 +6,29 @@
       <h1><%= currentStatus || 'Technician Applications' %></h1>
       <p class="muted-note">Review technician signups, tools, services, and payout readiness.</p>
     </div>
-    <a class="btn secondary" href="/technicians/apply" target="_blank" rel="noreferrer">Open Signup Link</a>
+    <div class="dashboard-topline-actions">
+      <a class="btn secondary" href="/technicians/apply" target="_blank" rel="noreferrer">Application Link</a>
+      <a class="btn secondary" href="/technician/signup" target="_blank" rel="noreferrer">Portal Signup</a>
+      <a class="btn secondary" href="/technician/login" target="_blank" rel="noreferrer">Portal Login</a>
+    </div>
   </div>
+
+  <section class="dashboard-panel technician-location-panel">
+    <h2>Technician Live Locations</h2>
+    <% if (!locations.length) { %>
+      <p>No technician live locations yet.</p>
+    <% } %>
+    <div class="request-metric-row">
+      <% locations.forEach((location) => { %>
+        <p>
+          <span><%= location.label || 'Technician' %></span>
+          <strong><%= location.online ? 'Online' : 'Offline' %></strong>
+          <small><%= location.location?.lat ? `${location.location.lat.toFixed(5)}, ${location.location.lng.toFixed(5)}` : 'No GPS yet' %></small>
+          <small><%= location.location?.updatedAt ? new Date(location.location.updatedAt).toLocaleString() : '' %></small>
+        </p>
+      <% }) %>
+    </div>
+  </section>
 
   <div class="technician-filterbar">
     <a class="status-filter <%= !currentStatus ? 'active' : '' %>" href="/dashboard/technicians">All</a>

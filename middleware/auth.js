@@ -4,6 +4,11 @@ function requireAdmin(req, res, next) {
   return next();
 }
 
+function requireTechnician(req, res, next) {
+  if (req.session?.technician?.id) return next();
+  res.redirect('/technician/login');
+}
+
 function issueToken(admin) {
   return jwt.sign(
     { id: admin._id, role: admin.role },
@@ -12,4 +17,4 @@ function issueToken(admin) {
   );
 }
 
-module.exports = { requireAdmin, issueToken };
+module.exports = { requireAdmin, requireTechnician, issueToken };

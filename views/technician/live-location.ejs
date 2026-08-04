@@ -1,0 +1,34 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<%
+  const activeLocation = technicianLocation?.location;
+  const isOnline = Boolean(technicianLocation?.online);
+%>
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <h1>Live Location</h1>
+    <a class="btn secondary" href="/technician/jobs">Jobs</a>
+  </div>
+
+  <section class="dashboard-panel live-location-panel" data-live-location-panel data-live-location-endpoint="/technician/live-location" data-live-location-initial-online="<%= isOnline ? 'true' : 'false' %>">
+    <div>
+      <p class="eyebrow">Technician location</p>
+      <h2>Go Online For Live ETA</h2>
+      <p class="muted-copy">Only your technician portal shares your GPS while you are online. Customers never access your GPS directly.</p>
+    </div>
+
+    <div class="live-location-status">
+      <p><span>Online status</span><strong data-live-location-online><%= isOnline ? 'Online' : 'Offline' %></strong></p>
+      <p><span>Current live location</span><strong data-live-location-current><%= activeLocation?.lat ? `${activeLocation.lat.toFixed(5)}, ${activeLocation.lng.toFixed(5)}` : 'Not sharing yet' %></strong></p>
+      <p><span>Last updated</span><strong data-live-location-updated><%= activeLocation?.updatedAt ? new Date(activeLocation.updatedAt).toLocaleString() : 'Not updated yet' %></strong></p>
+      <p><span>System message</span><strong data-live-location-status><%= isOnline ? 'Live ETA is active.' : 'Go online when you are available.' %></strong></p>
+    </div>
+
+    <div class="live-location-actions">
+      <button class="btn primary" type="button" data-live-location-start>Go Online</button>
+      <button class="btn ghost" type="button" data-live-location-stop>Go Offline</button>
+    </div>
+  </section>
+</main>
+</body>
+</html>
