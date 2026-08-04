@@ -1,4 +1,5 @@
 const BusinessSettings = require('../models/BusinessSettings');
+const TechnicianApplication = require('../models/TechnicianApplication');
 const TechnicianLocation = require('../models/TechnicianLocation');
 const { fallbackSettings } = require('../middleware/settings');
 const { hasDatabase } = require('../utils/dbState');
@@ -32,7 +33,7 @@ function distanceMilesBetween(start, end) {
 async function getDispatchLocation(destination) {
   if (!hasDatabase()) return fallbackSettings.dispatchLocation;
   const freshSince = new Date(Date.now() - liveLocationFreshMinutes * 60 * 1000);
-  const [onlineTechnicians, settings] = await Promise.all([
+  const [onlineTechnicians, applications, settings] = await Promise.all([
     TechnicianLocation.find({
       online: true,
       'location.lat': { $type: 'number' },
@@ -41,9 +42,20 @@ async function getDispatchLocation(destination) {
     })
       .sort({ 'location.updatedAt': -1 })
       .lean(),
+    TechnicianApplication.find().select('technicianAccount email applicationStatus').lean(),
     BusinessSettings.findOne().lean()
   ]);
+  const applicationByTechnician = new Map();
+  applications.forEach((application) => {
+    const id = application.technicianAccount?.toString();
+    if (id) applicationByTechnician.set(id, application);
+  });
   const onlineTechnician = onlineTechnicians
+    .filter((technician) => {
+      const technicianId = technician.technician?.toString();
+      const application = technicianId ? applicationByTechnician.get(technicianId) : null;
+      return !application || application.applicationStatus === 'Approved';
+    })
     .map((technician) => ({
       ...technician,
       distanceToCustomer: distanceMilesBetween(technician.location, destination)

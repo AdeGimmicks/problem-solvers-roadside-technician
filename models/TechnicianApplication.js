@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const technicianApplicationSchema = new mongoose.Schema({
+  technicianAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true, sparse: true },
   fullName: { type: String, required: true, trim: true },
   phone: { type: String, required: true, trim: true },
   email: { type: String, trim: true, lowercase: true },

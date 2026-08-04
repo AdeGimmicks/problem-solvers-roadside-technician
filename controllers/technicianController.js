@@ -1,6 +1,8 @@
 const { validationResult } = require('express-validator');
+const Admin = require('../models/Admin');
 const TechnicianApplication = require('../models/TechnicianApplication');
 const TechnicianLocation = require('../models/TechnicianLocation');
+const { sendTechnicianApprovalEmail } = require('../services/emailService');
 const { cleanObject } = require('../utils/sanitize');
 
 const SERVICE_OPTIONS = [
@@ -69,27 +71,38 @@ async function submitApplication(req, res, next) {
 async function dashboardList(req, res) {
   const status = req.query.status;
   const query = status ? { applicationStatus: status } : {};
-  const [items, locations] = await Promise.all([
+  const [items, locations, technicianAccounts] = await Promise.all([
     TechnicianApplication.find(query).sort({ createdAt: -1 }).lean(),
-    TechnicianLocation.find().sort({ 'location.updatedAt': -1 }).lean()
+    TechnicianLocation.find().sort({ 'location.updatedAt': -1 }).lean(),
+    Admin.find({ role: 'technician' }).sort({ createdAt: -1 }).select('name email active createdAt').lean()
   ]);
   res.render('dashboard/technicians', {
     title: 'Technician Applications',
     metaDescription: 'Manage technician applications.',
     items,
     locations,
+    technicianAccounts,
     currentStatus: status || '',
     statuses: ['New', 'Reviewing', 'Approved', 'Rejected']
   });
 }
 
 async function updateStatus(req, res) {
-  await TechnicianApplication.findByIdAndUpdate(req.params.id, {
-    applicationStatus: req.body.applicationStatus,
-    notes: req.body.notes,
-    stripeConnectStatus: req.body.stripeConnectStatus,
-    payoutStatus: req.body.payoutStatus
-  });
+  const application = await TechnicianApplication.findById(req.params.id);
+  if (!application) return res.redirect('/dashboard/technicians');
+  const wasApproved = application.applicationStatus === 'Approved';
+  application.applicationStatus = req.body.applicationStatusAction || req.body.applicationStatus;
+  application.notes = req.body.notes;
+  application.stripeConnectStatus = req.body.stripeConnectStatus;
+  application.payoutStatus = req.body.payoutStatus;
+  await application.save();
+
+  if (!wasApproved && application.applicationStatus === 'Approved') {
+    await sendTechnicianApprovalEmail(application).catch((error) => {
+      console.error('Technician approval email failed:', error.message);
+    });
+  }
+
   res.redirect('/dashboard/technicians');
 }
 

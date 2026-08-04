@@ -861,6 +861,8 @@ function setupLiveLocationTool() {
   const currentText = panel.querySelector('[data-live-location-current]');
   const updatedText = panel.querySelector('[data-live-location-updated]');
   const liveLocationEndpoint = panel.dataset.liveLocationEndpoint || '/dashboard/live-location';
+  const liveLocationLocked = panel.dataset.liveLocationLocked === 'true';
+  const liveLocationLockedMessage = panel.dataset.liveLocationLockedMessage || 'Submit your technician application before going online.';
   let watchId = null;
   let lastSaveAt = 0;
 
@@ -909,6 +911,10 @@ function setupLiveLocationTool() {
   }
 
   function startSharing() {
+    if (liveLocationLocked) {
+      setStatus(liveLocationLockedMessage);
+      return;
+    }
     if (!navigator.geolocation) {
       setStatus('Location is not available in this browser.');
       return;

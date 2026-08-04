@@ -1,7 +1,20 @@
 const Admin = require('../models/Admin');
 const ServiceRequest = require('../models/ServiceRequest');
+const TechnicianApplication = require('../models/TechnicianApplication');
 const TechnicianLocation = require('../models/TechnicianLocation');
 const { REQUEST_STATUSES } = require('../utils/constants');
+const { cleanObject } = require('../utils/sanitize');
+
+const SERVICE_OPTIONS = [
+  'Tire Change',
+  'Jump Start',
+  'Fuel Delivery',
+  'Lockout Service',
+  'Tire Inflation',
+  'Battery Testing',
+  'Battery Replacement',
+  'Car Diagnostic'
+];
 
 function technicianSession(admin) {
   return {
@@ -10,6 +23,31 @@ function technicianSession(admin) {
     email: admin.email,
     role: admin.role
   };
+}
+
+async function getTechnicianGate(technician) {
+  const [application, location] = await Promise.all([
+    TechnicianApplication.findOne({
+      $or: [
+        { technicianAccount: technician.id },
+        { email: technician.email }
+      ]
+    }).sort({ updatedAt: -1 }).lean(),
+    TechnicianLocation.findOne({ technician: technician.id }).lean()
+  ]);
+  const legacyApproved = !application && Boolean(location?.location?.lat);
+  const approved = application?.applicationStatus === 'Approved' || legacyApproved;
+  let message = 'Submit your technician application before going online or receiving jobs.';
+  if (application?.applicationStatus === 'New' || application?.applicationStatus === 'Reviewing') {
+    message = 'Your technician application is under review. You can go online after Store Manager approval.';
+  }
+  if (application?.applicationStatus === 'Rejected') {
+    message = 'Your technician application was not approved. Contact Store Manager before going online.';
+  }
+  if (legacyApproved) {
+    message = 'Existing technician account is active.';
+  }
+  return { application, location, approved, legacyApproved, message };
 }
 
 function loginPage(req, res) {
@@ -70,7 +108,7 @@ async function signup(req, res) {
 
   const technician = await Admin.create({ name, email, password, role: 'technician' });
   req.session.technician = technicianSession(technician);
-  res.redirect('/technician');
+  res.redirect('/technician/application');
 }
 
 function logout(req, res) {
@@ -80,14 +118,15 @@ function logout(req, res) {
 
 async function dashboard(req, res) {
   const technicianId = req.session.technician.id;
-  const [location, jobs] = await Promise.all([
-    TechnicianLocation.findOne({ technician: technicianId }).lean(),
+  const gate = await getTechnicianGate(req.session.technician);
+  const [jobs] = await Promise.all([
     ServiceRequest.find({ assignedTechnician: technicianId }).sort({ createdAt: -1 }).limit(6).lean()
   ]);
   res.render('technician/index', {
     title: 'Technician Portal',
     metaDescription: 'Technician portal overview.',
-    location,
+    location: gate.location,
+    gate,
     jobs,
     technician: req.session.technician
   });
@@ -95,11 +134,13 @@ async function dashboard(req, res) {
 
 async function jobs(req, res) {
   const technicianId = req.session.technician.id;
+  const gate = await getTechnicianGate(req.session.technician);
   const items = await ServiceRequest.find({ assignedTechnician: technicianId }).sort({ createdAt: -1 }).lean();
   res.render('technician/jobs', {
     title: 'Assigned Jobs',
     metaDescription: 'Technician assigned jobs.',
     items,
+    gate,
     statuses: REQUEST_STATUSES,
     technician: req.session.technician
   });
@@ -136,11 +177,12 @@ async function updateJobStatus(req, res, next) {
 
 async function liveLocation(req, res) {
   const technicianId = req.session.technician.id;
-  const technicianLocation = await TechnicianLocation.findOne({ technician: technicianId }).lean();
+  const gate = await getTechnicianGate(req.session.technician);
   res.render('technician/live-location', {
     title: 'Live Location',
     metaDescription: 'Share technician live location.',
-    technicianLocation,
+    technicianLocation: gate.location,
+    gate,
     technician: req.session.technician
   });
 }
@@ -148,6 +190,14 @@ async function liveLocation(req, res) {
 async function updateLiveLocation(req, res, next) {
   try {
     const technicianId = req.session.technician.id;
+    const gate = await getTechnicianGate(req.session.technician);
+    if (!gate.approved) {
+      return res.status(403).json({
+        error: gate.message,
+        applicationRequired: !gate.application,
+        applicationStatus: gate.application?.applicationStatus || 'Application Required'
+      });
+    }
     const online = req.body.online !== false && req.body.online !== 'false';
     const label = req.session.technician.name || 'Technician';
     const query = { technician: technicianId };
@@ -189,6 +239,76 @@ async function updateLiveLocation(req, res, next) {
   }
 }
 
+async function applicationPage(req, res) {
+  const gate = await getTechnicianGate(req.session.technician);
+  res.render('technician/application', {
+    title: 'Technician Application',
+    metaDescription: 'Submit technician tools, services, and coverage area.',
+    form: gate.application || {
+      fullName: req.session.technician.name,
+      email: req.session.technician.email
+    },
+    application: gate.application,
+    errors: [],
+    services: SERVICE_OPTIONS,
+    technician: req.session.technician
+  });
+}
+
+async function submitApplication(req, res, next) {
+  try {
+    const data = cleanObject(req.body);
+    const servicesOffered = Array.isArray(data.servicesOffered)
+      ? data.servicesOffered
+      : [data.servicesOffered].filter(Boolean);
+    const requiredErrors = [];
+    if (!data.fullName) requiredErrors.push({ msg: 'Full name is required.' });
+    if (!data.phone) requiredErrors.push({ msg: 'Phone number is required.' });
+    if (!data.city) requiredErrors.push({ msg: 'City is required.' });
+    if (!servicesOffered.length) requiredErrors.push({ msg: 'Choose at least one service.' });
+    if (!data.tools) requiredErrors.push({ msg: 'Tools and equipment are required.' });
+
+    if (requiredErrors.length) {
+      return res.status(422).render('technician/application', {
+        title: 'Technician Application',
+        metaDescription: 'Submit technician tools, services, and coverage area.',
+        form: data,
+        application: null,
+        errors: requiredErrors,
+        services: SERVICE_OPTIONS,
+        technician: req.session.technician
+      });
+    }
+
+    await TechnicianApplication.findOneAndUpdate(
+      {
+        $or: [
+          { technicianAccount: req.session.technician.id },
+          { email: req.session.technician.email }
+        ]
+      },
+      {
+        technicianAccount: req.session.technician.id,
+        fullName: data.fullName,
+        phone: data.phone,
+        email: data.email || req.session.technician.email,
+        city: data.city,
+        serviceArea: data.serviceArea,
+        servicesOffered,
+        tools: data.tools,
+        vehicle: data.vehicle,
+        experience: data.experience,
+        photoPaths: (req.files || []).map((file) => `/uploads/${file.filename}`),
+        applicationStatus: 'New'
+      },
+      { upsert: true, new: true }
+    );
+    res.redirect('/technician');
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   loginPage,
   login,
@@ -199,5 +319,7 @@ module.exports = {
   jobs,
   updateJobStatus,
   liveLocation,
-  updateLiveLocation
+  updateLiveLocation,
+  applicationPage,
+  submitApplication
 };

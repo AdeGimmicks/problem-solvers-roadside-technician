@@ -1,0 +1,47 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <div>
+      <h1>Technician Application</h1>
+      <p class="muted-note">Submit your tools, services, coverage area, and work details for Store Manager review.</p>
+    </div>
+    <a class="btn secondary" href="/technician">Overview</a>
+  </div>
+
+  <% if (application) { %>
+    <section class="dashboard-panel technician-approval-panel">
+      <p class="eyebrow">Application status</p>
+      <h2><%= application.applicationStatus %></h2>
+      <p class="muted-copy"><%= application.applicationStatus === 'Approved' ? 'Your application has been approved. You can go online and receive jobs.' : 'Store Manager will review your application before you can go online or receive jobs.' %></p>
+    </section>
+  <% } %>
+
+  <section class="dashboard-panel">
+    <form class="settings-form" action="/technician/application" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <%- include('../partials/form-errors', { errors }) %>
+      <label>Full Name<input name="fullName" value="<%= form.fullName || '' %>" required></label>
+      <label>Phone Number<input name="phone" value="<%= form.phone || '' %>" required></label>
+      <label>Email<input type="email" name="email" value="<%= form.email || technician.email || '' %>"></label>
+      <label>City<input name="city" value="<%= form.city || '' %>" required></label>
+      <label>Service Area<input name="serviceArea" value="<%= form.serviceArea || '' %>"></label>
+      <label>Vehicle<input name="vehicle" value="<%= form.vehicle || '' %>"></label>
+
+      <fieldset class="check-panel">
+        <legend>Services You Can Handle</legend>
+        <% services.forEach((service) => { %>
+          <label><input type="checkbox" name="servicesOffered" value="<%= service %>" <%= [].concat(form.servicesOffered || []).includes(service) ? 'checked' : '' %>> <span><%= service %></span></label>
+        <% }) %>
+      </fieldset>
+
+      <label>Tools / Equipment<textarea name="tools" required><%= form.tools || '' %></textarea></label>
+      <label>Experience<textarea name="experience"><%= form.experience || '' %></textarea></label>
+      <label>Tool Photos<input type="file" name="photos" accept=".jpg,.jpeg,.png,.heic,.heif,image/jpeg,image/png,image/heic,image/heif" multiple></label>
+      <small class="muted-note">Upload up to 5 JPG, PNG, or HEIC images.</small>
+      <button class="btn primary" type="submit">Submit Application</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

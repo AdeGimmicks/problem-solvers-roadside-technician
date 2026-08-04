@@ -10,6 +10,13 @@
   </div>
 
   <section class="dashboard-panel">
+    <% if (!gate.approved) { %>
+      <div class="service-block-message">
+        <strong>Application approval required.</strong>
+        <p><%= gate.message %></p>
+        <a class="btn primary" href="/technician/application">Submit Technician Application</a>
+      </div>
+    <% } %>
     <% if (!items.length) { %>
       <p>No assigned jobs yet.</p>
     <% } %>

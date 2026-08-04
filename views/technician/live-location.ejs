@@ -10,12 +10,20 @@
     <a class="btn secondary" href="/technician/jobs">Jobs</a>
   </div>
 
-  <section class="dashboard-panel live-location-panel" data-live-location-panel data-live-location-endpoint="/technician/live-location" data-live-location-initial-online="<%= isOnline ? 'true' : 'false' %>">
+  <section class="dashboard-panel live-location-panel" data-live-location-panel data-live-location-endpoint="/technician/live-location" data-live-location-initial-online="<%= isOnline ? 'true' : 'false' %>" data-live-location-locked="<%= gate.approved ? 'false' : 'true' %>" data-live-location-locked-message="<%= gate.message %>">
     <div>
       <p class="eyebrow">Technician location</p>
       <h2>Go Online For Live ETA</h2>
       <p class="muted-copy">Only your technician portal shares your GPS while you are online. Customers never access your GPS directly.</p>
     </div>
+
+    <% if (!gate.approved) { %>
+      <div class="service-block-message">
+        <strong>Application approval required.</strong>
+        <p><%= gate.message %></p>
+        <a class="btn primary" href="/technician/application">Submit Technician Application</a>
+      </div>
+    <% } %>
 
     <div class="live-location-status">
       <p><span>Online status</span><strong data-live-location-online><%= isOnline ? 'Online' : 'Offline' %></strong></p>

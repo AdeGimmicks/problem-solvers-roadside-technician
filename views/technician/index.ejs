@@ -12,14 +12,17 @@
   <section class="dashboard-panel live-location-panel">
     <div>
       <p class="eyebrow">Availability</p>
-      <h2><%= location?.online ? 'Online' : 'Offline' %></h2>
-      <p class="muted-copy">Go online before taking jobs so customer quotes can use your current driving ETA.</p>
+      <h2><%= gate.approved ? (location?.online ? 'Online' : 'Offline') : 'Application Required' %></h2>
+      <p class="muted-copy"><%= gate.approved ? 'Go online before taking jobs so customer quotes can use your current driving ETA.' : gate.message %></p>
+      <% if (!gate.approved) { %>
+        <a class="btn primary" href="/technician/application">Submit Technician Application</a>
+      <% } %>
     </div>
     <div class="live-location-status">
       <p><span>Location</span><strong><%= location?.location?.lat ? `${location.location.lat.toFixed(5)}, ${location.location.lng.toFixed(5)}` : 'Not shared' %></strong></p>
       <p><span>Last updated</span><strong><%= location?.location?.updatedAt ? new Date(location.location.updatedAt).toLocaleString() : 'Not updated' %></strong></p>
       <p><span>Assigned jobs</span><strong><%= jobs.length %></strong></p>
-      <p><span>Status</span><strong><%= location?.online ? 'Live ETA active' : 'Go online when available' %></strong></p>
+      <p><span>Status</span><strong><%= gate.approved ? (location?.online ? 'Live ETA active' : 'Go online when available') : 'Not approved yet' %></strong></p>
     </div>
   </section>
 

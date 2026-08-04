@@ -2257,6 +2257,22 @@ td {
   grid-template-columns: 190px 190px minmax(220px, 1fr);
 }
 
+.technician-manager-card .manager-update-row {
+  grid-template-columns: 1fr 190px 190px minmax(220px, 1fr) auto;
+  align-items: end;
+}
+
+.technician-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.danger-action {
+  border-color: rgba(255, 99, 71, 0.55);
+  color: #ffb3a8;
+}
+
 .empty-state {
   padding: 24px;
   border: 1px dashed rgba(255, 210, 31, 0.35);

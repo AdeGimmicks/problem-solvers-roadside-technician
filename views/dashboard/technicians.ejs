@@ -30,6 +30,23 @@
     </div>
   </section>
 
+  <section class="dashboard-panel technician-location-panel">
+    <h2>Technician Portal Accounts</h2>
+    <% if (!technicianAccounts.length) { %>
+      <p>No technician portal accounts yet.</p>
+    <% } %>
+    <div class="request-metric-row">
+      <% technicianAccounts.forEach((account) => { %>
+        <p>
+          <span><%= account.active ? 'Active account' : 'Inactive account' %></span>
+          <strong><%= account.name %></strong>
+          <small><%= account.email %></small>
+          <small><%= account.createdAt ? new Date(account.createdAt).toLocaleString() : '' %></small>
+        </p>
+      <% }) %>
+    </div>
+  </section>
+
   <div class="technician-filterbar">
     <a class="status-filter <%= !currentStatus ? 'active' : '' %>" href="/dashboard/technicians">All</a>
     <% statuses.forEach((status) => { %>
@@ -87,6 +104,11 @@
 
           <form class="manager-update-row" action="/dashboard/technicians/<%= item._id %>/status?_method=PATCH" method="post">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="technician-status-actions">
+              <button class="btn primary" type="submit" name="applicationStatusAction" value="Approved">Approve</button>
+              <button class="btn secondary" type="submit" name="applicationStatusAction" value="Reviewing">Pending / Reviewing</button>
+              <button class="btn ghost danger-action" type="submit" name="applicationStatusAction" value="Rejected">Reject</button>
+            </div>
             <label>Status
               <select name="applicationStatus">
                 <% statuses.forEach((status) => { %>
@@ -111,7 +133,7 @@
             <label>Notes
               <input name="notes" value="<%= item.notes || '' %>" placeholder="Internal note">
             </label>
-            <button class="btn primary" type="submit">Save</button>
+            <button class="btn primary" type="submit">Save Details</button>
           </form>
         </article>
       <% }) %>
