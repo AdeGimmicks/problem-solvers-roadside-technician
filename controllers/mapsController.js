@@ -4,6 +4,7 @@ const { fallbackSettings } = require('../middleware/settings');
 const { hasDatabase } = require('../utils/dbState');
 
 const googleMapsBase = 'https://maps.googleapis.com/maps/api';
+const liveLocationFreshMinutes = Number(process.env.LIVE_LOCATION_FRESH_MINUTES || 10);
 
 function mapsKey() {
   return process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_BROWSER_API_KEY || '';
@@ -30,8 +31,14 @@ function distanceMilesBetween(start, end) {
 
 async function getDispatchLocation(destination) {
   if (!hasDatabase()) return fallbackSettings.dispatchLocation;
+  const freshSince = new Date(Date.now() - liveLocationFreshMinutes * 60 * 1000);
   const [onlineTechnicians, settings] = await Promise.all([
-    TechnicianLocation.find({ online: true, 'location.lat': { $type: 'number' }, 'location.lng': { $type: 'number' } })
+    TechnicianLocation.find({
+      online: true,
+      'location.lat': { $type: 'number' },
+      'location.lng': { $type: 'number' },
+      'location.updatedAt': { $gte: freshSince }
+    })
       .sort({ 'location.updatedAt': -1 })
       .lean(),
     BusinessSettings.findOne().lean()
@@ -161,13 +168,15 @@ async function distance(req, res, next) {
     const payload = await fetchGoogle('/distancematrix/json', {
       origins: `${dispatchLocation.lat},${dispatchLocation.lng}`,
       destinations: `${destinationLat},${destinationLng}`,
-      units: 'imperial'
+      units: 'imperial',
+      departure_time: 'now'
     });
     const element = payload.rows?.[0]?.elements?.[0];
     if (!element || element.status !== 'OK') return res.json({ distanceMiles: null, travelTimeMinutes: null });
+    const duration = element.duration_in_traffic || element.duration;
     res.json({
       distanceMiles: Math.max(1, Math.round(element.distance.value / 1609.344)),
-      travelTimeMinutes: Math.max(5, Math.round(element.duration.value / 60)),
+      travelTimeMinutes: Math.max(1, Math.round(duration.value / 60)),
       originSource: dispatchLocation.source || 'dispatch-location'
     });
   } catch (error) {

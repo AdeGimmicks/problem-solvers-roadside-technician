@@ -393,7 +393,7 @@ const futureExpansionConfig = {
 const quoteConfig = {
   includedMiles: 10,
   travelFeePerExtraMile: 2,
-  dispatchBufferMinutes: 35
+  dispatchBufferMinutes: 0
 };
 Object.assign(quoteConfig, window.problemSolversQuoteConfig || {});
 const servicePricing = {
@@ -1072,7 +1072,7 @@ async function calculateQuote(form) {
     totalPrice,
     distanceMiles: hasTravelEstimate ? distanceMiles : null,
     travelTimeMinutes: hasTravelEstimate ? travelTimeMinutes : null,
-    estimatedArrivalMinutes: hasTravelEstimate ? travelTimeMinutes + quoteConfig.dispatchBufferMinutes : null,
+    estimatedArrivalMinutes: hasTravelEstimate ? travelTimeMinutes + Number(quoteConfig.dispatchBufferMinutes || 0) : null,
     travelEstimateStatus: hasTravelEstimate ? 'estimated' : 'needs-confirmation',
     travelEstimateSource: hasTravelEstimate ? travelEstimateSource : '',
     referenceNumber: `PS-${Date.now().toString().slice(-6)}`
