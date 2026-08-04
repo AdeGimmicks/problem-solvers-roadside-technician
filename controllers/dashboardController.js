@@ -10,7 +10,7 @@ const ServiceRequest = require('../models/ServiceRequest');
 const TechnicianLocation = require('../models/TechnicianLocation');
 const VisitorEvent = require('../models/VisitorEvent');
 const { issueToken } = require('../middleware/auth');
-const { REQUEST_STATUSES } = require('../utils/constants');
+const { REQUEST_STATUSES, PUBLIC_SERVICE_NAMES } = require('../utils/constants');
 const { cleanObject } = require('../utils/sanitize');
 
 async function ensureDefaultAdmin() {
@@ -131,7 +131,7 @@ async function overview(req, res) {
 
 async function getAudienceStats(since) {
   const baseMatch = { createdAt: { $gte: since } };
-  const [visits, uniqueVisitors, topServices, topPages, recentEvents] = await Promise.all([
+  const [visits, uniqueVisitors, topServices, topPages, recentEvents, serviceEvents] = await Promise.all([
     VisitorEvent.countDocuments({ ...baseMatch, eventType: 'page_view' }),
     VisitorEvent.distinct('visitorId', { ...baseMatch, visitorId: { $nin: ['', null] } }),
     VisitorEvent.aggregate([
@@ -146,8 +146,19 @@ async function getAudienceStats(since) {
       { $sort: { count: -1 } },
       { $limit: 8 }
     ]),
-    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(25).lean()
+    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(25).lean(),
+    VisitorEvent.find({ ...baseMatch, serviceName: { $in: PUBLIC_SERVICE_NAMES } })
+      .sort({ createdAt: -1 })
+      .limit(250)
+      .lean()
   ]);
+  const topServiceCounts = Object.fromEntries(topServices.map((item) => [item._id, item.count]));
+  const serviceGroups = PUBLIC_SERVICE_NAMES.map((serviceName) => ({
+    serviceName,
+    label: `${serviceName} Visitors`,
+    count: topServiceCounts[serviceName] || 0,
+    events: serviceEvents.filter((event) => event.serviceName === serviceName).slice(0, 8)
+  }));
 
   return {
     since,
@@ -155,7 +166,8 @@ async function getAudienceStats(since) {
     uniqueVisitors: uniqueVisitors.length,
     topServices,
     topPages,
-    recentEvents
+    recentEvents,
+    serviceGroups
   };
 }
 

@@ -32,22 +32,41 @@
     </article>
   </section>
 
-  <section class="dashboard-grid audience-grid">
-    <article class="dashboard-panel">
-      <h2>Service Interest</h2>
-      <% if (!audience.topServices.length) { %>
-        <p class="muted-copy">No service clicks or request interest recorded yet.</p>
-      <% } %>
-      <div class="audience-list">
-        <% audience.topServices.forEach((item) => { %>
-          <div class="audience-row">
-            <strong><%= item._id %></strong>
-            <span><%= item.count %></span>
-          </div>
-        <% }) %>
+  <section class="dashboard-panel">
+    <div class="dashboard-topline">
+      <div>
+        <p class="eyebrow">Roadside Service Visitors</p>
+        <h2>Visitors By Service</h2>
       </div>
-    </article>
+    </div>
+    <div class="service-visitor-grid">
+      <% audience.serviceGroups.forEach((group) => { %>
+        <article class="service-visitor-card">
+          <div class="service-visitor-head">
+            <div>
+              <span><%= group.label %></span>
+              <strong><%= group.count %></strong>
+            </div>
+          </div>
+          <% if (!group.events.length) { %>
+            <p class="muted-copy">No visitors recorded for this service yet.</p>
+          <% } else { %>
+            <div class="service-visitor-list">
+              <% group.events.forEach((event) => { %>
+                <div class="service-visitor-event">
+                  <strong><%= event.eventType.replaceAll('_', ' ') %></strong>
+                  <span><%= event.createdAt.toLocaleString() %></span>
+                  <small><%= event.path || '-' %></small>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </article>
+      <% }) %>
+    </div>
+  </section>
 
+  <section class="dashboard-grid audience-grid">
     <article class="dashboard-panel">
       <h2>Top Pages</h2>
       <% if (!audience.topPages.length) { %>
