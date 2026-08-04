@@ -4,6 +4,7 @@ const publicController = require('../controllers/publicController');
 const requestController = require('../controllers/serviceRequestController');
 const technicianController = require('../controllers/technicianController');
 const mapsController = require('../controllers/mapsController');
+const analyticsController = require('../controllers/analyticsController');
 const upload = require('../middleware/upload');
 const { PUBLIC_SERVICE_NAMES } = require('../utils/constants');
 
@@ -54,6 +55,7 @@ router.get('/api/maps/geocode', mapsController.geocode);
 router.get('/api/maps/autocomplete', mapsController.autocomplete);
 router.get('/api/maps/place-details', mapsController.placeDetails);
 router.get('/api/maps/distance', mapsController.distance);
+router.get('/api/analytics/track', analyticsController.track);
 router.get('/technicians/apply', technicianController.applyPage);
 router.post('/technicians/apply', upload.array('photos', 5), technicianValidators, technicianController.submitApplication);
 router.get('/robots.txt', publicController.robots);

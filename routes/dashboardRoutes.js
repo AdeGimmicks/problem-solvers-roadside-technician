@@ -17,6 +17,7 @@ router.post('/requests/:id/status', requireAdmin, dashboard.updateRequestStatus)
 router.patch('/requests/:id/status', requireAdmin, dashboard.updateRequestStatus);
 router.get('/customers', requireAdmin, dashboard.customers);
 router.get('/payments', requireAdmin, dashboard.payments);
+router.get('/audience', requireAdmin, dashboard.audience);
 router.get('/cms', requireAdmin, dashboard.cms);
 router.get('/live-location', requireAdmin, dashboard.liveLocation);
 router.post('/live-location', requireAdmin, dashboard.updateLiveLocation);

@@ -8,6 +8,7 @@ const Review = require('../models/Review');
 const ServiceArea = require('../models/ServiceArea');
 const ServiceRequest = require('../models/ServiceRequest');
 const TechnicianLocation = require('../models/TechnicianLocation');
+const VisitorEvent = require('../models/VisitorEvent');
 const { issueToken } = require('../middleware/auth');
 const { REQUEST_STATUSES } = require('../utils/constants');
 const { cleanObject } = require('../utils/sanitize');
@@ -106,11 +107,13 @@ function logout(req, res) {
 }
 
 async function overview(req, res) {
-  const [counts, paymentCounts, recentRequests, payments] = await Promise.all([
+  const since = new Date(Date.now() - (1000 * 60 * 60 * 24 * 7));
+  const [counts, paymentCounts, recentRequests, payments, audience] = await Promise.all([
     ServiceRequest.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
     ServiceRequest.aggregate([{ $group: { _id: '$paymentStatus', count: { $sum: 1 } } }]),
     ServiceRequest.find().sort({ createdAt: -1 }).limit(8).lean(),
-    Payment.find().sort({ createdAt: -1 }).limit(6).populate('serviceRequest').lean()
+    Payment.find().sort({ createdAt: -1 }).limit(6).populate('serviceRequest').lean(),
+    getAudienceStats(since)
   ]);
   const statusCounts = Object.fromEntries(counts.map((item) => [item._id, item.count]));
   const paymentStatusCounts = Object.fromEntries(paymentCounts.map((item) => [item._id || 'Payment Pending', item.count]));
@@ -121,8 +124,39 @@ async function overview(req, res) {
     paymentStatusCounts,
     recentRequests,
     payments,
+    audience,
     statuses: REQUEST_STATUSES
   });
+}
+
+async function getAudienceStats(since) {
+  const baseMatch = { createdAt: { $gte: since } };
+  const [visits, uniqueVisitors, topServices, topPages, recentEvents] = await Promise.all([
+    VisitorEvent.countDocuments({ ...baseMatch, eventType: 'page_view' }),
+    VisitorEvent.distinct('visitorId', { ...baseMatch, visitorId: { $nin: ['', null] } }),
+    VisitorEvent.aggregate([
+      { $match: { ...baseMatch, serviceName: { $nin: [null, ''] } } },
+      { $group: { _id: '$serviceName', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 8 }
+    ]),
+    VisitorEvent.aggregate([
+      { $match: { ...baseMatch, eventType: 'page_view', path: { $nin: [null, ''] } } },
+      { $group: { _id: '$path', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 8 }
+    ]),
+    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(25).lean()
+  ]);
+
+  return {
+    since,
+    visits,
+    uniqueVisitors: uniqueVisitors.length,
+    topServices,
+    topPages,
+    recentEvents
+  };
 }
 
 async function requests(req, res) {
@@ -208,6 +242,18 @@ async function payments(req, res) {
     title: 'Payments',
     metaDescription: 'Payment records.',
     items
+  });
+}
+
+async function audience(req, res) {
+  const days = Math.max(1, Math.min(Number(req.query.days || 7), 90));
+  const since = new Date(Date.now() - (1000 * 60 * 60 * 24 * days));
+  const stats = await getAudienceStats(since);
+  res.render('dashboard/audience', {
+    title: 'Website Audience',
+    metaDescription: 'Website visitor and service interest analytics.',
+    days,
+    audience: stats
   });
 }
 
@@ -409,6 +455,7 @@ module.exports = {
   updateRequestStatus,
   customers,
   payments,
+  audience,
   cms,
   liveLocation,
   updateLiveLocation,

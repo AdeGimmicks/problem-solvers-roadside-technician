@@ -56,6 +56,67 @@ const params = new URLSearchParams(window.location.search);
 const requestedService = params.get('service');
 const problemInput = document.querySelector('[name="problem"]');
 
+const analyticsVisitorKey = 'problemSolversVisitorId';
+const analyticsSessionKey = 'problemSolversSessionId';
+
+function randomAnalyticsId(prefix) {
+  if (window.crypto?.randomUUID) return `${prefix}-${window.crypto.randomUUID()}`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getAnalyticsId(key, prefix, storage = window.localStorage) {
+  try {
+    let value = storage.getItem(key);
+    if (!value) {
+      value = randomAnalyticsId(prefix);
+      storage.setItem(key, value);
+    }
+    return value;
+  } catch (error) {
+    return randomAnalyticsId(prefix);
+  }
+}
+
+function trackVisitorEvent(eventType, data = {}) {
+  if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/technician')) return;
+  const payload = new URLSearchParams({
+    eventType,
+    visitorId: getAnalyticsId(analyticsVisitorKey, 'visitor'),
+    sessionId: getAnalyticsId(analyticsSessionKey, 'session', window.sessionStorage),
+    path: `${location.pathname}${location.search}`,
+    pageTitle: document.title || '',
+    referrer: document.referrer || '',
+    screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+    ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined && value !== null && value !== ''))
+  });
+  const url = `/api/analytics/track?${payload.toString()}`;
+
+  fetch(url, {
+    method: 'GET',
+    keepalive: true,
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' }
+  }).catch(() => {});
+}
+
+trackVisitorEvent('page_view', requestedService ? { serviceName: requestedService } : {});
+
+if (requestedService) {
+  trackVisitorEvent('service_interest', { serviceName: requestedService });
+}
+
+document.querySelectorAll('a[href*="/request-service"]').forEach((link) => {
+  link.addEventListener('click', () => {
+    try {
+      const target = new URL(link.href, window.location.href);
+      const serviceName = target.searchParams.get('service') || link.textContent.trim();
+      trackVisitorEvent('service_interest', { serviceName });
+    } catch (error) {
+      trackVisitorEvent('service_interest', { serviceName: link.textContent.trim() });
+    }
+  });
+});
+
 if (requestedService && problemInput && !problemInput.value) {
   problemInput.value = requestedService;
 }
@@ -1391,10 +1452,14 @@ function setupStaticRequestSave() {
   const summaryStep = form.querySelector('[data-request-step="summary"]');
 
   renderSelectedServiceDetails();
+  if (problemInput?.value) {
+    trackVisitorEvent('request_start', { serviceName: problemInput.value });
+  }
   problemInput?.addEventListener('change', () => {
     renderSelectedServiceDetails();
     collectServiceDetails(form);
     validateServiceBusinessRules(form, { showMessage: false, lockButton: false });
+    trackVisitorEvent('service_interest', { serviceName: problemInput.value });
   });
   setupRequestSteps(form);
   form.querySelector('[data-service-questions]')?.addEventListener('change', () => {
@@ -1424,11 +1489,13 @@ function setupStaticRequestSave() {
         submitButton.textContent = 'Checking Quote...';
       }
       latestQuote = await calculateQuote(form);
+      trackVisitorEvent('quote_review', { serviceName: new FormData(form).get('problem') });
       renderQuote(latestQuote);
       updateRequestSummary(form);
 
       if (submitButton) submitButton.textContent = 'Preparing Payment...';
       savedRequest = await createServiceRequest(form);
+      trackVisitorEvent('request_submit', { serviceName: new FormData(form).get('problem') });
 
       if (submitButton) submitButton.textContent = 'Opening Payment...';
       await startStripeCheckout(savedRequest);
@@ -1503,6 +1570,7 @@ function setupRequestSteps(form) {
           nextButton.textContent = 'Calculating Quote...';
         }
         latestQuote = await calculateQuote(form);
+        trackVisitorEvent('quote_review', { serviceName: new FormData(form).get('problem') });
         renderQuote(latestQuote);
         updateRequestSummary(form);
       } catch (error) {

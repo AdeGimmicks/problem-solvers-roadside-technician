@@ -2160,6 +2160,64 @@ td {
   margin-top: auto;
 }
 
+.audience-stat-grid {
+  margin: 18px 0;
+}
+
+.audience-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.audience-summary-panel {
+  margin: 18px 0;
+}
+
+.audience-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.audience-summary-grid div,
+.audience-row {
+  border: 1px solid rgba(255, 210, 31, 0.16);
+  border-radius: var(--radius);
+  background: #101014;
+}
+
+.audience-summary-grid div {
+  padding: 16px;
+}
+
+.audience-summary-grid span,
+.audience-row span {
+  color: var(--muted);
+  font-family: var(--display-font);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.audience-summary-grid strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.7rem;
+}
+
+.audience-list {
+  display: grid;
+  gap: 10px;
+}
+
+.audience-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+}
+
 .manager-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2685,6 +2743,8 @@ td {
   .manager-filterbar,
   .manager-request-list.compact,
   .request-card-grid,
+  .audience-grid,
+  .audience-summary-grid,
   .quote-grid,
   .request-summary-grid,
   .request-actions,

@@ -1,0 +1,89 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main class="dashboard-main">
+  <div class="dashboard-topline">
+    <div>
+      <p class="eyebrow">Website Analytics</p>
+      <h1>Audience</h1>
+    </div>
+    <div class="manager-actions small">
+      <a class="btn secondary" href="/dashboard/audience?days=1">24 Hours</a>
+      <a class="btn secondary" href="/dashboard/audience?days=7">7 Days</a>
+      <a class="btn secondary" href="/dashboard/audience?days=30">30 Days</a>
+    </div>
+  </div>
+
+  <section class="stat-grid audience-stat-grid">
+    <article class="stat-card">
+      <span>Page Visits</span>
+      <strong><%= audience.visits %></strong>
+    </article>
+    <article class="stat-card">
+      <span>Known Visitors</span>
+      <strong><%= audience.uniqueVisitors %></strong>
+    </article>
+    <article class="stat-card">
+      <span>Top Service</span>
+      <strong><%= audience.topServices[0]?._id || 'None Yet' %></strong>
+    </article>
+    <article class="stat-card">
+      <span>Window</span>
+      <strong><%= days %>d</strong>
+    </article>
+  </section>
+
+  <section class="dashboard-grid audience-grid">
+    <article class="dashboard-panel">
+      <h2>Service Interest</h2>
+      <% if (!audience.topServices.length) { %>
+        <p class="muted-copy">No service clicks or request interest recorded yet.</p>
+      <% } %>
+      <div class="audience-list">
+        <% audience.topServices.forEach((item) => { %>
+          <div class="audience-row">
+            <strong><%= item._id %></strong>
+            <span><%= item.count %></span>
+          </div>
+        <% }) %>
+      </div>
+    </article>
+
+    <article class="dashboard-panel">
+      <h2>Top Pages</h2>
+      <% if (!audience.topPages.length) { %>
+        <p class="muted-copy">No page visits recorded yet.</p>
+      <% } %>
+      <div class="audience-list">
+        <% audience.topPages.forEach((item) => { %>
+          <div class="audience-row">
+            <strong><%= item._id %></strong>
+            <span><%= item.count %></span>
+          </div>
+        <% }) %>
+      </div>
+    </article>
+  </section>
+
+  <section class="dashboard-panel">
+    <h2>Recent Visitor Activity</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Action</th><th>Service</th><th>Page</th></tr>
+        </thead>
+        <tbody>
+          <% audience.recentEvents.forEach((event) => { %>
+            <tr>
+              <td><%= event.createdAt.toLocaleString() %></td>
+              <td><%= event.eventType.replaceAll('_', ' ') %></td>
+              <td><%= event.serviceName || '-' %></td>
+              <td><%= event.path || '-' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+</body>
+</html>
