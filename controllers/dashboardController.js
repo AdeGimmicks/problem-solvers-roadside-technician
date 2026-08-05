@@ -9,6 +9,7 @@ const ServiceArea = require('../models/ServiceArea');
 const ServiceRequest = require('../models/ServiceRequest');
 const TechnicianLocation = require('../models/TechnicianLocation');
 const VisitorEvent = require('../models/VisitorEvent');
+const { sendOwnerSms, sendPaymentStatusSms, smsStatus } = require('../services/smsService');
 const { issueToken } = require('../middleware/auth');
 const { REQUEST_STATUSES, PUBLIC_SERVICE_NAMES } = require('../utils/constants');
 const { cleanObject } = require('../utils/sanitize');
@@ -228,6 +229,9 @@ async function updateRequestStatus(req, res, next) {
       { _id: item._id },
       Object.keys(push).length ? { $set: update, $push: push } : { $set: update }
     );
+    if (item.paymentStatus !== 'Paid' && nextPaymentStatus === 'Paid') {
+      await sendPaymentStatusSms({ ...item, ...update }, { amount: item.totalPrice || item.estimatedPrice, status: 'Paid' });
+    }
 
     if (nextPaymentStatus === 'Paid') return res.redirect('/dashboard/requests?payment=paid');
     if (nextStatus === 'Accepted') return res.redirect('/dashboard/requests?status=Accepted');
@@ -365,6 +369,9 @@ async function recordPayment(req, res) {
   request.payment = payment._id;
   request.paymentStatus = payment.status || 'Paid';
   await request.save();
+  if (request.paymentStatus === 'Paid') {
+    await sendPaymentStatusSms(request, payment);
+  }
   res.redirect('/dashboard/payments');
 }
 
@@ -380,6 +387,8 @@ async function settings(req, res) {
     title: 'Business Settings',
     metaDescription: 'Business settings.',
     businessSettings,
+    smsStatus: smsStatus(),
+    reqQuery: req.query || {},
     reviews,
     photos,
     pricing,
@@ -431,6 +440,19 @@ async function updateSettings(req, res) {
   res.redirect('/dashboard/settings');
 }
 
+async function testSms(req, res) {
+  const result = await sendOwnerSms([
+    'Problem Solvers Roadside SMS Test',
+    `Sent: ${new Date().toLocaleString()}`,
+    'If you received this, owner SMS alerts are connected.'
+  ].join('\n'));
+  const status = result?.ok ? 'sent' : 'failed';
+  const message = result?.ok
+    ? 'Test SMS sent. Check your phone.'
+    : `Test SMS failed: ${result?.error || result?.reason || 'Unknown error'}`;
+  res.redirect(`/dashboard/settings?sms=${status}&smsMessage=${encodeURIComponent(message)}`);
+}
+
 async function addReview(req, res) {
   const data = cleanObject(req.body);
   await Review.create({ customerName: data.customerName, rating: data.rating, quote: data.quote, source: data.source });
@@ -474,6 +496,7 @@ module.exports = {
   recordPayment,
   settings,
   updateSettings,
+  testSms,
   addReview,
   addPhoto,
   addPricing,

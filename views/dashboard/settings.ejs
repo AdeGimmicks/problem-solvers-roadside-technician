@@ -2,6 +2,28 @@
 <main class="dashboard-main">
   <h1>Business Settings</h1>
   <section class="dashboard-panel">
+    <h2>Owner SMS Alerts</h2>
+    <% if (typeof smsStatus !== 'undefined') { %>
+      <p class="muted-copy">
+        Twilio:
+        <strong><%= smsStatus.configured ? 'Configured' : 'Not fully configured' %></strong>
+        | From number:
+        <strong><%= smsStatus.fromNumber || 'Missing' %></strong>
+        | Owner number:
+        <strong><%= smsStatus.hasToNumber ? 'Set in Render' : 'Using dashboard business/text number' %></strong>
+      </p>
+    <% } %>
+    <% if (typeof reqQuery !== 'undefined' && reqQuery.smsMessage) { %>
+      <p class="muted-copy"><strong><%= reqQuery.smsMessage %></strong></p>
+    <% } %>
+    <% if (typeof csrfToken !== 'undefined') { %>
+      <form action="/dashboard/settings/test-sms" method="post" class="mini-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn primary" type="submit">Send Test SMS</button>
+      </form>
+    <% } %>
+  </section>
+  <section class="dashboard-panel">
     <h2>Technician Starting Location</h2>
     <p class="muted-copy">Set where you are starting from now. Quotes use this location against the customer's address or GPS location.</p>
     <p class="muted-copy">For live quote estimates, open <a href="/dashboard/live-location">Live Location</a> on your phone and start sharing while you are available.</p>

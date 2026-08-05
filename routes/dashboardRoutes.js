@@ -26,6 +26,7 @@ router.get('/technicians', requireAdmin, technicianController.dashboardList);
 router.patch('/technicians/:id/status', requireAdmin, technicianController.updateStatus);
 router.get('/settings', requireAdmin, dashboard.settings);
 router.post('/settings', requireAdmin, dashboard.updateSettings);
+router.post('/settings/test-sms', requireAdmin, dashboard.testSms);
 router.post('/reviews', requireAdmin, dashboard.addReview);
 router.post('/photos', requireAdmin, upload.single('photo'), dashboard.addPhoto);
 router.post('/pricing', requireAdmin, dashboard.addPricing);

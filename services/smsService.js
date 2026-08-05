@@ -14,6 +14,17 @@ function smsConfigured() {
   return Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
 }
 
+function smsStatus() {
+  return {
+    configured: smsConfigured(),
+    hasAccountSid: Boolean(process.env.TWILIO_ACCOUNT_SID),
+    hasAuthToken: Boolean(process.env.TWILIO_AUTH_TOKEN),
+    hasFromNumber: Boolean(process.env.TWILIO_FROM_NUMBER),
+    hasToNumber: Boolean(process.env.SMS_TO_NUMBER),
+    fromNumber: normalizePhone(process.env.TWILIO_FROM_NUMBER || '')
+  };
+}
+
 async function getOwnerPhone() {
   if (process.env.SMS_TO_NUMBER) return normalizePhone(process.env.SMS_TO_NUMBER);
   if (process.env.BUSINESS_PHONE) return normalizePhone(process.env.BUSINESS_PHONE);
@@ -42,12 +53,24 @@ async function sendSms(to, message) {
     })
   });
 
+  const payload = await response.json().catch(async () => {
+    const text = await response.text().catch(() => '');
+    return text ? { message: text } : {};
+  });
+
   if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
+    const errorText = payload.message || JSON.stringify(payload);
     throw new Error(`Twilio SMS failed: ${response.status} ${errorText}`);
   }
 
-  return { ok: true };
+  console.info('Owner SMS sent through Twilio:', {
+    sid: payload.sid,
+    status: payload.status,
+    to: destination,
+    from: normalizePhone(process.env.TWILIO_FROM_NUMBER)
+  });
+
+  return { ok: true, sid: payload.sid, status: payload.status };
 }
 
 function money(value) {
@@ -63,9 +86,13 @@ function vehicleLine(request) {
 
 async function sendOwnerSms(message) {
   const ownerPhone = await getOwnerPhone();
-  if (!ownerPhone) return;
-  await sendSms(ownerPhone, message).catch((error) => {
+  if (!ownerPhone) {
+    console.error('Owner SMS notification failed: no owner phone number found.');
+    return { ok: false, skipped: true, reason: 'No owner phone number found.' };
+  }
+  return sendSms(ownerPhone, message).catch((error) => {
     console.error('Owner SMS notification failed:', error.message);
+    return { ok: false, error: error.message };
   });
 }
 
@@ -99,5 +126,7 @@ async function sendPaymentStatusSms(request, payment) {
 
 module.exports = {
   sendNewRequestSms,
-  sendPaymentStatusSms
+  sendPaymentStatusSms,
+  sendOwnerSms,
+  smsStatus
 };
