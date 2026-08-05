@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const Customer = require('../models/Customer');
 const ServiceRequest = require('../models/ServiceRequest');
 const { sendServiceRequestNotification } = require('../services/emailService');
+const { sendNewRequestSms } = require('../services/smsService');
 const { cleanObject } = require('../utils/sanitize');
 
 function wantsJson(req) {
@@ -116,6 +117,7 @@ async function submitRequest(req, res, next) {
     });
 
     await sendServiceRequestNotification(serviceRequest);
+    await sendNewRequestSms(serviceRequest);
     if (wantsJson(req)) {
       return res.status(201).json({ request: serializeRequest(serviceRequest) });
     }

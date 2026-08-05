@@ -1,6 +1,7 @@
 const ServiceRequest = require('../models/ServiceRequest');
 const Payment = require('../models/Payment');
 const { stripe, stripePublishableKey } = require('../config/services');
+const { sendPaymentStatusSms } = require('../services/smsService');
 
 const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
 const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
@@ -11,6 +12,7 @@ async function recordStripeCheckoutPayment(session) {
 
   const request = await ServiceRequest.findById(serviceRequestId);
   if (!request) return null;
+  const wasPaid = request.paymentStatus === 'Paid';
 
   const paymentIntentId = typeof session.payment_intent === 'string'
     ? session.payment_intent
@@ -35,6 +37,9 @@ async function recordStripeCheckoutPayment(session) {
   request.payment = payment._id;
   request.paymentStatus = payment.status === 'Paid' ? 'Paid' : 'Payment Pending';
   await request.save();
+  if (!wasPaid && request.paymentStatus === 'Paid') {
+    await sendPaymentStatusSms(request, payment);
+  }
 
   return { request, payment };
 }

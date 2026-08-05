@@ -11,6 +11,7 @@ Production-ready Node/Express roadside assistance website for a mobile roadside 
 - Stripe Checkout
 - Google Maps embed/API configuration
 - Nodemailer email notifications
+- Twilio SMS notifications for owner/store manager alerts
 - Helmet, rate limiting, CSRF protection, input validation, password hashing, JWT helper
 - Render deployment config
 
@@ -71,6 +72,8 @@ Requests can also be marked Cancelled. Every status change is stored in MongoDB 
 This project includes `render.yaml`. Connect the GitHub repository to Render, set the required environment variables, and deploy with `npm start`.
 
 Stripe Checkout uses environment variables only. Reuse the existing Stripe account by setting `STRIPE_SECRET_KEY=sk_live_...` and `STRIPE_PUBLISHABLE_KEY=pk_live_...` in Render. Do not paste Stripe keys into the source code.
+
+SMS alerts use Twilio environment variables only. Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` in Render. Set `SMS_TO_NUMBER` if owner alerts should go to a different phone number than the dashboard business/text number.
 
 ## Notes
 
