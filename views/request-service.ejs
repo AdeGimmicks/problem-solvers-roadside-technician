@@ -25,7 +25,7 @@
         <label>Service
           <select name="problem" required>
             <option value="">Select service</option>
-            <% ['Tire Change', 'Jump Start', 'Fuel Delivery', 'Lockout Service', 'Tire Inflation'].forEach((problem) => { %>
+            <% ['Tire Change', 'Jump Start', 'Fuel Delivery', 'Lockout Service', 'Tire Inflation', 'Battery Replacement'].forEach((problem) => { %>
               <option <%= (form.problem || '') === problem ? 'selected' : '' %>><%= problem %></option>
             <% }) %>
           </select>

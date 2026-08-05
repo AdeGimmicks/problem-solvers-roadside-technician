@@ -18,7 +18,8 @@
       ['Jump Start', '⚡', 'Jump', 'Starts', 'Battery boost at your location.'],
       ['Fuel Delivery', '⛽', 'Fuel', 'Delivery', 'Emergency fuel brought to you.'],
       ['Lockout Service', '▣', 'Lockout', 'Service', 'Help getting back into your vehicle.'],
-      ['Tire Inflation', '✚', 'Tire', 'Inflation', 'Air-up support for low tires.']
+      ['Tire Inflation', '✚', 'Tire', 'Inflation', 'Air-up support for low tires.'],
+      ['Battery Replacement', '▤', 'Battery', 'Replacement', 'Mobile battery install support.']
     ].forEach((item) => { %>
       <a class="service-chip" href="/request-service?service=<%= encodeURIComponent(item[0]) %>">
         <span class="service-icon"><%= item[1] %></span>
