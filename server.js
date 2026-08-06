@@ -47,7 +47,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://js.stripe.com', 'https://maps.googleapis.com'],
+      scriptSrc: [
+  "'self'",
+  'https://js.stripe.com',
+  'https://maps.googleapis.com',
+  'https://www.googletagmanager.com'
+],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
@@ -58,7 +63,9 @@ app.use(helmet({
         'https://geocode.arcgis.com',
         'https://nominatim.openstreetmap.org',
         'https://router.project-osrm.org',
-        'https://maps.googleapis.com'
+        'https://maps.googleapis.com',
+        'https://www.googletagmanager.com',
+        'https://www.google-analytics.com'
       ]
     }
   }
