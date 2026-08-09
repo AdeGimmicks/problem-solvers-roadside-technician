@@ -14,6 +14,10 @@ function smsConfigured() {
   return Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
 }
 
+function isTrialTemplateError(error) {
+  return /trial accounts can only use predefined sms templates|invalid template name/i.test(error?.message || '');
+}
+
 function smsStatus() {
   return {
     configured: smsConfigured(),
@@ -33,7 +37,7 @@ async function getOwnerPhone() {
   return normalizePhone(settings?.textNumber || settings?.phoneNumber || process.env.PHONE_NUMBER);
 }
 
-async function sendSms(to, message) {
+async function createTwilioMessage(to, body) {
   if (!smsConfigured()) return { ok: false, skipped: true, reason: 'SMS is not configured.' };
   const destination = normalizePhone(to);
   if (!destination) return { ok: false, skipped: true, reason: 'No SMS destination number.' };
@@ -49,7 +53,7 @@ async function sendSms(to, message) {
     body: new URLSearchParams({
       From: normalizePhone(process.env.TWILIO_FROM_NUMBER),
       To: destination,
-      Body: message.slice(0, 1500)
+      Body: body.slice(0, 1500)
     })
   });
 
@@ -71,6 +75,17 @@ async function sendSms(to, message) {
   });
 
   return { ok: true, sid: payload.sid, status: payload.status };
+}
+
+async function sendSms(to, message) {
+  try {
+    return await createTwilioMessage(to, message);
+  } catch (error) {
+    if (!isTrialTemplateError(error)) throw error;
+
+    console.warn('Twilio trial blocked custom SMS body. Retrying with sms_internal_alerts template.');
+    return createTwilioMessage(to, process.env.TWILIO_TRIAL_SMS_TEMPLATE || 'sms_internal_alerts');
+  }
 }
 
 function money(value) {
