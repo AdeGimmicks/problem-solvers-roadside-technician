@@ -118,6 +118,7 @@ async function sendNewRequestSms(request) {
     `Service: ${request.problem}`,
     `Customer: ${request.customerName}`,
     `Phone: ${request.phone}`,
+    `Email: ${request.email || 'Not provided'}`,
     `Vehicle: ${vehicleLine(request) || 'Not provided'}`,
     `Location: ${request.currentLocation}`,
     `ETA: ${request.estimatedArrivalMinutes ? `${request.estimatedArrivalMinutes} min` : 'Not estimated'}`,
@@ -134,6 +135,7 @@ async function sendPaymentStatusSms(request, payment) {
     `Service: ${request.problem}`,
     `Customer: ${request.customerName}`,
     `Phone: ${request.phone}`,
+    `Email: ${request.email || 'Not provided'}`,
     `Amount: ${money(payment?.amount || request.totalPrice || request.estimatedPrice)}`,
     `Location: ${request.currentLocation}`
   ].join('\n'));
