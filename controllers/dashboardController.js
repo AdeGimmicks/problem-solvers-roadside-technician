@@ -190,7 +190,8 @@ async function requests(req, res) {
     metaDescription: 'Manage roadside assistance requests.',
     items,
     statuses: REQUEST_STATUSES,
-    currentStatus: title
+    currentStatus: title,
+    openRequestId: req.query.open || ''
   });
 }
 

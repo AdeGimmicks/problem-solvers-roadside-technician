@@ -32,7 +32,8 @@
   <section class="request-manager-list" aria-label="Service request list">
     <% items.forEach((item) => { %>
       <% const serviceDetailText = formatDetails(item.serviceDetails); %>
-      <details class="request-manager-card">
+      <% const isOpenRequest = openRequestId && String(item._id) === String(openRequestId); %>
+      <details id="request-<%= item._id %>" class="request-manager-card" <%= isOpenRequest ? 'open' : '' %>>
         <summary class="request-manager-summary">
           <span class="request-summary-customer"><%= item.customerName %></span>
           <span class="request-summary-id"><%= item.requestId || item.referenceNumber || item._id %></span>

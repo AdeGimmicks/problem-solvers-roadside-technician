@@ -99,6 +99,13 @@ function vehicleLine(request) {
     .join(' ');
 }
 
+function dashboardRequestUrl(request) {
+  const baseUrl = (process.env.APP_URL || process.env.PUBLIC_SITE_URL || process.env.BASE_URL || 'https://problemsolversroadside.com')
+    .replace(/\/+$/, '');
+  const requestId = request._id || request.id || '';
+  return `${baseUrl}/dashboard/requests?open=${encodeURIComponent(requestId)}`;
+}
+
 async function sendOwnerSms(message) {
   const ownerPhone = await getOwnerPhone();
   if (!ownerPhone) {
@@ -123,7 +130,8 @@ async function sendNewRequestSms(request) {
     `Location: ${request.currentLocation}`,
     `ETA: ${request.estimatedArrivalMinutes ? `${request.estimatedArrivalMinutes} min` : 'Not estimated'}`,
     `Total: ${money(request.totalPrice || request.estimatedPrice)}`,
-    `Payment: ${request.paymentStatus || 'Payment Pending'}`
+    `Payment: ${request.paymentStatus || 'Payment Pending'}`,
+    `Dashboard: ${dashboardRequestUrl(request)}`
   ].join('\n'));
 }
 
@@ -137,7 +145,8 @@ async function sendPaymentStatusSms(request, payment) {
     `Phone: ${request.phone}`,
     `Email: ${request.email || 'Not provided'}`,
     `Amount: ${money(payment?.amount || request.totalPrice || request.estimatedPrice)}`,
-    `Location: ${request.currentLocation}`
+    `Location: ${request.currentLocation}`,
+    `Dashboard: ${dashboardRequestUrl(request)}`
   ].join('\n'));
 }
 
