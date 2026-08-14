@@ -9,6 +9,8 @@
         <strong><%= smsStatus.configured ? 'Configured' : 'Not fully configured' %></strong>
         | From number:
         <strong><%= smsStatus.fromNumber || 'Missing' %></strong>
+        | Messaging service:
+        <strong><%= smsStatus.hasMessagingServiceSid ? 'Set in Render' : 'Missing' %></strong>
         | Owner number:
         <strong><%= smsStatus.hasToNumber ? 'Set in Render' : 'Using dashboard business/text number' %></strong>
       </p>

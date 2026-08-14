@@ -11,7 +11,11 @@ function normalizePhone(phone) {
 }
 
 function smsConfigured() {
-  return Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
+  return Boolean(
+    process.env.TWILIO_ACCOUNT_SID
+      && process.env.TWILIO_AUTH_TOKEN
+      && (process.env.TWILIO_MESSAGING_SERVICE_SID || process.env.TWILIO_FROM_NUMBER)
+  );
 }
 
 function isTrialTemplateError(error) {
@@ -24,7 +28,9 @@ function smsStatus() {
     hasAccountSid: Boolean(process.env.TWILIO_ACCOUNT_SID),
     hasAuthToken: Boolean(process.env.TWILIO_AUTH_TOKEN),
     hasFromNumber: Boolean(process.env.TWILIO_FROM_NUMBER),
+    hasMessagingServiceSid: Boolean(process.env.TWILIO_MESSAGING_SERVICE_SID),
     hasToNumber: Boolean(process.env.SMS_TO_NUMBER),
+    messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID || '',
     fromNumber: normalizePhone(process.env.TWILIO_FROM_NUMBER || '')
   };
 }
@@ -44,17 +50,24 @@ async function createTwilioMessage(to, body) {
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const messageParams = new URLSearchParams({
+    To: destination,
+    Body: body.slice(0, 1500)
+  });
+
+  if (process.env.TWILIO_MESSAGING_SERVICE_SID) {
+    messageParams.set('MessagingServiceSid', process.env.TWILIO_MESSAGING_SERVICE_SID);
+  } else {
+    messageParams.set('From', normalizePhone(process.env.TWILIO_FROM_NUMBER));
+  }
+
   const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: new URLSearchParams({
-      From: normalizePhone(process.env.TWILIO_FROM_NUMBER),
-      To: destination,
-      Body: body.slice(0, 1500)
-    })
+    body: messageParams
   });
 
   const payload = await response.json().catch(async () => {
@@ -71,7 +84,8 @@ async function createTwilioMessage(to, body) {
     sid: payload.sid,
     status: payload.status,
     to: destination,
-    from: normalizePhone(process.env.TWILIO_FROM_NUMBER)
+    from: normalizePhone(process.env.TWILIO_FROM_NUMBER),
+    messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID || ''
   });
 
   return { ok: true, sid: payload.sid, status: payload.status };
