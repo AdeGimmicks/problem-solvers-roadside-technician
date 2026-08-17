@@ -1,0 +1,63 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+
+<main class="direct-service-main">
+  <section class="direct-service-hero">
+    <div class="direct-service-copy">
+      <p class="eyebrow"><%= service.eyebrow %></p>
+      <h1><%= service.heading %></h1>
+      <p class="direct-service-summary"><%= service.summary %></p>
+      <div class="direct-service-actions">
+        <a class="btn primary" href="<%= service.requestUrl %>">Get Quote Now</a>
+        <a class="btn secondary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
+        <a class="btn ghost" href="sms:<%= settings.textNumber || settings.phoneNumber %>">Text Us</a>
+      </div>
+    </div>
+    <aside class="direct-service-panel">
+      <p class="eyebrow">Service quote</p>
+      <h2><%= service.name %></h2>
+      <div class="direct-service-price">
+        <span>Starting price</span>
+        <strong><%= service.price %></strong>
+        <small>Final total may include a travel fee based on live driving time.</small>
+      </div>
+      <p class="direct-service-notice"><%= service.notice %></p>
+    </aside>
+  </section>
+
+  <section class="direct-service-section">
+    <h2>What This Covers</h2>
+    <div class="direct-service-grid">
+      <% service.bullets.forEach((item, index) => { %>
+        <article class="direct-service-card">
+          <span><%= index + 1 %></span>
+          <h3><%= item %></h3>
+          <p><%= index === 0 ? service.summary : service.notice %></p>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="direct-service-section direct-service-request">
+    <div class="direct-service-panel">
+      <p class="eyebrow">Request roadside help</p>
+      <h2>Ready For <%= service.name %>?</h2>
+      <p class="direct-service-notice">Enter your vehicle and service location to receive the live ETA and complete quote before payment.</p>
+      <div class="direct-service-actions">
+        <a class="btn primary" href="<%= service.requestUrl %>">Start Request</a>
+        <a class="btn secondary" href="/services">View All Services</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="direct-service-section">
+    <h2>Other Roadside Help</h2>
+    <div class="direct-service-related">
+      <% relatedServices.forEach((related) => { %>
+        <a href="/<%= related.slug %>"><%= related.name %></a>
+      <% }) %>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/footer') %>

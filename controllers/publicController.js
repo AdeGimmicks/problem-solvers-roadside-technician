@@ -175,6 +175,61 @@ const POLICIES = {
   }
 };
 
+const DIRECT_SERVICE_SLUGS = ['tire-change', 'jump-start', 'lockout', 'fuel-delivery'];
+
+const DIRECT_SERVICE_CONTENT = {
+  'tire-change': {
+    eyebrow: 'Flat tire roadside help',
+    title: 'Tire Change Roadside Service',
+    metaDescription: 'Request mobile tire change service at your location. Problem Solvers Roadside Technician helps with flat tire swaps using your usable spare tire.',
+    heading: 'Tire Change At Your Location',
+    summary: 'Got a flat or unsafe tire? We come to your location and install your usable spare so you can get moving again.',
+    notice: 'A tire change requires a usable spare tire. If you do not have one, call first so we can talk through the best next step.',
+    bullets: ['Spare tire installation', 'Flat tire roadside support', 'Vehicle and service location collected before quote']
+  },
+  'jump-start': {
+    eyebrow: 'Dead battery help',
+    title: 'Jump Start Roadside Service',
+    metaDescription: 'Request mobile jump start service at your location from Problem Solvers Roadside Technician.',
+    heading: 'Jump Start At Your Location',
+    summary: 'Dead battery or no-start situation? Request a jump start and get a live quote before payment.',
+    notice: 'If the vehicle still will not start after the boost, we can discuss next steps before dispatch.',
+    bullets: ['Portable battery boost', 'Battery connection check', 'Fast roadside response']
+  },
+  lockout: {
+    eyebrow: 'Vehicle lockout help',
+    title: 'Lockout Roadside Service',
+    metaDescription: 'Request mobile vehicle lockout help at your location from Problem Solvers Roadside Technician.',
+    heading: 'Lockout Help At Your Location',
+    summary: 'Locked your keys inside? Start a lockout request and share your vehicle and location details.',
+    notice: 'You must have legal access or permission for the vehicle before service can be performed.',
+    bullets: ['Non-destructive entry tools', 'Arrival and vehicle verification', 'Mobile lockout support']
+  },
+  'fuel-delivery': {
+    eyebrow: 'Emergency fuel help',
+    title: 'Fuel Delivery Roadside Service',
+    metaDescription: 'Request emergency fuel delivery at your location from Problem Solvers Roadside Technician.',
+    heading: 'Fuel Delivery At Your Location',
+    summary: 'Out of gas or too low to continue safely? Request fuel delivery and get help at your location.',
+    notice: 'Fuel cost may be added to the roadside service price depending on the amount needed.',
+    bullets: ['Emergency fuel delivery', 'Location-based quote', 'Route guidance to nearby gas']
+  }
+};
+
+function getDirectServicePages() {
+  return DIRECT_SERVICE_SLUGS
+    .map((slug) => {
+      const service = SERVICES.find((item) => item.slug === slug);
+      if (!service) return null;
+      return {
+        ...service,
+        ...DIRECT_SERVICE_CONTENT[slug],
+        requestUrl: `/request-service?service=${encodeURIComponent(service.name)}`
+      };
+    })
+    .filter(Boolean);
+}
+
 async function home(req, res) {
   const [reviews, photos, serviceAreas] = hasDatabase()
     ? await Promise.all([
@@ -208,7 +263,21 @@ function services(req, res) {
   res.render('services', {
     title: 'Roadside Assistance Services in Chicago',
     metaDescription: 'Mobile tire change, jump start, lockout, fuel delivery, and tire inflation services.',
-    services: SERVICES.filter((service) => service.publicRequest)
+    services: SERVICES.filter((service) => service.publicRequest),
+    directServicePages: getDirectServicePages()
+  });
+}
+
+function servicePage(req, res, next) {
+  const directServicePages = getDirectServicePages();
+  const service = directServicePages.find((item) => item.slug === req.params.serviceSlug);
+  if (!service) return next();
+
+  res.render('service-page', {
+    title: service.title,
+    metaDescription: service.metaDescription,
+    service,
+    relatedServices: directServicePages.filter((item) => item.slug !== service.slug)
   });
 }
 
@@ -258,6 +327,7 @@ function sitemap(req, res) {
   const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
   const urls = [
     '',
+    ...DIRECT_SERVICE_SLUGS.map((slug) => `/${slug}`),
     '/services',
     '/about',
     '/contact',
@@ -267,4 +337,4 @@ function sitemap(req, res) {
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((url) => `  <url><loc>${baseUrl}${url}</loc></url>`).join('\n')}\n</urlset>`);
 }
 
-module.exports = { home, home2, chooseService, services, about, contact, requestService, policy, robots, sitemap };
+module.exports = { home, home2, chooseService, services, servicePage, about, contact, requestService, policy, robots, sitemap };

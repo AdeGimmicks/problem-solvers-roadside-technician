@@ -34,6 +34,25 @@
     </section>
   </section>
 
+  <section class="section services-page-grid" aria-labelledby="direct-services-title">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Roadside services</p>
+        <h2 id="direct-services-title">Choose The Help You Need</h2>
+      </div>
+    </div>
+    <div class="direct-service-grid services-direct-grid">
+      <% directServicePages.forEach((service) => { %>
+        <a class="direct-service-card services-direct-card" href="/<%= service.slug %>">
+          <span><%= service.icon %></span>
+          <h3><%= service.name %></h3>
+          <p><%= service.summary %></p>
+          <strong>Starting at <%= service.price %></strong>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+
   <section class="section home-panel-section">
     <div class="section-heading">
       <p class="eyebrow">Reviews</p>

@@ -14,14 +14,15 @@
 
   <section class="home-service-strip" aria-label="Roadside services">
     <% [
-      ['Tire Change', '◎', 'Tire', 'Changes', 'Flat tire swap with your spare.'],
-      ['Jump Start', '⚡', 'Jump', 'Starts', 'Battery boost at your location.'],
-      ['Fuel Delivery', '⛽', 'Fuel', 'Delivery', 'Emergency fuel brought to you.'],
-      ['Lockout Service', '▣', 'Lockout', 'Service', 'Help getting back into your vehicle.'],
-      ['Tire Inflation', '✚', 'Tire', 'Inflation', 'Air-up support for low tires.'],
-      ['Battery Replacement', '▤', 'Battery', 'Replacement', 'Mobile battery install support.']
+      ['Tire Change', '◎', 'Tire', 'Changes', 'Flat tire swap with your spare.', '/tire-change'],
+      ['Jump Start', '⚡', 'Jump', 'Starts', 'Battery boost at your location.', '/jump-start'],
+      ['Fuel Delivery', '⛽', 'Fuel', 'Delivery', 'Emergency fuel brought to you.', '/fuel-delivery'],
+      ['Lockout Service', '▣', 'Lockout', 'Service', 'Help getting back into your vehicle.', '/lockout'],
+      ['Tire Inflation', '✚', 'Tire', 'Inflation', 'Air-up support for low tires.', null],
+      ['Battery Replacement', '▤', 'Battery', 'Replacement', 'Mobile battery install support.', null]
     ].forEach((item) => { %>
-      <a class="service-chip" href="/request-service?service=<%= encodeURIComponent(item[0]) %>">
+      <% const serviceHref = item[5] || `/request-service?service=${encodeURIComponent(item[0])}`; %>
+      <a class="service-chip" href="<%= serviceHref %>">
         <span class="service-icon"><%= item[1] %></span>
         <span class="service-copy"><%= item[2] %><br><%= item[3] %> <em><%= item[4] %></em><b>Select Service</b></span>
       </a>

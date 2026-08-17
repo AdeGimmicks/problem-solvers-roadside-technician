@@ -43,6 +43,7 @@ router.get('/', publicController.home);
 router.get('/home-2', publicController.home2);
 router.get('/choose-service', publicController.chooseService);
 router.get('/services', publicController.services);
+router.get('/:serviceSlug(tire-change|jump-start|lockout|fuel-delivery)', publicController.servicePage);
 router.get('/about', publicController.about);
 router.get('/contact', publicController.contact);
 router.post('/contact', contactValidators, requestController.submitContact);
