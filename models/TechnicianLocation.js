@@ -4,6 +4,7 @@ const technicianLocationSchema = new mongoose.Schema({
   technician: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', index: true, sparse: true },
   label: { type: String, default: 'Store Manager' },
   online: { type: Boolean, default: false, index: true },
+  acceptingJobs: { type: Boolean, default: true, index: true },
   location: {
     lat: Number,
     lng: Number,

@@ -1,63 +1,45 @@
 const ServiceRequest = require('../models/ServiceRequest');
 const Payment = require('../models/Payment');
+const TechnicianLocation = require('../models/TechnicianLocation');
 const { stripe, stripePublishableKey } = require('../config/services');
 const { sendPaymentStatusSms } = require('../services/smsService');
 
 const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
 const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
-const BUSY_REQUEST_STATUSES = ['Accepted', 'Technician Assigned', 'En Route', 'Arrived'];
 
-function serializeAvailabilityJob(job) {
-  if (!job) return null;
+function serializeAvailabilityState(location) {
+  if (!location) return null;
 
-  const minutes = Number(job.estimatedArrivalMinutes || job.travelTimeMinutes || 0);
   return {
-    id: job._id.toString(),
-    referenceNumber: job.referenceNumber || job.requestId || '',
-    service: job.problem || 'Roadside Service',
-    status: job.status || 'Active',
-    location: job.currentLocation || job.location?.address || '',
-    estimatedArrivalMinutes: Number.isFinite(minutes) && minutes > 0 ? minutes : null,
-    acceptedAt: job.acceptedAt,
-    createdAt: job.createdAt
+    id: location._id.toString(),
+    label: location.label || 'Store Manager',
+    online: Boolean(location.online),
+    acceptingJobs: location.acceptingJobs !== false,
+    updatedAt: location.updatedAt,
+    locationUpdatedAt: location.location?.updatedAt
   };
 }
 
-async function getTechnicianAvailability(excludeRequestId) {
-  const query = {
-    status: { $nin: ['Completed', 'Cancelled'] },
-    $or: [
-      { status: { $in: BUSY_REQUEST_STATUSES } },
-      { paymentStatus: 'Paid' }
-    ]
-  };
-
-  if (excludeRequestId) {
-    query._id = { $ne: excludeRequestId };
-  }
-
-  const activeJob = await ServiceRequest.findOne(query)
-    .sort({ acceptedAt: -1, updatedAt: -1, createdAt: -1 })
+async function getTechnicianAvailability() {
+  const availabilityControl = await TechnicianLocation.findOne()
+    .sort({ updatedAt: -1 })
     .lean();
 
-  if (!activeJob) {
+  if (!availabilityControl || availabilityControl.acceptingJobs !== false) {
     return {
       available: true,
       busy: false,
+      acceptingJobs: true,
       message: 'Technician is available.'
     };
   }
 
-  const job = serializeAvailabilityJob(activeJob);
-  const waitText = job.estimatedArrivalMinutes
-    ? ` The current job has about ${job.estimatedArrivalMinutes} minutes showing in the system.`
-    : '';
-
   return {
     available: false,
     busy: true,
-    activeJob: job,
-    message: `The technician is currently handling another service request.${waitText} You can still continue if you are willing to wait, or call first before paying.`
+    acceptingJobs: false,
+    control: serializeAvailabilityState(availabilityControl),
+    message: 'No technician is currently accepting immediate jobs. You can continue only if you are willing to wait, or call first before paying.'
   };
 }
 
@@ -108,12 +90,19 @@ async function createCheckoutSession(req, res, next) {
     const serviceRequest = await ServiceRequest.findById(req.body.serviceRequestId);
     if (!serviceRequest) return res.status(404).json({ error: 'Service request not found.' });
 
-    const availability = await getTechnicianAvailability(serviceRequest._id);
+    const availability = await getTechnicianAvailability();
     if (availability.busy && req.body.customerAcceptedWait !== true) {
       return res.status(409).json({
-        error: 'Technician is currently busy. Please confirm you are willing to wait before paying.',
+        error: 'No technician is currently accepting immediate jobs. Please confirm you are willing to wait before paying.',
         availability
       });
+    }
+
+    if (availability.busy && req.body.customerAcceptedWait === true) {
+      serviceRequest.waitlisted = true;
+      serviceRequest.waitlistedAt = serviceRequest.waitlistedAt || new Date();
+      serviceRequest.waitlistReason = 'Customer chose to wait while Store Manager was not accepting immediate jobs.';
+      await serviceRequest.save();
     }
 
     const amount = Number(serviceRequest.totalPrice || serviceRequest.estimatedPrice || 0);

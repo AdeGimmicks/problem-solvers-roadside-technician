@@ -50,6 +50,7 @@
             <time><%= formatDateTime(item.createdAt) %></time>
           </div>
           <span class="status-pill"><%= item.status %></span>
+          <% if (item.waitlisted) { %><span class="status-pill manager-status">Wait list</span><% } %>
         </div>
 
         <div class="request-manager-body">
@@ -126,6 +127,9 @@
               <label>Internal notes
                 <textarea name="internalNotes" placeholder="Customer parked behind apartment, call before arrival, etc."><%= item.internalNotes || '' %></textarea>
               </label>
+              <% if (item.waitlisted) { %>
+                <p class="summary-note">Customer joined the wait list before payment<% if (item.waitlistedAt) { %> on <%= formatDateTime(item.waitlistedAt) %><% } %>.</p>
+              <% } %>
               <button class="btn primary" type="submit">Save Update</button>
             </form>
           </aside>

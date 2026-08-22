@@ -1237,18 +1237,8 @@ async function startStripeCheckout(request, options = {}) {
 }
 
 function formatAvailabilityWarning(availability) {
-  const job = availability?.activeJob;
-  if (!job) {
-    return availability?.message || 'The technician is currently busy. You can continue only if you are willing to wait.';
-  }
-
-  const parts = [
-    `The technician is currently busy with ${job.service || 'another service'}.`
-  ];
-  if (job.status) parts.push(`Status: ${job.status}.`);
-  if (job.estimatedArrivalMinutes) parts.push(`Current job time showing: about ${job.estimatedArrivalMinutes} minutes.`);
-  parts.push('If you can wait, continue to secure payment. If this is urgent, call first before paying.');
-  return parts.join(' ');
+  return availability?.message
+    || 'No technician is currently accepting immediate jobs. If you can wait, continue to payment and your request will be handled as a wait-list request. If this is urgent, call first before paying.';
 }
 
 function showAvailabilityWarning(availability) {
@@ -1263,10 +1253,15 @@ function showAvailabilityWarning(availability) {
 function hideAvailabilityWarning() {
   const panel = document.querySelector('[data-availability-warning]');
   if (panel) panel.hidden = true;
+  const submitButton = document.querySelector('[data-submit-request]');
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = 'Pay Now';
+  }
   const waitButton = document.querySelector('[data-confirm-wait]');
   if (waitButton) {
     waitButton.disabled = false;
-    waitButton.textContent = 'I can wait, continue to payment';
+    waitButton.textContent = 'I can wait, join wait list and pay';
   }
 }
 
@@ -1302,7 +1297,7 @@ function setupStaticRequestSave() {
     } catch (error) {
       alert(error.message || 'Unable to open payment. Please try again.');
       waitButton.disabled = false;
-      waitButton.textContent = 'I can wait, continue to payment';
+      waitButton.textContent = 'I can wait, join wait list and pay';
     }
   });
 
@@ -1350,8 +1345,8 @@ function setupStaticRequestSave() {
       alert(error.message || 'Unable to complete the request. Please try again.');
     } finally {
       if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Pay Now';
+        submitButton.disabled = Boolean(pendingCheckoutRequest);
+        submitButton.textContent = pendingCheckoutRequest ? 'Confirm Wait Above' : 'Pay Now';
       }
     }
   });

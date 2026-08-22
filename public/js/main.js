@@ -943,8 +943,11 @@ function setupLiveLocationTool() {
 
   const startButton = panel.querySelector('[data-live-location-start]');
   const stopButton = panel.querySelector('[data-live-location-stop]');
+  const acceptJobsButton = panel.querySelector('[data-accept-jobs]');
+  const stopAcceptingJobsButton = panel.querySelector('[data-stop-accepting-jobs]');
   const statusText = panel.querySelector('[data-live-location-status]');
   const onlineText = panel.querySelector('[data-live-location-online]');
+  const acceptingText = panel.querySelector('[data-live-location-accepting]');
   const currentText = panel.querySelector('[data-live-location-current]');
   const updatedText = panel.querySelector('[data-live-location-updated]');
   const liveLocationEndpoint = panel.dataset.liveLocationEndpoint || '/dashboard/live-location';
@@ -963,6 +966,12 @@ function setupLiveLocationTool() {
     if (stopButton) stopButton.disabled = !isOnline && watchId === null;
   };
 
+  const setAcceptingState = (isAccepting) => {
+    if (acceptingText) acceptingText.textContent = isAccepting ? 'Accepting jobs' : 'Not accepting jobs';
+    if (acceptJobsButton) acceptJobsButton.disabled = isAccepting;
+    if (stopAcceptingJobsButton) stopAcceptingJobsButton.disabled = !isAccepting;
+  };
+
   async function postLiveLocation(payload) {
     const csrfToken = await getCsrfToken();
     const response = await fetch(liveLocationEndpoint, {
@@ -977,6 +986,21 @@ function setupLiveLocationTool() {
     });
     if (!response.ok) throw new Error('Could not save live location.');
     return response.json();
+  }
+
+  async function setAcceptingJobs(isAccepting) {
+    try {
+      if (acceptJobsButton) acceptJobsButton.disabled = true;
+      if (stopAcceptingJobsButton) stopAcceptingJobsButton.disabled = true;
+      const result = await postLiveLocation({ acceptingJobs: isAccepting });
+      setAcceptingState(result.acceptingJobs !== false);
+      setStatus(result.message || (isAccepting
+        ? 'Accepting jobs. Customers can continue to payment normally.'
+        : 'Not accepting immediate jobs. Customers will see the wait-list warning.'));
+    } catch (error) {
+      setAcceptingState(panel.dataset.liveLocationInitialAccepting !== 'false');
+      setStatus(error.message || 'Could not update job availability.');
+    }
   }
 
   async function saveLiveLocation(position, force = false) {
@@ -1054,8 +1078,11 @@ function setupLiveLocationTool() {
   }
 
   setOnlineState(panel.dataset.liveLocationInitialOnline === 'true');
+  setAcceptingState(panel.dataset.liveLocationInitialAccepting !== 'false');
   startButton?.addEventListener('click', startSharing);
   stopButton?.addEventListener('click', stopSharing);
+  acceptJobsButton?.addEventListener('click', () => setAcceptingJobs(true));
+  stopAcceptingJobsButton?.addEventListener('click', () => setAcceptingJobs(false));
 }
 
 function distanceMilesBetween(start, end) {
@@ -1544,18 +1571,8 @@ async function startStripeCheckout(request, options = {}) {
 }
 
 function formatAvailabilityWarning(availability) {
-  const job = availability?.activeJob;
-  if (!job) {
-    return availability?.message || 'The technician is currently busy. You can continue only if you are willing to wait.';
-  }
-
-  const parts = [
-    `The technician is currently busy with ${job.service || 'another service'}.`
-  ];
-  if (job.status) parts.push(`Status: ${job.status}.`);
-  if (job.estimatedArrivalMinutes) parts.push(`Current job time showing: about ${job.estimatedArrivalMinutes} minutes.`);
-  parts.push('If you can wait, continue to secure payment. If this is urgent, call first before paying.');
-  return parts.join(' ');
+  return availability?.message
+    || 'No technician is currently accepting immediate jobs. If you can wait, continue to payment and your request will be handled as a wait-list request. If this is urgent, call first before paying.';
 }
 
 function showAvailabilityWarning(availability) {
@@ -1570,10 +1587,15 @@ function showAvailabilityWarning(availability) {
 function hideAvailabilityWarning() {
   const panel = document.querySelector('[data-availability-warning]');
   if (panel) panel.hidden = true;
+  const submitButton = document.querySelector('[data-submit-request]');
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = 'Pay Now';
+  }
   const waitButton = document.querySelector('[data-confirm-wait]');
   if (waitButton) {
     waitButton.disabled = false;
-    waitButton.textContent = 'I can wait, continue to payment';
+    waitButton.textContent = 'I can wait, join wait list and pay';
   }
 }
 
@@ -1621,7 +1643,7 @@ function setupStaticRequestSave() {
     } catch (error) {
       alert(error.message || 'Unable to open payment. Please try again.');
       waitButton.disabled = false;
-      waitButton.textContent = 'I can wait, continue to payment';
+      waitButton.textContent = 'I can wait, join wait list and pay';
     }
   });
 
@@ -1676,8 +1698,8 @@ function setupStaticRequestSave() {
       alert(error.message || 'Unable to complete the request. Please try again.');
     } finally {
       if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Pay Now';
+        submitButton.disabled = Boolean(pendingCheckoutRequest);
+        submitButton.textContent = pendingCheckoutRequest ? 'Confirm Wait Above' : 'Pay Now';
       }
     }
   });

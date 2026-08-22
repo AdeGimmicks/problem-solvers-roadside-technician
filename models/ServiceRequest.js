@@ -48,6 +48,9 @@ const serviceRequestSchema = new mongoose.Schema({
   travelFeePercent: Number,
   longDistanceThresholdMinutes: Number,
   referenceNumber: { type: String, index: true },
+  waitlisted: { type: Boolean, default: false, index: true },
+  waitlistedAt: Date,
+  waitlistReason: String,
   paymentStatus: { type: String, enum: ['Payment Pending', 'Paid'], default: 'Payment Pending' },
   assignedTechnician: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
   payment: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }

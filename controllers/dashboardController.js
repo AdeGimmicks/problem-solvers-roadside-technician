@@ -647,24 +647,44 @@ async function liveLocation(req, res) {
     title: 'Live Technician Location',
     metaDescription: 'Share live technician location for quote distance and ETA.',
     businessSettings,
-    technicianLocation
+    technicianLocation,
+    acceptingJobs: technicianLocation?.acceptingJobs !== false
   });
 }
 
 async function updateLiveLocation(req, res, next) {
   try {
     const online = req.body.online !== false && req.body.online !== 'false';
+    const hasAcceptingJobs = Object.prototype.hasOwnProperty.call(req.body, 'acceptingJobs');
     const technicianId = req.session?.admin?.id || null;
     const label = req.session?.admin?.name || 'Store Manager';
+    const query = technicianId ? { technician: technicianId } : { technician: null };
+    if (hasAcceptingJobs && !Object.prototype.hasOwnProperty.call(req.body, 'lat')) {
+      const acceptingJobs = req.body.acceptingJobs !== false && req.body.acceptingJobs !== 'false';
+      const availability = await TechnicianLocation.findOneAndUpdate(query, {
+        technician: technicianId,
+        label,
+        acceptingJobs,
+        source: 'dashboard-live-location'
+      }, { upsert: true, new: true });
+      return res.json({
+        ok: true,
+        online: Boolean(availability.online),
+        acceptingJobs: availability.acceptingJobs !== false,
+        location: availability.location,
+        message: availability.acceptingJobs === false
+          ? 'Not accepting immediate jobs. Customers will see the wait-list warning.'
+          : 'Accepting jobs. Customers can continue to payment normally.'
+      });
+    }
     if (!online) {
-      const query = technicianId ? { technician: technicianId } : { technician: null };
       const offline = await TechnicianLocation.findOneAndUpdate(query, {
         technician: technicianId,
         label,
         online: false,
         source: 'dashboard-live-location'
       }, { upsert: true, new: true });
-      return res.json({ ok: true, online: false, location: offline.location });
+      return res.json({ ok: true, online: false, acceptingJobs: offline.acceptingJobs !== false, location: offline.location });
     }
 
     const lat = Number(req.body.lat);
@@ -679,7 +699,17 @@ async function updateLiveLocation(req, res, next) {
       accuracy: Number.isFinite(accuracy) ? accuracy : undefined,
       updatedAt: new Date()
     };
-    const query = technicianId ? { technician: technicianId } : { technician: null };
+    const technicianLocationUpdate = {
+      technician: technicianId,
+      label,
+      online: true,
+      location,
+      source: 'dashboard-live-location'
+    };
+    if (hasAcceptingJobs) {
+      technicianLocationUpdate.acceptingJobs = req.body.acceptingJobs !== false && req.body.acceptingJobs !== 'false';
+    }
+
     const [settings, technicianLocation] = await Promise.all([
       BusinessSettings.findOneAndUpdate({}, {
       liveTechnicianLocation: {
@@ -690,18 +720,13 @@ async function updateLiveLocation(req, res, next) {
         updatedAt: new Date()
       }
       }, { upsert: true, new: true }),
-      TechnicianLocation.findOneAndUpdate(query, {
-        technician: technicianId,
-        label,
-        online: true,
-        location,
-        source: 'dashboard-live-location'
-      }, { upsert: true, new: true })
+      TechnicianLocation.findOneAndUpdate(query, technicianLocationUpdate, { upsert: true, new: true })
     ]);
 
     res.json({
       ok: true,
       online: true,
+      acceptingJobs: technicianLocation.acceptingJobs !== false,
       location: technicianLocation.location || settings.liveTechnicianLocation
     });
   } catch (error) {
