@@ -1586,6 +1586,103 @@ textarea {
   content: 'Close';
 }
 
+.audience-manager-list {
+  margin: 18px 0;
+}
+
+.audience-manager-summary {
+  grid-template-columns: minmax(190px, 1.2fr) minmax(130px, 0.8fr) minmax(150px, 1fr) auto minmax(180px, 1fr) auto;
+}
+
+.audience-manager-body {
+  grid-template-columns: 1fr;
+}
+
+.audience-manager-main {
+  width: 100%;
+}
+
+.audience-expanded-list {
+  display: grid;
+  gap: 10px;
+}
+
+.audience-expanded-row,
+.audience-journey-row > summary {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) repeat(3, minmax(140px, 0.8fr));
+  gap: 10px 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 210, 31, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.audience-expanded-row strong,
+.audience-journey-row > summary strong {
+  color: var(--white);
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.audience-expanded-row span,
+.audience-journey-row > summary span {
+  display: grid;
+  gap: 3px;
+  color: var(--muted);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.audience-expanded-row span b,
+.audience-journey-row > summary span b {
+  color: var(--white);
+  font-family: var(--display-font);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.audience-expanded-row small,
+.audience-journey-row > summary small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.audience-journey-row {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.audience-journey-row > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.audience-journey-row > summary::-webkit-details-marker {
+  display: none;
+}
+
+.audience-journey-row[open] > summary {
+  border-color: rgba(255, 210, 31, 0.45);
+}
+
+.audience-row-timeline {
+  margin-top: 10px;
+  padding: 0 0 0 12px;
+}
+
+.audience-date-heading {
+  margin: 14px 0 2px;
+  color: var(--yellow);
+  font-family: var(--display-font);
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
 .request-summary-customer,
 .request-summary-id {
   color: var(--white);
@@ -2046,77 +2143,10 @@ textarea {
   display: none;
 }
 
-.metric-card summary {
-  display: grid;
-  gap: 8px;
-}
-
-.metric-card[open] {
-  border-color: rgba(255, 210, 31, 0.45);
-}
-
-.metric-drilldown {
-  display: grid;
-  max-height: 340px;
-  gap: 8px;
-  overflow: auto;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 210, 31, 0.14);
-}
-
-.metric-row {
-  display: grid;
-  grid-template-columns: minmax(130px, 1fr) repeat(3, minmax(110px, 0.8fr));
-  gap: 8px 12px;
-  align-items: start;
-  padding: 10px;
-  border: 1px solid rgba(255, 210, 31, 0.16);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
-}
-
-.metric-row > strong {
-  font-size: 1rem;
-  line-height: 1.25;
-}
-
-.metric-row span {
-  display: grid;
-  gap: 2px;
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.metric-row span b {
-  color: var(--white);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-}
-
-.metric-row small {
-  grid-column: 1 / -1;
-  color: var(--muted);
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
 .dashboard-main > .stat-grid {
   grid-template-columns: repeat(4, minmax(170px, 1fr));
   overflow-x: auto;
   padding-bottom: 4px;
-}
-
-.traffic-source-stat-grid {
-  margin-top: 16px;
-}
-
-.metric-date-label {
-  color: var(--yellow);
-  font-size: 0.78rem;
-  font-weight: 900;
-  text-transform: uppercase;
 }
 
 .dashboard-main > .stat-grid .stat-card {
@@ -2124,7 +2154,8 @@ textarea {
   border-radius: 8px;
 }
 
-.stat-card > summary > strong {
+.stat-card > summary > strong,
+.metric-card > strong {
   font-size: 2.2rem;
 }
 
@@ -3216,6 +3247,15 @@ td {
     gap: 10px;
     overflow-x: auto;
     scrollbar-width: thin;
+  }
+
+  .audience-manager-summary {
+    grid-template-columns: 190px 120px 140px 82px 170px 70px;
+  }
+
+  .audience-expanded-row,
+  .audience-journey-row > summary {
+    grid-template-columns: 1fr;
   }
 
   .request-manager-summary::after {

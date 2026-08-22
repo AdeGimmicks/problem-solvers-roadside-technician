@@ -15,85 +15,158 @@
   </div>
 
   <section class="stat-grid audience-stat-grid">
-    <details class="stat-card metric-card">
-      <summary><span>Page Visits</span><strong><%= audience.visits %></strong></summary>
-      <div class="metric-drilldown">
-        <% audience.pageVisitEvents.forEach((event) => { %>
-          <div class="metric-row">
-            <strong><%= event.pageLabel %></strong>
-            <span><b>IP</b><%= event.ipLabel %></span>
-            <span><b>Source</b><%= event.sourceLabel %></span>
-            <span><b>Time</b><%= event.displayTime %></span>
-            <small><%= event.path || '-' %></small>
-          </div>
-        <% }) %>
-        <% if (!audience.pageVisitEvents.length) { %><div class="metric-row"><strong>No page visits in this window.</strong></div><% } %>
-      </div>
-    </details>
-    <details class="stat-card metric-card">
-      <summary><span>Real Visitor Visits</span><strong><%= audience.customerVisits %></strong></summary>
-      <div class="metric-drilldown">
-        <% audience.customerVisitEvents.forEach((event) => { %>
-          <div class="metric-row">
-            <strong><%= event.pageLabel %></strong>
-            <span><b>IP</b><%= event.ipLabel %></span>
-            <span><b>Source</b><%= event.sourceLabel %></span>
-            <span><b>Time</b><%= event.displayTime %></span>
-            <small><%= event.path || '-' %></small>
-          </div>
-        <% }) %>
-        <% if (!audience.customerVisitEvents.length) { %><div class="metric-row"><strong>No real visitor visits in this window.</strong></div><% } %>
-      </div>
-    </details>
-    <details class="stat-card metric-card">
-      <summary><span>Owner Visits</span><strong><%= audience.ownerVisits %></strong></summary>
-      <div class="metric-drilldown">
-        <% audience.ownerVisitEvents.forEach((event) => { %>
-          <div class="metric-row">
-            <strong><%= event.pageLabel %></strong>
-            <span><b>IP</b><%= event.ipLabel %></span>
-            <span><b>Source</b><%= event.sourceLabel %></span>
-            <span><b>Time</b><%= event.displayTime %></span>
-            <small><%= event.path || '-' %></small>
-          </div>
-        <% }) %>
-        <% if (!audience.ownerVisitEvents.length) { %><div class="metric-row"><strong>No owner visits in this window.</strong></div><% } %>
-      </div>
-    </details>
-    <details class="stat-card metric-card">
-      <summary><span>Known Visitors</span><strong><%= audience.uniqueVisitors %></strong></summary>
-      <div class="metric-drilldown">
-        <% audience.knownVisitorRows.forEach((journey) => { %>
-          <div class="metric-row">
-            <strong><%= journey.visitorLabel %></strong>
-            <span><b>IP</b><%= journey.ipAddress %></span>
-            <span><b>Source</b><%= journey.sourceLabel %></span>
-            <span><b>Last seen</b><%= journey.lastSeenDisplay %></span>
-            <small><%= journey.landingLabel %> - <%= journey.landingPath %></small>
-          </div>
-        <% }) %>
-        <% if (!audience.knownVisitorRows.length) { %><div class="metric-row"><strong>No known visitors in this window.</strong></div><% } %>
-      </div>
-    </details>
+    <article class="stat-card metric-card"><span>Page Visits</span><strong><%= audience.visits %></strong></article>
+    <article class="stat-card metric-card"><span>Real Visitor Visits</span><strong><%= audience.customerVisits %></strong></article>
+    <article class="stat-card metric-card"><span>Owner Visits</span><strong><%= audience.ownerVisits %></strong></article>
+    <article class="stat-card metric-card"><span>Known Visitors</span><strong><%= audience.uniqueVisitors %></strong></article>
   </section>
 
-  <section class="stat-grid audience-stat-grid traffic-source-stat-grid">
-    <% audience.sourceBreakdown.forEach((source) => { %>
-      <details class="stat-card metric-card source-metric-card">
-        <summary><span><%= source.label %> Visits</span><strong><%= source.count %></strong></summary>
-        <div class="metric-drilldown">
-          <% source.dateGroups.forEach((dateGroup) => { %>
-            <div class="metric-date-label"><%= dateGroup.displayDate %></div>
-            <% dateGroup.journeys.forEach((journey) => { %>
-              <div class="metric-row">
+  <section class="request-manager-list audience-manager-list" aria-label="Visitor visit breakdown">
+    <details class="request-manager-card audience-manager-card">
+      <summary class="request-manager-summary audience-manager-summary">
+        <span class="request-summary-customer">Page Visits</span>
+        <span class="request-summary-id"><%= audience.visits %> visits</span>
+        <span class="request-summary-service">All pages</span>
+        <span class="request-summary-payment is-paid">Tracked</span>
+        <span class="request-summary-date">Latest page views</span>
+      </summary>
+      <div class="request-manager-body audience-manager-body">
+        <section class="request-manager-main audience-manager-main">
+          <div class="audience-expanded-list">
+            <% audience.pageVisitEvents.forEach((event) => { %>
+              <article class="audience-expanded-row">
+                <strong><%= event.pageLabel %></strong>
+                <span><b>IP</b><%= event.ipLabel %></span>
+                <span><b>Source</b><%= event.sourceLabel %></span>
+                <span><b>Time</b><%= event.displayTime %></span>
+                <small><%= event.path || '-' %></small>
+              </article>
+            <% }) %>
+            <% if (!audience.pageVisitEvents.length) { %><p class="muted-copy">No page visits in this window.</p><% } %>
+          </div>
+        </section>
+      </div>
+    </details>
+
+    <details class="request-manager-card audience-manager-card">
+      <summary class="request-manager-summary audience-manager-summary">
+        <span class="request-summary-customer">Real Visitor Visits</span>
+        <span class="request-summary-id"><%= audience.customerVisits %> visits</span>
+        <span class="request-summary-service">Not owner</span>
+        <span class="request-summary-payment is-paid">Visitors</span>
+        <span class="request-summary-date">Latest visitors</span>
+      </summary>
+      <div class="request-manager-body audience-manager-body">
+        <section class="request-manager-main audience-manager-main">
+          <div class="audience-expanded-list">
+            <% audience.customerVisitEvents.forEach((event) => { %>
+              <article class="audience-expanded-row">
+                <strong><%= event.pageLabel %></strong>
+                <span><b>IP</b><%= event.ipLabel %></span>
+                <span><b>Source</b><%= event.sourceLabel %></span>
+                <span><b>Time</b><%= event.displayTime %></span>
+                <small><%= event.path || '-' %></small>
+              </article>
+            <% }) %>
+            <% if (!audience.customerVisitEvents.length) { %><p class="muted-copy">No real visitor visits in this window.</p><% } %>
+          </div>
+        </section>
+      </div>
+    </details>
+
+    <details class="request-manager-card audience-manager-card">
+      <summary class="request-manager-summary audience-manager-summary">
+        <span class="request-summary-customer">Owner Visits</span>
+        <span class="request-summary-id"><%= audience.ownerVisits %> visits</span>
+        <span class="request-summary-service">Your checks</span>
+        <span class="request-summary-payment is-unpaid">Owner</span>
+        <span class="request-summary-date">Matched owner IP/session</span>
+      </summary>
+      <div class="request-manager-body audience-manager-body">
+        <section class="request-manager-main audience-manager-main">
+          <div class="audience-expanded-list">
+            <% audience.ownerVisitEvents.forEach((event) => { %>
+              <article class="audience-expanded-row">
+                <strong><%= event.pageLabel %></strong>
+                <span><b>IP</b><%= event.ipLabel %></span>
+                <span><b>Source</b><%= event.sourceLabel %></span>
+                <span><b>Time</b><%= event.displayTime %></span>
+                <small><%= event.path || '-' %></small>
+              </article>
+            <% }) %>
+            <% if (!audience.ownerVisitEvents.length) { %><p class="muted-copy">No owner visits in this window.</p><% } %>
+          </div>
+        </section>
+      </div>
+    </details>
+
+    <details class="request-manager-card audience-manager-card">
+      <summary class="request-manager-summary audience-manager-summary">
+        <span class="request-summary-customer">Known Visitors</span>
+        <span class="request-summary-id"><%= audience.uniqueVisitors %> visitors</span>
+        <span class="request-summary-service">Grouped journeys</span>
+        <span class="request-summary-payment is-paid">Sessions</span>
+        <span class="request-summary-date">Latest visitor groups</span>
+      </summary>
+      <div class="request-manager-body audience-manager-body">
+        <section class="request-manager-main audience-manager-main">
+          <div class="audience-expanded-list">
+            <% audience.knownVisitorRows.forEach((journey) => { %>
+              <article class="audience-expanded-row">
                 <strong><%= journey.visitorLabel %></strong>
                 <span><b>IP</b><%= journey.ipAddress %></span>
-                <span><b>Landed</b><%= journey.landingLabel %></span>
+                <span><b>Source</b><%= journey.sourceLabel %></span>
                 <span><b>Last seen</b><%= journey.lastSeenDisplay %></span>
-                <small><%= journey.badge %> - <%= journey.landingPath || '-' %></small>
-              </div>
+                <small><%= journey.landingLabel %> - <%= journey.landingPath %></small>
+              </article>
             <% }) %>
-          <% }) %>
+            <% if (!audience.knownVisitorRows.length) { %><p class="muted-copy">No known visitors in this window.</p><% } %>
+          </div>
+        </section>
+      </div>
+    </details>
+
+    <% audience.sourceBreakdown.forEach((source) => { %>
+      <details class="request-manager-card audience-manager-card">
+        <summary class="request-manager-summary audience-manager-summary">
+          <span class="request-summary-customer"><%= source.label %> Visits</span>
+          <span class="request-summary-id"><%= source.count %> visits</span>
+          <span class="request-summary-service"><%= source.category %></span>
+          <span class="request-summary-payment <%= source.category === 'Paid Ads' ? 'is-unpaid' : 'is-paid' %>"><%= source.category === 'Paid Ads' ? 'Ads' : 'Source' %></span>
+          <span class="request-summary-date">Grouped by date</span>
+        </summary>
+        <div class="request-manager-body audience-manager-body">
+          <section class="request-manager-main audience-manager-main">
+            <div class="audience-expanded-list">
+              <% source.dateGroups.forEach((dateGroup) => { %>
+                <h3 class="audience-date-heading"><%= dateGroup.displayDate %></h3>
+                <% dateGroup.journeys.forEach((journey) => { %>
+                  <details class="audience-expanded-row audience-journey-row">
+                    <summary>
+                      <strong><%= journey.visitorLabel %></strong>
+                      <span><b>IP</b><%= journey.ipAddress %></span>
+                      <span><b>Landed</b><%= journey.landingLabel %></span>
+                      <span><b>Last seen</b><%= journey.lastSeenDisplay %></span>
+                      <small><%= journey.badge %> - <%= journey.landingPath || '-' %></small>
+                    </summary>
+                    <ol class="journey-timeline audience-row-timeline">
+                      <% journey.events.forEach((event) => { %>
+                        <li>
+                          <span><%= event.displayTime %></span>
+                          <strong><%= event.actionLabel %></strong>
+                          <small><%= event.serviceName || event.pageLabel %> - <%= event.path || '-' %></small>
+                          <small>IP: <%= event.ipLabel %> - Source: <%= event.sourceLabel %></small>
+                        </li>
+                      <% }) %>
+                    </ol>
+                  </details>
+                <% }) %>
+              <% }) %>
+              <% if (!source.dateGroups.length) { %>
+                <p class="muted-copy">No visits recorded for this source in this window.</p>
+              <% } %>
+            </div>
+          </section>
         </div>
       </details>
     <% }) %>
@@ -183,7 +256,6 @@
       </div>
     </details>
   </section>
-
   <details class="dashboard-panel collapsible-panel">
     <summary class="panel-heading-row">
       <div>
