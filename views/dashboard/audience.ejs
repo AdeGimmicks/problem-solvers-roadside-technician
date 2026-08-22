@@ -93,8 +93,8 @@
     <% } %>
     <div class="visitor-journey-list">
       <% audience.visitorJourneys.forEach((journey) => { %>
-        <article class="visitor-journey-card <%= journey.badge === 'Owner visit' ? 'is-owner' : '' %>">
-          <div class="journey-summary">
+        <details class="visitor-journey-card <%= journey.badge === 'Owner visit' ? 'is-owner' : '' %>">
+          <summary class="journey-summary">
             <div>
               <span class="journey-badge"><%= journey.badge %></span>
               <h3><%= journey.visitorLabel %></h3>
@@ -107,24 +107,27 @@
               <p><strong>Device:</strong> <%= journey.deviceLabel %></p>
               <p><strong>Last seen:</strong> <%= journey.lastSeen ? journey.lastSeen.toLocaleString() : '-' %></p>
             </div>
-          </div>
-          <% if (journey.services.length) { %>
-            <div class="journey-services">
-              <% journey.services.forEach((serviceName) => { %>
-                <span><%= serviceName %></span>
+            <span class="journey-toggle">View details</span>
+          </summary>
+          <div class="journey-details">
+            <% if (journey.services.length) { %>
+              <div class="journey-services">
+                <% journey.services.forEach((serviceName) => { %>
+                  <span><%= serviceName %></span>
+                <% }) %>
+              </div>
+            <% } %>
+            <ol class="journey-timeline">
+              <% journey.events.forEach((event) => { %>
+                <li>
+                  <span><%= event.createdAt.toLocaleString() %></span>
+                  <strong><%= event.actionLabel %></strong>
+                  <small><%= event.serviceName || event.pageLabel %> - <%= event.path || '-' %></small>
+                </li>
               <% }) %>
-            </div>
-          <% } %>
-          <ol class="journey-timeline">
-            <% journey.events.forEach((event) => { %>
-              <li>
-                <span><%= event.createdAt.toLocaleString() %></span>
-                <strong><%= event.actionLabel %></strong>
-                <small><%= event.serviceName || event.pageLabel %> - <%= event.path || '-' %></small>
-              </li>
-            <% }) %>
-          </ol>
-        </article>
+            </ol>
+          </div>
+        </details>
       <% }) %>
     </div>
   </section>

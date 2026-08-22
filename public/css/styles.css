@@ -2331,6 +2331,15 @@ td {
   background: #101014;
 }
 
+.visitor-journey-card summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.visitor-journey-card summary::-webkit-details-marker {
+  display: none;
+}
+
 .visitor-journey-card.is-owner {
   border-color: rgba(255, 210, 31, 0.55);
   background:
@@ -2340,7 +2349,8 @@ td {
 
 .journey-summary {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr) auto;
+  align-items: start;
   gap: 14px;
 }
 
@@ -2371,6 +2381,36 @@ td {
   color: var(--black);
   background: var(--gold);
   font-weight: 900;
+}
+
+.journey-toggle {
+  display: inline-flex;
+  min-width: 104px;
+  justify-content: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 210, 31, 0.35);
+  border-radius: 8px;
+  color: var(--white);
+  font-weight: 900;
+}
+
+.visitor-journey-card[open] .journey-toggle {
+  color: var(--black);
+  background: var(--gold);
+}
+
+.visitor-journey-card[open] .journey-toggle {
+  font-size: 0;
+}
+
+.visitor-journey-card[open] .journey-toggle::after {
+  content: "Hide details";
+  font-size: 1rem;
+}
+
+.journey-details {
+  display: grid;
+  gap: 12px;
 }
 
 .journey-services {
