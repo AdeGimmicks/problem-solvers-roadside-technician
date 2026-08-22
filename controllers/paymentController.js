@@ -1,31 +1,16 @@
 const ServiceRequest = require('../models/ServiceRequest');
 const Payment = require('../models/Payment');
-const TechnicianLocation = require('../models/TechnicianLocation');
+const BusinessSettings = require('../models/BusinessSettings');
 const { stripe, stripePublishableKey } = require('../config/services');
 const { sendPaymentStatusSms } = require('../services/smsService');
 
 const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
 const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
 
-function serializeAvailabilityState(location) {
-  if (!location) return null;
-
-  return {
-    id: location._id.toString(),
-    label: location.label || 'Store Manager',
-    online: Boolean(location.online),
-    acceptingJobs: location.acceptingJobs !== false,
-    updatedAt: location.updatedAt,
-    locationUpdatedAt: location.location?.updatedAt
-  };
-}
-
 async function getTechnicianAvailability() {
-  const availabilityControl = await TechnicianLocation.findOne()
-    .sort({ updatedAt: -1 })
-    .lean();
+  const settings = await BusinessSettings.findOne().lean();
 
-  if (!availabilityControl || availabilityControl.acceptingJobs !== false) {
+  if (!settings || settings.acceptingJobs !== false) {
     return {
       available: true,
       busy: false,
@@ -38,7 +23,9 @@ async function getTechnicianAvailability() {
     available: false,
     busy: true,
     acceptingJobs: false,
-    control: serializeAvailabilityState(availabilityControl),
+    control: {
+      updatedAt: settings.acceptingJobsUpdatedAt || settings.updatedAt
+    },
     message: 'No technician is currently accepting immediate jobs. You can continue only if you are willing to wait, or call first before paying.'
   };
 }

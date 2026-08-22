@@ -648,7 +648,7 @@ async function liveLocation(req, res) {
     metaDescription: 'Share live technician location for quote distance and ETA.',
     businessSettings,
     technicianLocation,
-    acceptingJobs: technicianLocation?.acceptingJobs !== false
+    acceptingJobs: businessSettings?.acceptingJobs !== false
   });
 }
 
@@ -661,30 +661,48 @@ async function updateLiveLocation(req, res, next) {
     const query = technicianId ? { technician: technicianId } : { technician: null };
     if (hasAcceptingJobs && !Object.prototype.hasOwnProperty.call(req.body, 'lat')) {
       const acceptingJobs = req.body.acceptingJobs !== false && req.body.acceptingJobs !== 'false';
-      const availability = await TechnicianLocation.findOneAndUpdate(query, {
-        technician: technicianId,
-        label,
-        acceptingJobs,
-        source: 'dashboard-live-location'
-      }, { upsert: true, new: true });
+      const [settings, availability] = await Promise.all([
+        BusinessSettings.findOneAndUpdate({}, {
+          acceptingJobs,
+          acceptingJobsUpdatedAt: new Date(),
+          acceptingJobsUpdatedBy: label
+        }, { upsert: true, new: true }),
+        TechnicianLocation.findOneAndUpdate(query, {
+          technician: technicianId,
+          label,
+          acceptingJobs,
+          source: 'dashboard-live-location'
+        }, { upsert: true, new: true })
+      ]);
+      const globalAcceptingJobs = settings.acceptingJobs !== false;
       return res.json({
         ok: true,
         online: Boolean(availability.online),
-        acceptingJobs: availability.acceptingJobs !== false,
+        acceptingJobs: globalAcceptingJobs,
         location: availability.location,
-        message: availability.acceptingJobs === false
-          ? 'Not accepting immediate jobs. Customers will see the wait-list warning.'
-          : 'Accepting jobs. Customers can continue to payment normally.'
+        message: globalAcceptingJobs
+          ? 'Accepting jobs. Customers can continue to payment normally.'
+          : 'Not accepting immediate jobs. Customers will see the wait-list warning.'
       });
     }
     if (!online) {
-      const offline = await TechnicianLocation.findOneAndUpdate(query, {
-        technician: technicianId,
-        label,
+      const [settings, offline] = await Promise.all([
+        BusinessSettings.findOneAndUpdate({}, {
+          $setOnInsert: { acceptingJobs: true }
+        }, { upsert: true, new: true }),
+        TechnicianLocation.findOneAndUpdate(query, {
+          technician: technicianId,
+          label,
+          online: false,
+          source: 'dashboard-live-location'
+        }, { upsert: true, new: true })
+      ]);
+      return res.json({
+        ok: true,
         online: false,
-        source: 'dashboard-live-location'
-      }, { upsert: true, new: true });
-      return res.json({ ok: true, online: false, acceptingJobs: offline.acceptingJobs !== false, location: offline.location });
+        acceptingJobs: settings.acceptingJobs !== false,
+        location: offline.location
+      });
     }
 
     const lat = Number(req.body.lat);
@@ -709,9 +727,7 @@ async function updateLiveLocation(req, res, next) {
     if (hasAcceptingJobs) {
       technicianLocationUpdate.acceptingJobs = req.body.acceptingJobs !== false && req.body.acceptingJobs !== 'false';
     }
-
-    const [settings, technicianLocation] = await Promise.all([
-      BusinessSettings.findOneAndUpdate({}, {
+    const settingsUpdate = {
       liveTechnicianLocation: {
         lat,
         lng,
@@ -719,14 +735,22 @@ async function updateLiveLocation(req, res, next) {
         source: 'dashboard-live-location',
         updatedAt: new Date()
       }
-      }, { upsert: true, new: true }),
+    };
+    if (hasAcceptingJobs) {
+      settingsUpdate.acceptingJobs = technicianLocationUpdate.acceptingJobs;
+      settingsUpdate.acceptingJobsUpdatedAt = new Date();
+      settingsUpdate.acceptingJobsUpdatedBy = label;
+    }
+
+    const [settings, technicianLocation] = await Promise.all([
+      BusinessSettings.findOneAndUpdate({}, settingsUpdate, { upsert: true, new: true }),
       TechnicianLocation.findOneAndUpdate(query, technicianLocationUpdate, { upsert: true, new: true })
     ]);
 
     res.json({
       ok: true,
       online: true,
-      acceptingJobs: technicianLocation.acceptingJobs !== false,
+      acceptingJobs: settings.acceptingJobs !== false,
       location: technicianLocation.location || settings.liveTechnicianLocation
     });
   } catch (error) {

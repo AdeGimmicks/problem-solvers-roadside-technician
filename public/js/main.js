@@ -993,7 +993,9 @@ function setupLiveLocationTool() {
       if (acceptJobsButton) acceptJobsButton.disabled = true;
       if (stopAcceptingJobsButton) stopAcceptingJobsButton.disabled = true;
       const result = await postLiveLocation({ acceptingJobs: isAccepting });
-      setAcceptingState(result.acceptingJobs !== false);
+      const nextAcceptingState = result.acceptingJobs !== false;
+      panel.dataset.liveLocationInitialAccepting = nextAcceptingState ? 'true' : 'false';
+      setAcceptingState(nextAcceptingState);
       setStatus(result.message || (isAccepting
         ? 'Accepting jobs. Customers can continue to payment normally.'
         : 'Not accepting immediate jobs. Customers will see the wait-list warning.'));
@@ -1261,10 +1263,8 @@ function renderQuote(quote) {
   if (feeElement) feeElement.textContent = money(quote.travelFee || 0);
   if (feeRow) feeRow.hidden = !quote.longDistanceApplies;
   if (feeMessage) {
-    feeMessage.hidden = !quote.longDistanceApplies && !quote.closeDistanceApplies;
-    feeMessage.textContent = quote.closeDistanceApplies
-      ? `Close-distance price applied because the estimated drive time is within ${quote.closeDistanceMaxMinutes} minutes. The arrival time includes ${quote.closeDistanceTrafficBufferMinutes} extra minutes for traffic.`
-      : quote.longDistanceApplies
+    feeMessage.hidden = !quote.longDistanceApplies;
+    feeMessage.textContent = quote.longDistanceApplies
       ? `An additional ${quote.travelFeePercent}% travel fee has been applied because the estimated driving time is more than ${quote.longDistanceThresholdMinutes} minutes.`
       : '';
   }

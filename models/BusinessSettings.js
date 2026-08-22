@@ -21,6 +21,9 @@ const businessSettingsSchema = new mongoose.Schema({
     source: String,
     updatedAt: Date
   },
+  acceptingJobs: { type: Boolean, default: true, index: true },
+  acceptingJobsUpdatedAt: Date,
+  acceptingJobsUpdatedBy: String,
   quoteConfig: {
     includedMiles: { type: Number, default: 10 },
     travelFeePerExtraMile: { type: Number, default: 2 },

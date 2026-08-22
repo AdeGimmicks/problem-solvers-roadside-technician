@@ -10,6 +10,7 @@ const fallbackSettings = {
   serviceArea: process.env.SERVICE_AREA || 'Chicago and surrounding suburbs',
   googleMapsEmbedUrl: process.env.GOOGLE_MAPS_EMBED_URL || '',
   googleReviewUrl: process.env.GOOGLE_REVIEW_URL || '',
+  acceptingJobs: true,
   dispatchLocation: process.env.DISPATCH_LAT && process.env.DISPATCH_LNG ? {
     lat: Number(process.env.DISPATCH_LAT),
     lng: Number(process.env.DISPATCH_LNG)

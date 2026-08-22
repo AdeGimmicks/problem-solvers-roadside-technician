@@ -2016,6 +2016,19 @@ textarea {
   gap: 10px;
 }
 
+.live-location-actions .btn.ghost,
+.live-location-actions .btn.secondary {
+  border-color: var(--white);
+  background: var(--white);
+  color: var(--black);
+}
+
+.live-location-actions .btn.ghost:disabled,
+.live-location-actions .btn.secondary:disabled {
+  color: var(--black);
+  opacity: 0.78;
+}
+
 .dashboard-topline-actions {
   display: flex;
   flex-wrap: wrap;
