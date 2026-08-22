@@ -2,6 +2,7 @@ const path = require('path');
 const Review = require('../models/Review');
 const Photo = require('../models/Photo');
 const ServiceArea = require('../models/ServiceArea');
+const ServiceRequest = require('../models/ServiceRequest');
 const { SERVICES } = require('../utils/constants');
 const { hasDatabase } = require('../utils/dbState');
 
@@ -297,11 +298,52 @@ function contact(req, res) {
   });
 }
 
-function requestService(req, res) {
+async function requestService(req, res) {
+  let form = {};
+  if (req.query.resume) {
+    const request = await ServiceRequest.findOne({
+      _id: req.query.resume,
+      paymentStatus: { $ne: 'Paid' }
+    }).lean().catch(() => null);
+
+    if (request) {
+      form = {
+        existingServiceRequestId: request._id.toString(),
+        problem: request.problem,
+        serviceDetails: JSON.stringify(request.serviceDetails || {}),
+        customerName: request.customerName,
+        phone: request.phone,
+        email: request.email,
+        vehicleMake: request.vehicleMake,
+        vehicleModel: request.vehicleModel,
+        vehicleColor: request.vehicleColor,
+        vehicleYear: request.vehicleYear,
+        currentLocation: request.currentLocation,
+        message: request.message,
+        basePrice: request.basePrice,
+        travelFee: request.travelFee,
+        totalPrice: request.totalPrice || request.estimatedPrice,
+        distanceMiles: request.distanceMiles,
+        travelTimeMinutes: request.travelTimeMinutes,
+        estimatedArrivalMinutes: request.estimatedArrivalMinutes,
+        referenceNumber: request.referenceNumber,
+        travelEstimateSource: request.travelEstimateSource,
+        longDistanceApplies: request.longDistanceApplies,
+        longDistanceTier: request.longDistanceTier,
+        travelFeePercent: request.travelFeePercent,
+        longDistanceThresholdMinutes: request.longDistanceThresholdMinutes,
+        locationLat: request.location?.lat,
+        locationLng: request.location?.lng
+      };
+    }
+  } else if (req.query.service) {
+    form.problem = req.query.service;
+  }
+
   res.render('request-service', {
     title: 'Request Roadside Assistance',
     metaDescription: 'Request mobile roadside assistance for tire changes, jump starts, lockouts, fuel delivery, and battery service in Chicago.',
-    form: {},
+    form,
     errors: []
   });
 }

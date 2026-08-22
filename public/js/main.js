@@ -1297,6 +1297,56 @@ function renderSelectedServiceDetails() {
   }
 }
 
+function readServiceDetailsFromForm(form) {
+  const hiddenField = form.querySelector('[data-service-details-field]');
+  if (!hiddenField?.value) return {};
+
+  try {
+    const details = JSON.parse(hiddenField.value);
+    return details && typeof details === 'object' && !Array.isArray(details) ? details : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function restoreServiceDetailInputs(form) {
+  const details = readServiceDetailsFromForm(form);
+  Object.entries(details).forEach(([key, value]) => {
+    form.querySelectorAll(`[data-service-question="${CSS.escape(key)}"]`).forEach((field) => {
+      if (field.type === 'radio') {
+        field.checked = field.value === String(value);
+        return;
+      }
+      field.value = value;
+    });
+  });
+}
+
+function quoteFromForm(form) {
+  const data = new FormData(form);
+  const numberValue = (key) => {
+    const value = Number(data.get(key));
+    return Number.isFinite(value) ? value : null;
+  };
+  const totalPrice = numberValue('totalPrice');
+  if (!totalPrice) return null;
+
+  return {
+    basePrice: numberValue('basePrice') || totalPrice,
+    travelFee: numberValue('travelFee') || 0,
+    totalPrice,
+    distanceMiles: numberValue('distanceMiles'),
+    travelTimeMinutes: numberValue('travelTimeMinutes'),
+    estimatedArrivalMinutes: numberValue('estimatedArrivalMinutes'),
+    travelEstimateSource: data.get('travelEstimateSource') || '',
+    longDistanceApplies: data.get('longDistanceApplies') === 'true',
+    longDistanceTier: data.get('longDistanceTier') || '',
+    travelFeePercent: numberValue('travelFeePercent') || 0,
+    longDistanceThresholdMinutes: numberValue('longDistanceThresholdMinutes') || 0,
+    referenceNumber: data.get('referenceNumber') || ''
+  };
+}
+
 function collectServiceDetails(form) {
   const details = {};
   form.querySelectorAll('[data-service-question]').forEach((field) => {
@@ -1468,8 +1518,16 @@ function setupStaticRequestSave() {
   if (!form) return;
   const submitButton = document.querySelector('[data-submit-request]');
   const summaryStep = form.querySelector('[data-request-step="summary"]');
+  const existingRequestField = form.querySelector('[data-existing-request-id]');
 
   renderSelectedServiceDetails();
+  restoreServiceDetailInputs(form);
+  const restoredQuote = quoteFromForm(form);
+  if (restoredQuote) {
+    latestQuote = restoredQuote;
+    renderQuote(restoredQuote);
+    updateRequestSummary(form);
+  }
   if (problemInput?.value) {
     trackVisitorEvent('request_start', { serviceName: problemInput.value });
   }
@@ -1506,13 +1564,18 @@ function setupStaticRequestSave() {
         submitButton.disabled = true;
         submitButton.textContent = 'Checking Quote...';
       }
+      const existingReferenceNumber = new FormData(form).get('referenceNumber');
       latestQuote = await calculateQuote(form);
+      if (existingRequestField?.value && existingReferenceNumber) {
+        latestQuote.referenceNumber = existingReferenceNumber;
+      }
       trackVisitorEvent('quote_review', { serviceName: new FormData(form).get('problem') });
       renderQuote(latestQuote);
       updateRequestSummary(form);
 
       if (submitButton) submitButton.textContent = 'Preparing Payment...';
       savedRequest = await createServiceRequest(form);
+      if (existingRequestField) existingRequestField.value = savedRequest.id;
       trackVisitorEvent('request_submit', { serviceName: new FormData(form).get('problem') });
 
       if (submitButton) submitButton.textContent = 'Opening Payment...';

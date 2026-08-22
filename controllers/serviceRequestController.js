@@ -41,6 +41,46 @@ function parseServiceDetails(value) {
   }
 }
 
+function serviceRequestPayload(data, customerId, serviceDetails, photoPaths = []) {
+  const payload = {
+    customer: customerId,
+    customerName: data.customerName,
+    phone: data.phone,
+    email: data.email,
+    vehicleMake: data.vehicleMake,
+    vehicleModel: data.vehicleModel,
+    vehicleColor: data.vehicleColor,
+    vehicleYear: data.vehicleYear,
+    problem: data.problem,
+    serviceDetails,
+    currentLocation: data.currentLocation,
+    location: {
+      address: data.currentLocation,
+      lat: data.locationLat ? Number(data.locationLat) : undefined,
+      lng: data.locationLng ? Number(data.locationLng) : undefined
+    },
+    message: data.message,
+    preferredPaymentMethod: 'Card',
+    basePrice: data.basePrice,
+    travelFee: data.travelFee,
+    totalPrice: data.totalPrice || data.estimatedPrice,
+    estimatedPrice: data.totalPrice || data.estimatedPrice,
+    distanceMiles: data.distanceMiles,
+    travelTimeMinutes: data.travelTimeMinutes,
+    estimatedArrivalMinutes: data.estimatedArrivalMinutes,
+    travelEstimateSource: data.travelEstimateSource,
+    longDistanceApplies: data.longDistanceApplies === 'true',
+    longDistanceTier: data.longDistanceTier,
+    travelFeePercent: data.travelFeePercent,
+    longDistanceThresholdMinutes: data.longDistanceThresholdMinutes,
+    referenceNumber: data.referenceNumber,
+    paymentStatus: data.paymentStatus || 'Payment Pending'
+  };
+
+  if (photoPaths.length) payload.photoPaths = photoPaths;
+  return payload;
+}
+
 async function submitRequest(req, res, next) {
   try {
     const errors = validationResult(req);
@@ -81,45 +121,25 @@ async function submitRequest(req, res, next) {
     }
 
     const photoPaths = (req.files || []).map((file) => `/uploads/${file.filename}`);
-    const serviceRequest = await ServiceRequest.create({
-      customer: customer._id,
-      customerName: data.customerName,
-      phone: data.phone,
-      email: data.email,
-      vehicleMake: data.vehicleMake,
-      vehicleModel: data.vehicleModel,
-      vehicleColor: data.vehicleColor,
-      vehicleYear: data.vehicleYear,
-      problem: data.problem,
-      serviceDetails,
-      currentLocation: data.currentLocation,
-      location: {
-        address: data.currentLocation,
-        lat: data.locationLat ? Number(data.locationLat) : undefined,
-        lng: data.locationLng ? Number(data.locationLng) : undefined
-      },
-      message: data.message,
-      preferredPaymentMethod: 'Card',
-      basePrice: data.basePrice,
-      travelFee: data.travelFee,
-      totalPrice: data.totalPrice || data.estimatedPrice,
-      estimatedPrice: data.totalPrice || data.estimatedPrice,
-      distanceMiles: data.distanceMiles,
-      travelTimeMinutes: data.travelTimeMinutes,
-      estimatedArrivalMinutes: data.estimatedArrivalMinutes,
-      travelEstimateSource: data.travelEstimateSource,
-      longDistanceApplies: data.longDistanceApplies === 'true',
-      longDistanceTier: data.longDistanceTier,
-      travelFeePercent: data.travelFeePercent,
-      longDistanceThresholdMinutes: data.longDistanceThresholdMinutes,
-      referenceNumber: data.referenceNumber,
-      paymentStatus: data.paymentStatus || 'Payment Pending',
+    const payload = serviceRequestPayload(data, customer._id, serviceDetails, photoPaths);
+    const existingRequest = data.existingServiceRequestId
+      ? await ServiceRequest.findOneAndUpdate(
+        { _id: data.existingServiceRequestId, paymentStatus: { $ne: 'Paid' } },
+        { $set: payload },
+        { new: true }
+      ).catch(() => null)
+      : null;
+
+    const serviceRequest = existingRequest || await ServiceRequest.create({
+      ...payload,
       photoPaths
     });
 
-    await sendServiceRequestNotification(serviceRequest);
-    await sendNewRequestSms(serviceRequest);
-    await sendNewBookingPush(serviceRequest);
+    if (!existingRequest) {
+      await sendServiceRequestNotification(serviceRequest);
+      await sendNewRequestSms(serviceRequest);
+      await sendNewBookingPush(serviceRequest);
+    }
     if (wantsJson(req)) {
       return res.status(201).json({ request: serializeRequest(serviceRequest) });
     }

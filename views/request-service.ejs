@@ -7,17 +7,18 @@
   <section class="form-layout single request-layout">
     <form class="form-card wide request-card" action="/request-service" method="post" enctype="multipart/form-data" data-request-form novalidate>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="existingServiceRequestId" value="<%= form.existingServiceRequestId || '' %>" data-existing-request-id>
       <%- include('partials/form-errors', { errors }) %>
       <ol class="request-progress" data-request-progress aria-label="Request progress">
-        <li class="is-active" data-progress-step="service"><span>1</span><strong>Service</strong></li>
-        <li data-progress-step="details"><span>2</span><strong>Details</strong></li>
-        <li data-progress-step="vehicle"><span>3</span><strong>Vehicle</strong></li>
-        <li data-progress-step="contact"><span>4</span><strong>Contact</strong></li>
-        <li data-progress-step="summary"><span>5</span><strong>Pay</strong></li>
+        <li class="<%= form.existingServiceRequestId ? 'is-complete' : 'is-active' %>" data-progress-step="service"><span>1</span><strong>Service</strong></li>
+        <li class="<%= form.existingServiceRequestId ? 'is-complete' : '' %>" data-progress-step="details"><span>2</span><strong>Details</strong></li>
+        <li class="<%= form.existingServiceRequestId ? 'is-complete' : '' %>" data-progress-step="vehicle"><span>3</span><strong>Vehicle</strong></li>
+        <li class="<%= form.existingServiceRequestId ? 'is-complete' : '' %>" data-progress-step="contact"><span>4</span><strong>Contact</strong></li>
+        <li class="<%= form.existingServiceRequestId ? 'is-active' : '' %>" data-progress-step="summary"><span>5</span><strong>Pay</strong></li>
       </ol>
       <input type="hidden" name="preferredPaymentMethod" value="Card">
-      <input type="hidden" name="serviceDetails" data-service-details-field>
-      <section class="request-step" data-request-step="service">
+      <input type="hidden" name="serviceDetails" value="<%= form.serviceDetails || '' %>" data-service-details-field>
+      <section class="request-step" data-request-step="service" <%= form.existingServiceRequestId ? 'hidden' : '' %>>
         <div class="request-step-heading">
           <p class="step-label">Choose your service</p>
           <p>Select the roadside help you need. Your estimate will show before payment.</p>
@@ -101,7 +102,7 @@
         </div>
       </section>
 
-      <section class="request-step" data-request-step="summary" hidden>
+      <section class="request-step" data-request-step="summary" <%= form.existingServiceRequestId ? '' : 'hidden' %>>
         <div class="request-step-heading">
           <p class="step-label">Service summary</p>
           <p>Review the request, then continue to secure payment.</p>
@@ -131,22 +132,22 @@
           <p><span>Secure Payment</span> Your payment is processed securely through Stripe. Once your payment is confirmed, your technician will be dispatched to the service location.</p>
         </div>
       </section>
-      <input type="hidden" name="basePrice" data-quote-field="basePrice">
-      <input type="hidden" name="travelFee" data-quote-field="travelFee">
-      <input type="hidden" name="totalPrice" data-quote-field="totalPrice">
-      <input type="hidden" name="distanceMiles" data-quote-field="distanceMiles">
-      <input type="hidden" name="travelTimeMinutes" data-quote-field="travelTimeMinutes">
-      <input type="hidden" name="estimatedArrivalMinutes" data-quote-field="estimatedArrivalMinutes">
-      <input type="hidden" name="referenceNumber" data-quote-field="referenceNumber">
+      <input type="hidden" name="basePrice" value="<%= form.basePrice || '' %>" data-quote-field="basePrice">
+      <input type="hidden" name="travelFee" value="<%= form.travelFee || '' %>" data-quote-field="travelFee">
+      <input type="hidden" name="totalPrice" value="<%= form.totalPrice || '' %>" data-quote-field="totalPrice">
+      <input type="hidden" name="distanceMiles" value="<%= form.distanceMiles || '' %>" data-quote-field="distanceMiles">
+      <input type="hidden" name="travelTimeMinutes" value="<%= form.travelTimeMinutes || '' %>" data-quote-field="travelTimeMinutes">
+      <input type="hidden" name="estimatedArrivalMinutes" value="<%= form.estimatedArrivalMinutes || '' %>" data-quote-field="estimatedArrivalMinutes">
+      <input type="hidden" name="referenceNumber" value="<%= form.referenceNumber || '' %>" data-quote-field="referenceNumber">
       <input type="hidden" name="travelEstimateStatus" data-quote-field="travelEstimateStatus">
-      <input type="hidden" name="travelEstimateSource" data-quote-field="travelEstimateSource">
-      <input type="hidden" name="longDistanceApplies" data-quote-field="longDistanceApplies">
+      <input type="hidden" name="travelEstimateSource" value="<%= form.travelEstimateSource || '' %>" data-quote-field="travelEstimateSource">
+      <input type="hidden" name="longDistanceApplies" value="<%= form.longDistanceApplies || '' %>" data-quote-field="longDistanceApplies">
       <input type="hidden" name="maxTravelTimeMinutes" data-quote-field="maxTravelTimeMinutes">
-      <input type="hidden" name="longDistanceTier" data-quote-field="longDistanceTier">
-      <input type="hidden" name="travelFeePercent" data-quote-field="travelFeePercent">
-      <input type="hidden" name="longDistanceThresholdMinutes" data-quote-field="longDistanceThresholdMinutes">
-      <input type="hidden" name="locationLat" data-location-lat>
-      <input type="hidden" name="locationLng" data-location-lng>
+      <input type="hidden" name="longDistanceTier" value="<%= form.longDistanceTier || '' %>" data-quote-field="longDistanceTier">
+      <input type="hidden" name="travelFeePercent" value="<%= form.travelFeePercent || '' %>" data-quote-field="travelFeePercent">
+      <input type="hidden" name="longDistanceThresholdMinutes" value="<%= form.longDistanceThresholdMinutes || '' %>" data-quote-field="longDistanceThresholdMinutes">
+      <input type="hidden" name="locationLat" value="<%= form.locationLat || '' %>" data-location-lat>
+      <input type="hidden" name="locationLng" value="<%= form.locationLng || '' %>" data-location-lng>
       <section class="confirmation-panel" data-confirmation-panel hidden>
         <h2>Request received.</h2>
         <p>Reference number: <strong data-reference-number></strong></p>

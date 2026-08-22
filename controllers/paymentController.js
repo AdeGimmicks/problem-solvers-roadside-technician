@@ -131,7 +131,8 @@ async function cancel(req, res, next) {
     res.render('payment-cancel', {
       title: 'Payment Cancelled',
       metaDescription: 'Your payment was cancelled.',
-      request
+      request,
+      returnUrl: request ? `/request-service?resume=${encodeURIComponent(request._id.toString())}` : '/request-service'
     });
   } catch (error) {
     next(error);

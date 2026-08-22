@@ -12,7 +12,7 @@
         <p>No payment was completed. You can request service again or call/text us directly.</p>
       <% } %>
       <div class="hero-actions">
-        <a class="btn primary" href="/request-service<%= request ? `?service=${encodeURIComponent(request.problem)}` : '' %>">Return To Request</a>
+        <a class="btn primary" href="<%= returnUrl || '/request-service' %>">Return To Request</a>
         <a class="btn ghost" href="tel:<%= settings.phoneNumber %>">Call Now</a>
         <a class="btn ghost" href="sms:<%= settings.textNumber %>">Text Now</a>
       </div>
