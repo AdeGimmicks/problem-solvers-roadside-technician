@@ -137,8 +137,18 @@ async function lookupIpLocation(ip) {
 
 async function getLocation(req, ip) {
   const headerLocation = locationFromHeaders(req);
-  if (headerLocation.city || headerLocation.region || headerLocation.country) return headerLocation;
-  return lookupIpLocation(ip);
+  if (headerLocation.city && headerLocation.region && headerLocation.country) return headerLocation;
+  const lookedUpLocation = await lookupIpLocation(ip);
+  return cleanObject({
+    ...lookedUpLocation,
+    ...headerLocation,
+    city: headerLocation.city || lookedUpLocation.city,
+    region: headerLocation.region || lookedUpLocation.region,
+    country: headerLocation.country || lookedUpLocation.country,
+    postal: headerLocation.postal || lookedUpLocation.postal,
+    timezone: headerLocation.timezone || lookedUpLocation.timezone,
+    isp: headerLocation.isp || lookedUpLocation.isp
+  });
 }
 
 function isOwnerVisit(req, ip, visitorId) {

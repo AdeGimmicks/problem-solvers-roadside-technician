@@ -164,7 +164,8 @@ function formatDashboardTime(value) {
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    second: '2-digit'
+    second: '2-digit',
+    timeZoneName: 'short'
   }).format(new Date(value));
 }
 
@@ -385,8 +386,8 @@ async function getAudienceStats(since) {
   const ownerVisitEvents = pageVisitEvents.filter((event) => event.visitorType === 'owner');
   const customerVisitEvents = pageVisitEvents.filter((event) => event.visitorType !== 'owner');
   const sourceGroups = buildJourneyGroups(allVisitorJourneys, (journey) => ({
-    label: journey.badge === 'Owner visit' ? 'Owner Visits' : journey.sourceLabel,
-    category: journey.badge === 'Owner visit' ? 'Owner' : journey.sourceCategory
+    label: journey.sourceLabel,
+    category: journey.sourceCategory
   }));
 
   return {
@@ -524,11 +525,49 @@ function csvRow(values) {
   return values.map(csvValue).join(',');
 }
 
+function exportFilter(req, since) {
+  const type = String(req.query.type || 'all');
+  const sourceName = String(req.query.sourceName || '').trim();
+  const sourceCategory = String(req.query.sourceCategory || '').trim();
+  const query = { createdAt: { $gte: since } };
+  let label = 'all-visits';
+
+  if (type === 'page') {
+    query.eventType = 'page_view';
+    label = 'page-visits';
+  }
+  if (type === 'real') {
+    query.eventType = 'page_view';
+    query.visitorType = { $ne: 'owner' };
+    label = 'real-visitor-visits';
+  }
+  if (type === 'owner') {
+    query.eventType = 'page_view';
+    query.visitorType = 'owner';
+    label = 'owner-visits';
+  }
+  if (type === 'known') {
+    query.visitorId = { $nin: ['', null] };
+    label = 'known-visitors';
+  }
+  if (type === 'source' && sourceName) {
+    query.sourceName = sourceName;
+    if (sourceCategory) query.sourceCategory = sourceCategory;
+    label = `${sourceName}-${sourceCategory || 'source'}`;
+  }
+
+  return {
+    query,
+    label: label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'visitor-export'
+  };
+}
+
 async function audienceExport(req, res, next) {
   try {
     const days = audienceDays(req);
     const since = audienceSince(days);
-    const events = await VisitorEvent.find({ createdAt: { $gte: since } }).sort({ createdAt: -1 }).lean();
+    const filter = exportFilter(req, since);
+    const events = await VisitorEvent.find(filter.query).sort({ createdAt: -1 }).lean();
     const decorated = events.map(decorateEvent);
     const rows = [
       csvRow([
@@ -584,7 +623,7 @@ async function audienceExport(req, res, next) {
     ];
     const filenameDate = new Date().toISOString().slice(0, 10);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="visitor-journeys-${days}d-${filenameDate}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${filter.label}-${days}d-${filenameDate}.csv"`);
     res.send(rows.join('\n'));
   } catch (error) {
     next(error);

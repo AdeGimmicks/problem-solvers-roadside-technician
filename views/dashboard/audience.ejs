@@ -33,6 +33,9 @@
       </summary>
       <div class="request-manager-body audience-manager-body">
         <section class="request-manager-main audience-manager-main">
+          <div class="audience-export-row">
+            <a class="btn secondary dashboard-action-btn" href="/dashboard/audience/export.csv?days=<%= days %>&type=page">Download Page Visits CSV</a>
+          </div>
           <div class="audience-expanded-list">
             <% audience.pageVisitDateGroups.forEach((dateGroup) => { %>
               <details class="audience-date-group">
@@ -70,6 +73,9 @@
       </summary>
       <div class="request-manager-body audience-manager-body">
         <section class="request-manager-main audience-manager-main">
+          <div class="audience-export-row">
+            <a class="btn secondary dashboard-action-btn" href="/dashboard/audience/export.csv?days=<%= days %>&type=real">Download Real Visitor CSV</a>
+          </div>
           <div class="audience-expanded-list">
             <% audience.customerVisitDateGroups.forEach((dateGroup) => { %>
               <details class="audience-date-group">
@@ -107,6 +113,9 @@
       </summary>
       <div class="request-manager-body audience-manager-body">
         <section class="request-manager-main audience-manager-main">
+          <div class="audience-export-row">
+            <a class="btn secondary dashboard-action-btn" href="/dashboard/audience/export.csv?days=<%= days %>&type=owner">Download Owner Visits CSV</a>
+          </div>
           <div class="audience-expanded-list">
             <% audience.ownerVisitDateGroups.forEach((dateGroup) => { %>
               <details class="audience-date-group">
@@ -144,6 +153,9 @@
       </summary>
       <div class="request-manager-body audience-manager-body">
         <section class="request-manager-main audience-manager-main">
+          <div class="audience-export-row">
+            <a class="btn secondary dashboard-action-btn" href="/dashboard/audience/export.csv?days=<%= days %>&type=known">Download Known Visitors CSV</a>
+          </div>
           <div class="audience-expanded-list">
             <% audience.knownVisitorDateGroups.forEach((dateGroup) => { %>
               <details class="audience-date-group">
@@ -182,6 +194,9 @@
         </summary>
         <div class="request-manager-body audience-manager-body">
           <section class="request-manager-main audience-manager-main">
+            <div class="audience-export-row">
+              <a class="btn secondary dashboard-action-btn" href="/dashboard/audience/export.csv?days=<%= days %>&type=source&sourceName=<%= encodeURIComponent(source.label) %>&sourceCategory=<%= encodeURIComponent(source.category) %>">Download <%= source.label %> CSV</a>
+            </div>
             <div class="audience-expanded-list">
               <% source.dateGroups.forEach((dateGroup) => { %>
                 <details class="audience-date-group">

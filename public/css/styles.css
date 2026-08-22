@@ -1607,6 +1607,12 @@ textarea {
   gap: 10px;
 }
 
+.audience-export-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
 .audience-expanded-row,
 .audience-journey-row > summary {
   display: grid;
@@ -2654,10 +2660,10 @@ td {
   display: inline-flex;
   width: fit-content;
   padding: 6px 8px;
-  border: 1px solid rgba(255, 210, 31, 0.35);
+  border: 1px solid rgba(255, 210, 31, 0.65);
   border-radius: 8px;
-  color: var(--black);
-  background: var(--gold);
+  color: var(--yellow);
+  background: rgba(255, 210, 31, 0.16);
   font-weight: 900;
 }
 
