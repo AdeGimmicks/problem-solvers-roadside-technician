@@ -223,6 +223,7 @@ function decorateEvent(event = {}) {
     visitorLabel: plain.visitorLabel || (plain.visitorType === 'owner' ? 'Owner' : 'Visitor'),
     deviceLabel: [plain.deviceType, plain.browserName].filter(Boolean).join(' / ') || 'Unknown device',
     locationLabel: [plain.location?.city, plain.location?.region, plain.location?.country].filter(Boolean).join(', ') || 'Location unavailable',
+    ispLabel: plain.location?.isp || 'ISP unavailable',
     ipLabel: plain.ipAddress || 'Not stored on older record',
     displayTime: formatDashboardTime(plain.createdAt),
     displayDate: formatDashboardDate(plain.createdAt)
@@ -257,6 +258,7 @@ function buildVisitorJourneys(events) {
       services,
       ipAddress: first.ipAddress || 'Not stored',
       locationLabel: first.locationLabel,
+      ispLabel: first.ispLabel,
       deviceLabel: first.deviceLabel,
       firstSeen: first.createdAt,
       lastSeen: last.createdAt,
@@ -297,6 +299,44 @@ function buildJourneyGroups(journeys, getGroup) {
       journeys: journeysForDate.sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen))
     })).sort((a, b) => String(b.date).localeCompare(String(a.date)))
   })).sort((a, b) => b.count - a.count);
+}
+
+function buildEventDateGroups(events) {
+  const groups = new Map();
+  events.forEach((event) => {
+    const dateKey = dashboardDateKey(event.createdAt);
+    if (!groups.has(dateKey)) groups.set(dateKey, []);
+    groups.get(dateKey).push(event);
+  });
+
+  return Array.from(groups.entries()).map(([date, eventsForDate]) => ({
+    date,
+    displayDate: eventsForDate[0]?.createdAt ? formatDashboardDate(eventsForDate[0].createdAt) : 'Unknown date',
+    events: eventsForDate.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  })).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
+function buildJourneyDateGroups(journeys) {
+  const groups = new Map();
+  journeys.forEach((journey) => {
+    const dateKey = dashboardDateKey(journey.lastSeen);
+    if (!groups.has(dateKey)) groups.set(dateKey, []);
+    groups.get(dateKey).push(journey);
+  });
+
+  return Array.from(groups.entries()).map(([date, journeysForDate]) => ({
+    date,
+    displayDate: journeysForDate[0]?.lastSeen ? formatDashboardDate(journeysForDate[0].lastSeen) : 'Unknown date',
+    journeys: journeysForDate.sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen))
+  })).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
+function audienceDays(req) {
+  return Math.max(1, Math.min(Number(req.query.days || 7), 90));
+}
+
+function audienceSince(days) {
+  return new Date(Date.now() - (1000 * 60 * 60 * 24 * days));
 }
 
 async function getAudienceStats(since) {
@@ -360,9 +400,13 @@ async function getAudienceStats(since) {
     topLandingPages: topLandingPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
     sourceBreakdown: sourceGroups,
     pageVisitEvents,
+    pageVisitDateGroups: buildEventDateGroups(pageVisitEvents),
     customerVisitEvents,
+    customerVisitDateGroups: buildEventDateGroups(customerVisitEvents),
     ownerVisitEvents,
+    ownerVisitDateGroups: buildEventDateGroups(ownerVisitEvents),
     knownVisitorRows: allVisitorJourneys,
+    knownVisitorDateGroups: buildJourneyDateGroups(allVisitorJourneys),
     recentEvents: decoratedRecentEvents,
     serviceGroups,
     visitorJourneys
@@ -460,8 +504,8 @@ async function payments(req, res) {
 }
 
 async function audience(req, res) {
-  const days = Math.max(1, Math.min(Number(req.query.days || 7), 90));
-  const since = new Date(Date.now() - (1000 * 60 * 60 * 24 * days));
+  const days = audienceDays(req);
+  const since = audienceSince(days);
   const stats = await getAudienceStats(since);
   res.render('dashboard/audience', {
     title: 'Website Audience',
@@ -469,6 +513,82 @@ async function audience(req, res) {
     days,
     audience: stats
   });
+}
+
+function csvValue(value) {
+  const text = String(value ?? '');
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function csvRow(values) {
+  return values.map(csvValue).join(',');
+}
+
+async function audienceExport(req, res, next) {
+  try {
+    const days = audienceDays(req);
+    const since = audienceSince(days);
+    const events = await VisitorEvent.find({ createdAt: { $gte: since } }).sort({ createdAt: -1 }).lean();
+    const decorated = events.map(decorateEvent);
+    const rows = [
+      csvRow([
+        'Time',
+        'Date',
+        'Visitor Type',
+        'Visitor Label',
+        'Source',
+        'Source Category',
+        'Event',
+        'Page',
+        'Path',
+        'Landing Page',
+        'Landing Path',
+        'Service',
+        'IP Address',
+        'Location',
+        'ISP',
+        'Device',
+        'Browser',
+        'Operating System',
+        'Campaign',
+        'Ad Click ID',
+        'Referrer',
+        'Visitor ID',
+        'Session ID'
+      ]),
+      ...decorated.map((event) => csvRow([
+        event.displayTime,
+        event.displayDate,
+        event.visitorType,
+        event.visitorLabel,
+        event.sourceLabel,
+        event.sourceCategory,
+        event.actionLabel,
+        event.pageLabel,
+        event.path,
+        event.landingLabel,
+        event.landingPath,
+        event.serviceName,
+        event.ipLabel,
+        event.locationLabel,
+        event.ispLabel,
+        event.deviceType,
+        event.browserName,
+        event.operatingSystem,
+        event.campaignName,
+        event.adClickId,
+        event.referrer,
+        event.visitorId,
+        event.sessionId
+      ]))
+    ];
+    const filenameDate = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="visitor-journeys-${days}d-${filenameDate}.csv"`);
+    res.send(rows.join('\n'));
+  } catch (error) {
+    next(error);
+  }
 }
 
 async function cms(req, res) {
@@ -688,6 +808,7 @@ module.exports = {
   customers,
   payments,
   audience,
+  audienceExport,
   cms,
   liveLocation,
   updateLiveLocation,

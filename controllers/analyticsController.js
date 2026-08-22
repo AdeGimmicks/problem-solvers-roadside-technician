@@ -10,7 +10,19 @@ function clean(value, maxLength = 300) {
 
 function getClientIp(req) {
   const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-  return forwarded || req.ip || req.socket?.remoteAddress || '';
+  return normalizeIp(forwarded || req.ip || req.socket?.remoteAddress || '');
+}
+
+function normalizeIp(ip) {
+  return String(ip || '').replace(/^::ffff:/, '').trim();
+}
+
+function isPublicIp(ip) {
+  const value = normalizeIp(ip);
+  if (!value || value === '::1' || value === '127.0.0.1') return false;
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(value)) return false;
+  if (/^(fc|fd|fe80):/i.test(value)) return false;
+  return true;
 }
 
 function hashIp(ip) {
@@ -83,12 +95,50 @@ function parseDevice(userAgent) {
   return { deviceType, browserName, operatingSystem };
 }
 
-function getLocation(req) {
-  return {
+function locationFromHeaders(req) {
+  return cleanObject({
     city: clean(req.headers['x-vercel-ip-city'] || req.headers['cf-ipcity'], 80),
     region: clean(req.headers['x-vercel-ip-country-region'] || req.headers['cf-region'], 80),
-    country: clean(req.headers['x-vercel-ip-country'] || req.headers['cf-ipcountry'], 80)
-  };
+    country: clean(req.headers['x-vercel-ip-country'] || req.headers['cf-ipcountry'], 80),
+    postal: clean(req.headers['x-vercel-ip-postal-code'], 40),
+    timezone: clean(req.headers['x-vercel-ip-timezone'], 80)
+  });
+}
+
+function cleanObject(value) {
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item));
+}
+
+async function lookupIpLocation(ip) {
+  if (!isPublicIp(ip) || process.env.DISABLE_IP_GEOLOCATION === 'true') return {};
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1200);
+  try {
+    const response = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'ProblemSolversRoadside/1.0' }
+    });
+    if (!response.ok) return {};
+    const data = await response.json();
+    return cleanObject({
+      city: clean(data.city, 80),
+      region: clean(data.region || data.region_code, 80),
+      country: clean(data.country_name || data.country, 80),
+      postal: clean(data.postal, 40),
+      timezone: clean(data.timezone, 80),
+      isp: clean(data.org || data.asn, 120)
+    });
+  } catch (error) {
+    return {};
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function getLocation(req, ip) {
+  const headerLocation = locationFromHeaders(req);
+  if (headerLocation.city || headerLocation.region || headerLocation.country) return headerLocation;
+  return lookupIpLocation(ip);
 }
 
 function isOwnerVisit(req, ip, visitorId) {
@@ -138,7 +188,7 @@ async function track(req, res) {
       visitorLabel: ownerVisit ? `Owner${req.session?.admin?.name ? `: ${req.session.admin.name}` : ''}` : 'Visitor',
       ...source,
       ...device,
-      location: getLocation(req),
+      location: await getLocation(req, ipAddress),
       metadata: {
         source: 'website',
         screen: clean(req.query.screen, 40),

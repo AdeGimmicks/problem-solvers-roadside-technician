@@ -29,7 +29,10 @@ const visitorEventSchema = new mongoose.Schema({
   location: {
     city: { type: String, trim: true },
     region: { type: String, trim: true },
-    country: { type: String, trim: true }
+    country: { type: String, trim: true },
+    postal: { type: String, trim: true },
+    timezone: { type: String, trim: true },
+    isp: { type: String, trim: true }
   },
   metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
   createdAt: { type: Date, default: Date.now, index: true, expires: 60 * 60 * 24 * 180 }

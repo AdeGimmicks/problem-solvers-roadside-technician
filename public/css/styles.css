@@ -1610,7 +1610,7 @@ textarea {
 .audience-expanded-row,
 .audience-journey-row > summary {
   display: grid;
-  grid-template-columns: minmax(170px, 1fr) repeat(3, minmax(140px, 0.8fr));
+  grid-template-columns: minmax(170px, 1fr) repeat(4, minmax(130px, 0.8fr));
   gap: 10px 14px;
   align-items: center;
   padding: 14px 16px;
@@ -1668,6 +1668,59 @@ textarea {
 
 .audience-journey-row[open] > summary {
   border-color: rgba(255, 210, 31, 0.45);
+}
+
+.audience-date-group {
+  display: grid;
+  gap: 10px;
+}
+
+.audience-date-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 210, 31, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 210, 31, 0.07);
+  cursor: pointer;
+  list-style: none;
+}
+
+.audience-date-summary::-webkit-details-marker {
+  display: none;
+}
+
+.audience-date-summary::after {
+  content: 'Open';
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 210, 31, 0.35);
+  border-radius: 8px;
+  color: var(--yellow);
+  font-family: var(--display-font);
+  text-transform: uppercase;
+}
+
+.audience-date-group[open] > .audience-date-summary::after {
+  content: 'Close';
+}
+
+.audience-date-summary strong {
+  color: var(--white);
+  font-family: var(--display-font);
+  font-size: 1.25rem;
+}
+
+.audience-date-summary span {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.audience-date-body {
+  display: grid;
+  gap: 10px;
+  padding-left: 12px;
 }
 
 .audience-row-timeline {
