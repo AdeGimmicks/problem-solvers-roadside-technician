@@ -19,38 +19,84 @@
       <summary><span>Page Visits</span><strong><%= audience.visits %></strong></summary>
       <div class="metric-drilldown">
         <% audience.pageVisitEvents.forEach((event) => { %>
-          <p><strong><%= event.pageLabel %></strong><span><%= event.createdAt.toLocaleString() %> - <%= event.path || '-' %></span></p>
+          <div class="metric-row">
+            <strong><%= event.pageLabel %></strong>
+            <span><b>IP</b><%= event.ipLabel %></span>
+            <span><b>Source</b><%= event.sourceLabel %></span>
+            <span><b>Time</b><%= event.displayTime %></span>
+            <small><%= event.path || '-' %></small>
+          </div>
         <% }) %>
-        <% if (!audience.pageVisitEvents.length) { %><p>No page visits in this window.</p><% } %>
+        <% if (!audience.pageVisitEvents.length) { %><div class="metric-row"><strong>No page visits in this window.</strong></div><% } %>
       </div>
     </details>
     <details class="stat-card metric-card">
       <summary><span>Real Visitor Visits</span><strong><%= audience.customerVisits %></strong></summary>
       <div class="metric-drilldown">
         <% audience.customerVisitEvents.forEach((event) => { %>
-          <p><strong><%= event.sourceLabel %></strong><span><%= event.pageLabel %> - <%= event.ipAddress || 'No IP stored' %></span></p>
+          <div class="metric-row">
+            <strong><%= event.pageLabel %></strong>
+            <span><b>IP</b><%= event.ipLabel %></span>
+            <span><b>Source</b><%= event.sourceLabel %></span>
+            <span><b>Time</b><%= event.displayTime %></span>
+            <small><%= event.path || '-' %></small>
+          </div>
         <% }) %>
-        <% if (!audience.customerVisitEvents.length) { %><p>No real visitor visits in this window.</p><% } %>
+        <% if (!audience.customerVisitEvents.length) { %><div class="metric-row"><strong>No real visitor visits in this window.</strong></div><% } %>
       </div>
     </details>
     <details class="stat-card metric-card">
       <summary><span>Owner Visits</span><strong><%= audience.ownerVisits %></strong></summary>
       <div class="metric-drilldown">
         <% audience.ownerVisitEvents.forEach((event) => { %>
-          <p><strong><%= event.pageLabel %></strong><span><%= event.createdAt.toLocaleString() %> - <%= event.ipAddress || 'No IP stored' %></span></p>
+          <div class="metric-row">
+            <strong><%= event.pageLabel %></strong>
+            <span><b>IP</b><%= event.ipLabel %></span>
+            <span><b>Source</b><%= event.sourceLabel %></span>
+            <span><b>Time</b><%= event.displayTime %></span>
+            <small><%= event.path || '-' %></small>
+          </div>
         <% }) %>
-        <% if (!audience.ownerVisitEvents.length) { %><p>No owner visits in this window.</p><% } %>
+        <% if (!audience.ownerVisitEvents.length) { %><div class="metric-row"><strong>No owner visits in this window.</strong></div><% } %>
       </div>
     </details>
     <details class="stat-card metric-card">
       <summary><span>Known Visitors</span><strong><%= audience.uniqueVisitors %></strong></summary>
       <div class="metric-drilldown">
         <% audience.knownVisitorRows.forEach((journey) => { %>
-          <p><strong><%= journey.visitorLabel %></strong><span><%= journey.sourceLabel %> - <%= journey.ipAddress %> - <%= journey.lastSeen.toLocaleString() %></span></p>
+          <div class="metric-row">
+            <strong><%= journey.visitorLabel %></strong>
+            <span><b>IP</b><%= journey.ipAddress %></span>
+            <span><b>Source</b><%= journey.sourceLabel %></span>
+            <span><b>Last seen</b><%= journey.lastSeenDisplay %></span>
+            <small><%= journey.landingLabel %> - <%= journey.landingPath %></small>
+          </div>
         <% }) %>
-        <% if (!audience.knownVisitorRows.length) { %><p>No known visitors in this window.</p><% } %>
+        <% if (!audience.knownVisitorRows.length) { %><div class="metric-row"><strong>No known visitors in this window.</strong></div><% } %>
       </div>
     </details>
+  </section>
+
+  <section class="stat-grid audience-stat-grid traffic-source-stat-grid">
+    <% audience.sourceBreakdown.forEach((source) => { %>
+      <details class="stat-card metric-card source-metric-card">
+        <summary><span><%= source.label %> Visits</span><strong><%= source.count %></strong></summary>
+        <div class="metric-drilldown">
+          <% source.dateGroups.forEach((dateGroup) => { %>
+            <div class="metric-date-label"><%= dateGroup.displayDate %></div>
+            <% dateGroup.journeys.forEach((journey) => { %>
+              <div class="metric-row">
+                <strong><%= journey.visitorLabel %></strong>
+                <span><b>IP</b><%= journey.ipAddress %></span>
+                <span><b>Landed</b><%= journey.landingLabel %></span>
+                <span><b>Last seen</b><%= journey.lastSeenDisplay %></span>
+                <small><%= journey.badge %> - <%= journey.landingPath || '-' %></small>
+              </div>
+            <% }) %>
+          <% }) %>
+        </div>
+      </details>
+    <% }) %>
   </section>
 
   <section class="dashboard-grid audience-proof-grid">
@@ -79,7 +125,7 @@
               <% item.dateGroups.forEach((dateGroup) => { %>
                 <details class="source-date-group">
                   <summary>
-                    <strong><%= dateGroup.date === 'Unknown date' ? dateGroup.date : new Date(`${dateGroup.date}T00:00:00`).toLocaleDateString() %></strong>
+                    <strong><%= dateGroup.displayDate %></strong>
                     <span><%= dateGroup.journeys.length %></span>
                   </summary>
                   <div class="source-journey-list">
@@ -88,16 +134,17 @@
                         <summary>
                           <div>
                             <strong><%= journey.badge %></strong>
-                            <small><%= journey.landingLabel %> - <%= journey.ipAddress %> - <%= journey.lastSeen.toLocaleString() %></small>
+                            <small><%= journey.landingLabel %> - <%= journey.ipAddress %> - <%= journey.lastSeenDisplay %></small>
                           </div>
                           <span>Open</span>
                         </summary>
                         <ol class="journey-timeline">
                           <% journey.events.forEach((event) => { %>
                             <li>
-                              <span><%= event.createdAt.toLocaleString() %></span>
+                              <span><%= event.displayTime %></span>
                               <strong><%= event.actionLabel %></strong>
                               <small><%= event.serviceName || event.pageLabel %> - <%= event.path || '-' %></small>
+                              <small>IP: <%= event.ipLabel %> - Source: <%= event.sourceLabel %></small>
                             </li>
                           <% }) %>
                         </ol>
@@ -162,7 +209,7 @@
               <p><strong>IP:</strong> <%= journey.ipAddress %></p>
               <p><strong>Area:</strong> <%= journey.locationLabel %></p>
               <p><strong>Device:</strong> <%= journey.deviceLabel %></p>
-              <p><strong>Last seen:</strong> <%= journey.lastSeen ? journey.lastSeen.toLocaleString() : '-' %></p>
+              <p><strong>Last seen:</strong> <%= journey.lastSeenDisplay %></p>
             </div>
             <span class="journey-toggle">View details</span>
           </summary>
@@ -177,7 +224,7 @@
             <ol class="journey-timeline">
               <% journey.events.forEach((event) => { %>
                 <li>
-                  <span><%= event.createdAt.toLocaleString() %></span>
+                  <span><%= event.displayTime %></span>
                   <strong><%= event.actionLabel %></strong>
                   <small><%= event.serviceName || event.pageLabel %> - <%= event.path || '-' %></small>
                 </li>
@@ -213,8 +260,8 @@
               <% group.events.forEach((event) => { %>
                 <div class="service-visitor-event">
                   <strong><%= event.actionLabel %></strong>
-                  <span><%= event.createdAt.toLocaleString() %></span>
-                  <small><%= event.visitorLabel %> - <%= event.sourceLabel %></small>
+                  <span><%= event.displayTime %></span>
+                  <small><%= event.visitorLabel %> - <%= event.sourceLabel %> - IP: <%= event.ipLabel %></small>
                   <small><%= event.path || '-' %></small>
                 </div>
               <% }) %>
@@ -256,8 +303,8 @@
         <% audience.recentEvents.forEach((event) => { %>
           <div>
             <strong><%= event.actionLabel %></strong>
-            <span><%= event.createdAt.toLocaleString() %></span>
-            <small><%= event.visitorLabel %> - <%= event.sourceLabel %> - <%= event.serviceName || event.pageLabel %></small>
+            <span><%= event.displayTime %></span>
+            <small><%= event.visitorLabel %> - <%= event.sourceLabel %> - <%= event.serviceName || event.pageLabel %> - IP: <%= event.ipLabel %></small>
           </div>
         <% }) %>
       </div>

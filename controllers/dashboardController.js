@@ -14,6 +14,8 @@ const { issueToken } = require('../middleware/auth');
 const { REQUEST_STATUSES, PUBLIC_SERVICE_NAMES } = require('../utils/constants');
 const { cleanObject } = require('../utils/sanitize');
 
+const dashboardTimeZone = process.env.DASHBOARD_TIME_ZONE || 'America/Chicago';
+
 async function ensureDefaultAdmin() {
   const count = await Admin.countDocuments();
   if (count || !process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) return;
@@ -144,9 +146,48 @@ function pageLabel(path = '') {
     '/payment-policy': 'Payment Policy',
     '/cancellation-policy': 'Cancellation Policy',
     '/refund-policy': 'Refund Policy',
-    '/service-disclaimer': 'Service Disclaimer'
+    '/service-disclaimer': 'Service Disclaimer',
+    '/tire-change': 'Tire Change Page',
+    '/jump-start': 'Jump Start Page',
+    '/lockout': 'Lockout Page',
+    '/fuel-delivery': 'Fuel Delivery Page'
   };
   return labels[cleanPath] || cleanPath.replace(/^\/+/, '').replaceAll('-', ' ') || 'Home';
+}
+
+function formatDashboardTime(value) {
+  if (!value) return '-';
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: dashboardTimeZone,
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(new Date(value));
+}
+
+function formatDashboardDate(value) {
+  if (!value) return 'Unknown date';
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: dashboardTimeZone,
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(new Date(value));
+}
+
+function dashboardDateKey(value) {
+  if (!value) return 'Unknown date';
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: dashboardTimeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date(value));
+  const get = (type) => parts.find((part) => part.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
 }
 
 function actionLabel(eventType = '') {
@@ -181,7 +222,10 @@ function decorateEvent(event = {}) {
     sourceCategory: plain.sourceCategory || (fallbackSource(plain).includes('Ads') ? 'Paid Ads' : 'Unclassified'),
     visitorLabel: plain.visitorLabel || (plain.visitorType === 'owner' ? 'Owner' : 'Visitor'),
     deviceLabel: [plain.deviceType, plain.browserName].filter(Boolean).join(' / ') || 'Unknown device',
-    locationLabel: [plain.location?.city, plain.location?.region, plain.location?.country].filter(Boolean).join(', ') || 'Location unavailable'
+    locationLabel: [plain.location?.city, plain.location?.region, plain.location?.country].filter(Boolean).join(', ') || 'Location unavailable',
+    ipLabel: plain.ipAddress || 'Not stored on older record',
+    displayTime: formatDashboardTime(plain.createdAt),
+    displayDate: formatDashboardDate(plain.createdAt)
   };
 }
 
@@ -216,6 +260,8 @@ function buildVisitorJourneys(events) {
       deviceLabel: first.deviceLabel,
       firstSeen: first.createdAt,
       lastSeen: last.createdAt,
+      firstSeenDisplay: formatDashboardTime(first.createdAt),
+      lastSeenDisplay: formatDashboardTime(last.createdAt),
       events: ordered.slice(-8).reverse()
     };
   }).sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen));
@@ -235,7 +281,7 @@ function buildJourneyGroups(journeys, getGroup) {
       });
     }
     const current = groups.get(key);
-    const dateKey = journey.lastSeen ? new Date(journey.lastSeen).toISOString().slice(0, 10) : 'Unknown date';
+    const dateKey = dashboardDateKey(journey.lastSeen);
     if (!current.dateGroups.has(dateKey)) current.dateGroups.set(dateKey, []);
     current.dateGroups.get(dateKey).push(journey);
     current.count += 1;
@@ -247,6 +293,7 @@ function buildJourneyGroups(journeys, getGroup) {
     count: group.count,
     dateGroups: Array.from(group.dateGroups.entries()).map(([date, journeysForDate]) => ({
       date,
+      displayDate: journeysForDate[0]?.lastSeen ? formatDashboardDate(journeysForDate[0].lastSeen) : 'Unknown date',
       journeys: journeysForDate.sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen))
     })).sort((a, b) => String(b.date).localeCompare(String(a.date)))
   })).sort((a, b) => b.count - a.count);

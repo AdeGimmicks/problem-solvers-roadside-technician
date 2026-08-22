@@ -2064,18 +2064,40 @@ textarea {
   border-top: 1px solid rgba(255, 210, 31, 0.14);
 }
 
-.metric-drilldown p {
+.metric-row {
   display: grid;
-  gap: 2px;
-  margin: 0;
-  padding: 8px;
+  grid-template-columns: minmax(130px, 1fr) repeat(3, minmax(110px, 0.8fr));
+  gap: 8px 12px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid rgba(255, 210, 31, 0.16);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.045);
 }
 
-.metric-drilldown span {
+.metric-row > strong {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.metric-row span {
+  display: grid;
+  gap: 2px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.metric-row span b {
+  color: var(--white);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.metric-row small {
+  grid-column: 1 / -1;
+  color: var(--muted);
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -2086,12 +2108,23 @@ textarea {
   padding-bottom: 4px;
 }
 
+.traffic-source-stat-grid {
+  margin-top: 16px;
+}
+
+.metric-date-label {
+  color: var(--yellow);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .dashboard-main > .stat-grid .stat-card {
   min-width: 170px;
   border-radius: 8px;
 }
 
-.stat-card strong {
+.stat-card > summary > strong {
   font-size: 2.2rem;
 }
 
