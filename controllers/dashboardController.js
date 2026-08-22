@@ -323,12 +323,11 @@ async function getAudienceStats(since) {
       { $sort: { count: -1 } },
       { $limit: 8 }
     ]),
-    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(50).lean(),
+    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(500).lean(),
     VisitorEvent.find({ ...baseMatch, serviceName: { $in: PUBLIC_SERVICE_NAMES } })
       .sort({ createdAt: -1 })
-      .limit(250)
       .lean(),
-    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(600).lean()
+    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).lean()
   ]);
   const topServiceCounts = Object.fromEntries(topServices.map((item) => [item._id, item.count]));
   const decoratedServiceEvents = serviceEvents.map(decorateEvent);
@@ -336,15 +335,16 @@ async function getAudienceStats(since) {
     serviceName,
     label: `${serviceName} Visitors`,
     count: topServiceCounts[serviceName] || 0,
-    events: decoratedServiceEvents.filter((event) => event.serviceName === serviceName).slice(0, 6)
+    events: decoratedServiceEvents.filter((event) => event.serviceName === serviceName)
   }));
   const decoratedRecentEvents = recentEvents.map(decorateEvent);
   const decoratedJourneyEvents = journeyEvents.map(decorateEvent);
-  const visitorJourneys = buildVisitorJourneys(decoratedJourneyEvents).slice(0, 30);
-  const pageVisitEvents = decoratedRecentEvents.filter((event) => event.eventType === 'page_view');
+  const allVisitorJourneys = buildVisitorJourneys(decoratedJourneyEvents);
+  const visitorJourneys = allVisitorJourneys.slice(0, 30);
+  const pageVisitEvents = decoratedJourneyEvents.filter((event) => event.eventType === 'page_view');
   const ownerVisitEvents = pageVisitEvents.filter((event) => event.visitorType === 'owner');
   const customerVisitEvents = pageVisitEvents.filter((event) => event.visitorType !== 'owner');
-  const sourceGroups = buildJourneyGroups(visitorJourneys, (journey) => ({
+  const sourceGroups = buildJourneyGroups(allVisitorJourneys, (journey) => ({
     label: journey.badge === 'Owner visit' ? 'Owner Visits' : journey.sourceLabel,
     category: journey.badge === 'Owner visit' ? 'Owner' : journey.sourceCategory
   }));
@@ -358,11 +358,11 @@ async function getAudienceStats(since) {
     topServices,
     topPages: topPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
     topLandingPages: topLandingPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
-    sourceBreakdown: sourceGroups.slice(0, 8),
-    pageVisitEvents: pageVisitEvents.slice(0, 12),
-    customerVisitEvents: customerVisitEvents.slice(0, 12),
-    ownerVisitEvents: ownerVisitEvents.slice(0, 12),
-    knownVisitorRows: visitorJourneys.slice(0, 12),
+    sourceBreakdown: sourceGroups,
+    pageVisitEvents,
+    customerVisitEvents,
+    ownerVisitEvents,
+    knownVisitorRows: allVisitorJourneys,
     recentEvents: decoratedRecentEvents,
     serviceGroups,
     visitorJourneys

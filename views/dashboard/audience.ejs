@@ -28,7 +28,7 @@
         <span class="request-summary-id"><%= audience.visits %> visits</span>
         <span class="request-summary-service">All pages</span>
         <span class="request-summary-payment is-paid">Tracked</span>
-        <span class="request-summary-date">Latest page views</span>
+        <span class="request-summary-date">All page views</span>
       </summary>
       <div class="request-manager-body audience-manager-body">
         <section class="request-manager-main audience-manager-main">
@@ -36,9 +36,9 @@
             <% audience.pageVisitEvents.forEach((event) => { %>
               <article class="audience-expanded-row">
                 <strong><%= event.pageLabel %></strong>
-                <span><b>IP</b><%= event.ipLabel %></span>
-                <span><b>Source</b><%= event.sourceLabel %></span>
-                <span><b>Time</b><%= event.displayTime %></span>
+                <span><b>IP:</b> <%= event.ipLabel %></span>
+                <span><b>Source:</b> <%= event.sourceLabel %></span>
+                <span><b>Time:</b> <%= event.displayTime %></span>
                 <small><%= event.path || '-' %></small>
               </article>
             <% }) %>
@@ -54,7 +54,7 @@
         <span class="request-summary-id"><%= audience.customerVisits %> visits</span>
         <span class="request-summary-service">Not owner</span>
         <span class="request-summary-payment is-paid">Visitors</span>
-        <span class="request-summary-date">Latest visitors</span>
+        <span class="request-summary-date">All visitor page views</span>
       </summary>
       <div class="request-manager-body audience-manager-body">
         <section class="request-manager-main audience-manager-main">
@@ -62,9 +62,9 @@
             <% audience.customerVisitEvents.forEach((event) => { %>
               <article class="audience-expanded-row">
                 <strong><%= event.pageLabel %></strong>
-                <span><b>IP</b><%= event.ipLabel %></span>
-                <span><b>Source</b><%= event.sourceLabel %></span>
-                <span><b>Time</b><%= event.displayTime %></span>
+                <span><b>IP:</b> <%= event.ipLabel %></span>
+                <span><b>Source:</b> <%= event.sourceLabel %></span>
+                <span><b>Time:</b> <%= event.displayTime %></span>
                 <small><%= event.path || '-' %></small>
               </article>
             <% }) %>
@@ -88,9 +88,9 @@
             <% audience.ownerVisitEvents.forEach((event) => { %>
               <article class="audience-expanded-row">
                 <strong><%= event.pageLabel %></strong>
-                <span><b>IP</b><%= event.ipLabel %></span>
-                <span><b>Source</b><%= event.sourceLabel %></span>
-                <span><b>Time</b><%= event.displayTime %></span>
+                <span><b>IP:</b> <%= event.ipLabel %></span>
+                <span><b>Source:</b> <%= event.sourceLabel %></span>
+                <span><b>Time:</b> <%= event.displayTime %></span>
                 <small><%= event.path || '-' %></small>
               </article>
             <% }) %>
@@ -106,7 +106,7 @@
         <span class="request-summary-id"><%= audience.uniqueVisitors %> visitors</span>
         <span class="request-summary-service">Grouped journeys</span>
         <span class="request-summary-payment is-paid">Sessions</span>
-        <span class="request-summary-date">Latest visitor groups</span>
+        <span class="request-summary-date">All visitor groups</span>
       </summary>
       <div class="request-manager-body audience-manager-body">
         <section class="request-manager-main audience-manager-main">
@@ -114,9 +114,9 @@
             <% audience.knownVisitorRows.forEach((journey) => { %>
               <article class="audience-expanded-row">
                 <strong><%= journey.visitorLabel %></strong>
-                <span><b>IP</b><%= journey.ipAddress %></span>
-                <span><b>Source</b><%= journey.sourceLabel %></span>
-                <span><b>Last seen</b><%= journey.lastSeenDisplay %></span>
+                <span><b>IP:</b> <%= journey.ipAddress %></span>
+                <span><b>Source:</b> <%= journey.sourceLabel %></span>
+                <span><b>Last seen:</b> <%= journey.lastSeenDisplay %></span>
                 <small><%= journey.landingLabel %> - <%= journey.landingPath %></small>
               </article>
             <% }) %>
@@ -144,9 +144,9 @@
                   <details class="audience-expanded-row audience-journey-row">
                     <summary>
                       <strong><%= journey.visitorLabel %></strong>
-                      <span><b>IP</b><%= journey.ipAddress %></span>
-                      <span><b>Landed</b><%= journey.landingLabel %></span>
-                      <span><b>Last seen</b><%= journey.lastSeenDisplay %></span>
+                      <span><b>IP:</b> <%= journey.ipAddress %></span>
+                      <span><b>Landed:</b> <%= journey.landingLabel %></span>
+                      <span><b>Last seen:</b> <%= journey.lastSeenDisplay %></span>
                       <small><%= journey.badge %> - <%= journey.landingPath || '-' %></small>
                     </summary>
                     <ol class="journey-timeline audience-row-timeline">
