@@ -12,6 +12,15 @@
   const csrfToken = panel.dataset.csrf;
   let publicKey = '';
 
+  function isIosDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  function isStandaloneApp() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
   function decodePublicKey(value) {
     const padding = '='.repeat((4 - (value.length % 4)) % 4);
     const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -46,7 +55,11 @@
     if (!supported) {
       setEnabled(false);
       enableButton.disabled = true;
-      setMessage('This browser does not support web push notifications.', true);
+      if (isIosDevice() && !isStandaloneApp()) {
+        setMessage('On iPhone, add Store Manager to your Home Screen, then open it from that Home Screen icon and enable alerts there.', true);
+        return;
+      }
+      setMessage('This browser does not support web push notifications. Try Safari/Chrome on desktop, or use the Home Screen web app on iPhone.', true);
       return;
     }
 
