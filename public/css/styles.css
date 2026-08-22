@@ -2244,6 +2244,48 @@ td {
   font-weight: 800;
 }
 
+.push-settings-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.push-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.push-status-grid p {
+  min-height: 92px;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.push-status-grid span {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.push-status-grid strong {
+  color: var(--white);
+  font-size: clamp(1.4rem, 2vw, 2rem);
+}
+
+[data-push-message].is-error {
+  color: #ff8b8b;
+}
+
+[data-push-state].is-enabled {
+  background: rgba(41, 160, 89, 0.22);
+  color: #82f0a8;
+}
+
 .inline-form,
 .mini-form {
   display: grid;

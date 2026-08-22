@@ -191,6 +191,12 @@ function bookingTime(request) {
   }).format(request.createdAt || new Date());
 }
 
+function bookingLocation(request) {
+  if (request.currentLocation) return request.currentLocation;
+  if (request.location?.address) return request.location.address;
+  return 'Location not provided';
+}
+
 async function sendNewBookingPush(serviceRequest) {
   try {
     const subscriptions = await PushSubscription.find({ role: 'manager' }).lean();
@@ -199,7 +205,7 @@ async function sendNewBookingPush(serviceRequest) {
     const requestId = serviceRequest.requestId || serviceRequest.referenceNumber || serviceRequest._id;
     const name = serviceRequest.customerName || 'Customer';
     const service = serviceRequest.problem || serviceRequest.service || 'Roadside service';
-    const location = serviceRequest.currentLocation || serviceRequest.location || 'Location not provided';
+    const location = bookingLocation(serviceRequest);
     const time = bookingTime(serviceRequest);
     const payload = {
       title: 'New Roadside Booking',
@@ -208,7 +214,7 @@ async function sendNewBookingPush(serviceRequest) {
       badge: '/images/brand/problem-solvers-icon.png',
       tag: `booking-${requestId}`,
       data: {
-        url: `${applicationBaseUrl()}/dashboard/requests?open=${encodeURIComponent(requestId)}`
+        url: `${applicationBaseUrl()}/store-manager/requests?open=${encodeURIComponent(requestId)}`
       }
     };
 

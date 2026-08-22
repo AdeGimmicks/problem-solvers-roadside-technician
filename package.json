@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "check": "node --check server.js && node --check controllers/serviceRequestController.js && node --check controllers/dashboardController.js && node --check controllers/paymentController.js && node --check controllers/technicianController.js && node --check controllers/analyticsController.js && node --check services/smsService.js && node --check routes/publicRoutes.js && node --check routes/dashboardRoutes.js && node --check routes/paymentRoutes.js && node --check models/TechnicianApplication.js && node --check models/VisitorEvent.js",
+    "check": "node --check server.js && node --check controllers/serviceRequestController.js && node --check controllers/dashboardController.js && node --check controllers/paymentController.js && node --check controllers/technicianController.js && node --check controllers/analyticsController.js && node --check controllers/pushController.js && node --check services/smsService.js && node --check services/pushNotificationService.js && node --check routes/publicRoutes.js && node --check routes/dashboardRoutes.js && node --check routes/paymentRoutes.js && node --check models/TechnicianApplication.js && node --check models/VisitorEvent.js && node --check models/PushSubscription.js && node --check models/PushConfig.js",
     "seed": "node utils/seed.js",
     "export:html": "node utils/export-static-html.js"
   },

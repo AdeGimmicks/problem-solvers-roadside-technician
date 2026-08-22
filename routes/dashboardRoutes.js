@@ -1,5 +1,6 @@
 const express = require('express');
 const dashboard = require('../controllers/dashboardController');
+const pushController = require('../controllers/pushController');
 const technicianController = require('../controllers/technicianController');
 const { requireAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -19,6 +20,9 @@ router.get('/customers', requireAdmin, dashboard.customers);
 router.get('/payments', requireAdmin, dashboard.payments);
 router.get('/audience', requireAdmin, dashboard.audience);
 router.get('/audience/export.csv', requireAdmin, dashboard.audienceExport);
+router.get('/push/public-key', requireAdmin, pushController.publicKey);
+router.post('/push/subscribe', requireAdmin, pushController.subscribe);
+router.post('/push/unsubscribe', requireAdmin, pushController.unsubscribe);
 router.get('/cms', requireAdmin, dashboard.cms);
 router.get('/live-location', requireAdmin, dashboard.liveLocation);
 router.post('/live-location', requireAdmin, dashboard.updateLiveLocation);

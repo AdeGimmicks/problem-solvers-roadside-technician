@@ -25,6 +25,25 @@
       </form>
     <% } %>
   </section>
+  <section class="dashboard-panel push-settings-panel" data-push-panel data-csrf="<%= csrfToken %>">
+    <div class="dashboard-topline">
+      <div>
+        <p class="eyebrow">Owner Phone Alerts</p>
+        <h2>Booking Push Notifications</h2>
+      </div>
+      <span class="status-pill" data-push-state>Checking</span>
+    </div>
+    <div class="push-status-grid">
+      <p><span>Browser</span><strong data-push-support>Checking</strong></p>
+      <p><span>Permission</span><strong data-push-permission>Checking</strong></p>
+      <p><span>Subscribed devices</span><strong data-push-count>0</strong></p>
+    </div>
+    <p class="muted-copy" data-push-message>Checking notification support on this device.</p>
+    <div class="dashboard-actions">
+      <button class="btn primary" type="button" data-enable-push>Enable Phone Alerts</button>
+      <button class="btn secondary" type="button" data-disable-push disabled>Disable This Device</button>
+    </div>
+  </section>
   <section class="dashboard-panel">
     <h2>Technician Starting Location</h2>
     <p class="muted-copy">Set where you are starting from now. Quotes use this location against the customer's address or GPS location.</p>
@@ -114,4 +133,6 @@
       <% areas.forEach((area) => { %><p><%= area.name %></p><% }) %>
     </div>
   </section>
-</main></body></html>
+</main>
+<script src="/js/dashboard-push.js?v=booking-push-20260822" defer></script>
+</body></html>
