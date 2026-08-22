@@ -8,7 +8,9 @@ const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
 const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
 
 async function getTechnicianAvailability() {
-  const settings = await BusinessSettings.findOne().lean();
+  const settings = await BusinessSettings.findOne()
+    .sort({ acceptingJobsUpdatedAt: -1, updatedAt: -1 })
+    .lean();
 
   if (!settings || settings.acceptingJobs !== false) {
     return {

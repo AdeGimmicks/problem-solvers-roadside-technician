@@ -46,7 +46,9 @@ async function attachBusinessSettings(req, res, next) {
   }
 
   try {
-    const settings = await BusinessSettings.findOne().lean();
+    const settings = await BusinessSettings.findOne()
+      .sort({ acceptingJobsUpdatedAt: -1, updatedAt: -1 })
+      .lean();
     res.locals.settings = settings || fallbackSettings;
     next();
   } catch (error) {

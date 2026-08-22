@@ -2020,13 +2020,16 @@ textarea {
 .live-location-actions .btn.secondary {
   border-color: var(--white);
   background: var(--white);
-  color: var(--black);
+  color: var(--black) !important;
 }
 
+.live-location-actions .btn:disabled,
 .live-location-actions .btn.ghost:disabled,
 .live-location-actions .btn.secondary:disabled {
-  color: var(--black);
-  opacity: 0.78;
+  border-color: var(--white);
+  background: #e7e7e7;
+  color: var(--black) !important;
+  opacity: 1;
 }
 
 .dashboard-topline-actions {

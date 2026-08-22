@@ -943,8 +943,7 @@ function setupLiveLocationTool() {
 
   const startButton = panel.querySelector('[data-live-location-start]');
   const stopButton = panel.querySelector('[data-live-location-stop]');
-  const acceptJobsButton = panel.querySelector('[data-accept-jobs]');
-  const stopAcceptingJobsButton = panel.querySelector('[data-stop-accepting-jobs]');
+  const availabilityToggleButton = panel.querySelector('[data-job-availability-toggle]');
   const statusText = panel.querySelector('[data-live-location-status]');
   const onlineText = panel.querySelector('[data-live-location-online]');
   const acceptingText = panel.querySelector('[data-live-location-accepting]');
@@ -968,8 +967,11 @@ function setupLiveLocationTool() {
 
   const setAcceptingState = (isAccepting) => {
     if (acceptingText) acceptingText.textContent = isAccepting ? 'Accepting jobs' : 'Not accepting jobs';
-    if (acceptJobsButton) acceptJobsButton.disabled = isAccepting;
-    if (stopAcceptingJobsButton) stopAcceptingJobsButton.disabled = !isAccepting;
+    if (availabilityToggleButton) {
+      availabilityToggleButton.disabled = false;
+      availabilityToggleButton.textContent = isAccepting ? 'Do Not Accept Jobs' : 'Accept Jobs';
+      availabilityToggleButton.dataset.nextAccepting = isAccepting ? 'false' : 'true';
+    }
   };
 
   async function postLiveLocation(payload) {
@@ -990,8 +992,7 @@ function setupLiveLocationTool() {
 
   async function setAcceptingJobs(isAccepting) {
     try {
-      if (acceptJobsButton) acceptJobsButton.disabled = true;
-      if (stopAcceptingJobsButton) stopAcceptingJobsButton.disabled = true;
+      if (availabilityToggleButton) availabilityToggleButton.disabled = true;
       const result = await postLiveLocation({ acceptingJobs: isAccepting });
       const nextAcceptingState = result.acceptingJobs !== false;
       panel.dataset.liveLocationInitialAccepting = nextAcceptingState ? 'true' : 'false';
@@ -1005,7 +1006,7 @@ function setupLiveLocationTool() {
     }
   }
 
-  async function saveLiveLocation(position, force = false) {
+  async function saveLiveLocation(position, force = false, acceptingJobs = null) {
     const now = Date.now();
     if (!force && now - lastSaveAt < 25000) return;
     lastSaveAt = now;
@@ -1016,6 +1017,7 @@ function setupLiveLocationTool() {
       lng: position.coords.longitude,
       accuracy: position.coords.accuracy
     };
+    if (acceptingJobs !== null) payload.acceptingJobs = acceptingJobs;
     await postLiveLocation(payload);
     if (currentText) currentText.textContent = `${payload.lat.toFixed(5)}, ${payload.lng.toFixed(5)}`;
     if (updatedText) updatedText.textContent = new Date().toLocaleString();
@@ -1039,7 +1041,7 @@ function setupLiveLocationTool() {
     if (startButton) startButton.disabled = true;
     lastSaveAt = 0;
     navigator.geolocation.getCurrentPosition((position) => {
-      saveLiveLocation(position, true).catch((error) => {
+      saveLiveLocation(position, true, true).catch((error) => {
         setOnlineState(false);
         setStatus(error.message || 'Could not save live location.');
       });
@@ -1083,8 +1085,9 @@ function setupLiveLocationTool() {
   setAcceptingState(panel.dataset.liveLocationInitialAccepting !== 'false');
   startButton?.addEventListener('click', startSharing);
   stopButton?.addEventListener('click', stopSharing);
-  acceptJobsButton?.addEventListener('click', () => setAcceptingJobs(true));
-  stopAcceptingJobsButton?.addEventListener('click', () => setAcceptingJobs(false));
+  availabilityToggleButton?.addEventListener('click', () => {
+    setAcceptingJobs(availabilityToggleButton.dataset.nextAccepting !== 'false');
+  });
 }
 
 function distanceMilesBetween(start, end) {
@@ -1519,8 +1522,10 @@ async function getCsrfToken() {
   return csrfTokenPromise;
 }
 
-async function createServiceRequest(form) {
+async function createServiceRequest(form, options = {}) {
   const csrfToken = await getCsrfToken();
+  const body = new FormData(form);
+  if (options.customerAcceptedWait === true) body.set('customerAcceptedWait', 'true');
   const response = await fetch('/api/service-requests', {
     method: 'POST',
     credentials: 'same-origin',
@@ -1528,7 +1533,7 @@ async function createServiceRequest(form) {
       Accept: 'application/json',
       'X-CSRF-Token': csrfToken
     },
-    body: new FormData(form)
+    body
   });
 
   const payload = await response.json().catch(() => ({}));
@@ -1536,7 +1541,9 @@ async function createServiceRequest(form) {
     const message = payload.errors?.map((error) => error.msg).join('\n')
       || payload.error
       || 'Please check the form and try again.';
-    throw new Error(message);
+    const error = new Error(message);
+    if (response.status === 409 && payload.availability) error.availability = payload.availability;
+    throw error;
   }
 
   return payload.request;
@@ -1635,15 +1642,39 @@ function setupStaticRequestSave() {
   });
 
   waitButton?.addEventListener('click', async () => {
-    if (!pendingCheckoutRequest) return;
+    const resetWaitButton = () => {
+      waitButton.disabled = false;
+      waitButton.textContent = 'I can wait, join wait list and pay';
+    };
     try {
       waitButton.disabled = true;
       waitButton.textContent = 'Opening Payment...';
-      await startStripeCheckout(pendingCheckoutRequest, { customerAcceptedWait: true });
+      let waitlistedRequest = pendingCheckoutRequest;
+      if (!waitlistedRequest) {
+        if (!validateVehicleSelection()) {
+          vehicleModelInput?.reportValidity();
+          resetWaitButton();
+          return;
+        }
+        if (!validatePhotoUpload(form)) {
+          resetWaitButton();
+          return;
+        }
+        collectServiceDetails(form);
+        if (!validateServiceBusinessRules(form, { showMessage: false, lockButton: true })) {
+          resetWaitButton();
+          return;
+        }
+        latestQuote = latestQuote || await calculateQuote(form);
+        renderQuote(latestQuote);
+        updateRequestSummary(form);
+        waitlistedRequest = await createServiceRequest(form, { customerAcceptedWait: true });
+        if (existingRequestField) existingRequestField.value = waitlistedRequest.id;
+      }
+      await startStripeCheckout(waitlistedRequest, { customerAcceptedWait: true });
     } catch (error) {
       alert(error.message || 'Unable to open payment. Please try again.');
-      waitButton.disabled = false;
-      waitButton.textContent = 'I can wait, join wait list and pay';
+      resetWaitButton();
     }
   });
 
@@ -1688,8 +1719,8 @@ function setupStaticRequestSave() {
       if (submitButton) submitButton.textContent = 'Opening Payment...';
       await startStripeCheckout(savedRequest);
     } catch (error) {
-      if (error.availability && savedRequest) {
-        pendingCheckoutRequest = savedRequest;
+      if (error.availability) {
+        pendingCheckoutRequest = savedRequest || null;
         showAvailabilityWarning(error.availability);
         return;
       }

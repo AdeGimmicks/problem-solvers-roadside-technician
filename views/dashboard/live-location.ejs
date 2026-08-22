@@ -29,8 +29,7 @@
     <div class="live-location-actions">
       <button class="btn primary" type="button" data-live-location-start>Go Online</button>
       <button class="btn ghost" type="button" data-live-location-stop>Go Offline</button>
-      <button class="btn secondary" type="button" data-accept-jobs>Accept Jobs</button>
-      <button class="btn ghost" type="button" data-stop-accepting-jobs>Do Not Accept Jobs</button>
+      <button class="btn secondary" type="button" data-job-availability-toggle><%= isAcceptingJobs ? 'Do Not Accept Jobs' : 'Accept Jobs' %></button>
     </div>
   </section>
 </main>

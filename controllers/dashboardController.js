@@ -640,7 +640,7 @@ async function cms(req, res) {
 async function liveLocation(req, res) {
   const technicianId = req.session?.admin?.id || null;
   const [businessSettings, technicianLocation] = await Promise.all([
-    BusinessSettings.findOne().lean(),
+    BusinessSettings.findOne().sort({ acceptingJobsUpdatedAt: -1, updatedAt: -1 }).lean(),
     TechnicianLocation.findOne(technicianId ? { technician: technicianId } : { technician: null }).lean()
   ]);
   res.render('dashboard/live-location', {
@@ -666,7 +666,7 @@ async function updateLiveLocation(req, res, next) {
           acceptingJobs,
           acceptingJobsUpdatedAt: new Date(),
           acceptingJobsUpdatedBy: label
-        }, { upsert: true, new: true }),
+        }, { sort: { acceptingJobsUpdatedAt: -1, updatedAt: -1 }, upsert: true, new: true }),
         TechnicianLocation.findOneAndUpdate(query, {
           technician: technicianId,
           label,
@@ -689,7 +689,7 @@ async function updateLiveLocation(req, res, next) {
       const [settings, offline] = await Promise.all([
         BusinessSettings.findOneAndUpdate({}, {
           $setOnInsert: { acceptingJobs: true }
-        }, { upsert: true, new: true }),
+        }, { sort: { acceptingJobsUpdatedAt: -1, updatedAt: -1 }, upsert: true, new: true }),
         TechnicianLocation.findOneAndUpdate(query, {
           technician: technicianId,
           label,
@@ -743,7 +743,7 @@ async function updateLiveLocation(req, res, next) {
     }
 
     const [settings, technicianLocation] = await Promise.all([
-      BusinessSettings.findOneAndUpdate({}, settingsUpdate, { upsert: true, new: true }),
+      BusinessSettings.findOneAndUpdate({}, settingsUpdate, { sort: { acceptingJobsUpdatedAt: -1, updatedAt: -1 }, upsert: true, new: true }),
       TechnicianLocation.findOneAndUpdate(query, technicianLocationUpdate, { upsert: true, new: true })
     ]);
 

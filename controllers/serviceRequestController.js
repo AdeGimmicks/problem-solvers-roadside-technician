@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const BusinessSettings = require('../models/BusinessSettings');
 const Customer = require('../models/Customer');
 const ServiceRequest = require('../models/ServiceRequest');
 const { sendServiceRequestNotification } = require('../services/emailService');
@@ -8,6 +9,28 @@ const { cleanObject } = require('../utils/sanitize');
 
 function wantsJson(req) {
   return req.originalUrl.startsWith('/api/') || req.get('accept')?.includes('application/json');
+}
+
+async function getTechnicianAvailability() {
+  const settings = await BusinessSettings.findOne()
+    .sort({ acceptingJobsUpdatedAt: -1, updatedAt: -1 })
+    .lean();
+
+  if (!settings || settings.acceptingJobs !== false) {
+    return {
+      available: true,
+      busy: false,
+      acceptingJobs: true,
+      message: 'Technician is available.'
+    };
+  }
+
+  return {
+    available: false,
+    busy: true,
+    acceptingJobs: false,
+    message: 'No technician is currently accepting immediate jobs. You can continue only if you are willing to wait, or call first before paying.'
+  };
 }
 
 function serializeRequest(serviceRequest) {
@@ -110,6 +133,23 @@ async function submitRequest(req, res, next) {
       });
     }
 
+    const customerAcceptedWait = data.customerAcceptedWait === true || data.customerAcceptedWait === 'true';
+    const availability = await getTechnicianAvailability();
+    if (availability.busy && !customerAcceptedWait) {
+      if (wantsJson(req)) {
+        return res.status(409).json({
+          error: availability.message,
+          availability
+        });
+      }
+      return res.status(409).render('request-service', {
+        title: 'Request Roadside Assistance',
+        metaDescription: 'Request mobile roadside assistance in Chicago.',
+        form,
+        errors: [{ msg: availability.message }]
+      });
+    }
+
     let customer = await Customer.findOne({ phone: data.phone });
     if (!customer) {
       customer = await Customer.create({
@@ -122,6 +162,11 @@ async function submitRequest(req, res, next) {
 
     const photoPaths = (req.files || []).map((file) => `/uploads/${file.filename}`);
     const payload = serviceRequestPayload(data, customer._id, serviceDetails, photoPaths);
+    if (availability.busy && customerAcceptedWait) {
+      payload.waitlisted = true;
+      payload.waitlistedAt = new Date();
+      payload.waitlistReason = 'Customer chose to wait while Store Manager was not accepting immediate jobs.';
+    }
     const existingRequest = data.existingServiceRequestId
       ? await ServiceRequest.findOneAndUpdate(
         { _id: data.existingServiceRequestId, paymentStatus: { $ne: 'Paid' } },
