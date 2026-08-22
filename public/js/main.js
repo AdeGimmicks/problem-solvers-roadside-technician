@@ -858,6 +858,11 @@ function money(value) {
   return `$${Math.round(value)}`;
 }
 
+function positiveQuoteNumber(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
 function buildBaseQuote(problem) {
   const basePrice = servicePricing[problem] || 75;
 
@@ -1158,26 +1163,26 @@ async function calculateQuote(form) {
   }
 
   const hasTravelEstimate = Number.isFinite(distanceMiles) && Number.isFinite(travelTimeMinutes);
-  const closeDistancePrice = Number(quoteConfig.closeDistancePrice ?? 40);
-  const closeDistanceMaxMinutes = Number(quoteConfig.closeDistanceMaxMinutes ?? 30);
-  const closeDistanceTrafficBufferMinutes = Number(quoteConfig.closeDistanceTrafficBufferMinutes ?? 5);
+  const closeDistancePrice = 40;
+  const closeDistanceMaxMinutes = positiveQuoteNumber(quoteConfig.closeDistanceMaxMinutes, 30);
+  const closeDistanceTrafficBufferMinutes = Math.max(0, Number(quoteConfig.closeDistanceTrafficBufferMinutes ?? 5) || 5);
   const pricingTravelTimeMinutes = hasTravelEstimate
     ? travelTimeMinutes + Math.max(0, closeDistanceTrafficBufferMinutes)
     : null;
-  const standardTravelTimeMaxMinutes = Number(quoteConfig.standardTravelTimeMaxMinutes ?? quoteConfig.maxTravelTimeMinutes ?? 60);
-  const tierOneTravelTimeMaxMinutes = Number(quoteConfig.tierOneTravelTimeMaxMinutes ?? 90);
-  const tierOneTravelFeePercent = Number(quoteConfig.tierOneTravelFeePercent ?? 50);
-  const tierTwoTravelTimeMaxMinutes = Number(quoteConfig.tierTwoTravelTimeMaxMinutes ?? 120);
-  const tierTwoTravelFeePercent = Number(quoteConfig.tierTwoTravelFeePercent ?? 100);
+  const standardTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.standardTravelTimeMaxMinutes ?? quoteConfig.maxTravelTimeMinutes, 60);
+  const tierOneTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.tierOneTravelTimeMaxMinutes, 90);
+  const tierOneTravelFeePercent = positiveQuoteNumber(quoteConfig.tierOneTravelFeePercent, 50);
+  const tierTwoTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.tierTwoTravelTimeMaxMinutes, 120);
+  const tierTwoTravelFeePercent = positiveQuoteNumber(quoteConfig.tierTwoTravelFeePercent, 100);
   let travelFeePercent = 0;
   let longDistanceTier = '';
   let longDistanceThresholdMinutes = standardTravelTimeMaxMinutes;
   const closeDistanceApplies = hasTravelEstimate
     && closeDistancePrice > 0
-    && pricingTravelTimeMinutes <= closeDistanceMaxMinutes;
+    && travelTimeMinutes <= closeDistanceMaxMinutes;
 
-  if (!closeDistanceApplies && hasTravelEstimate && pricingTravelTimeMinutes > standardTravelTimeMaxMinutes) {
-    if (pricingTravelTimeMinutes <= tierOneTravelTimeMaxMinutes) {
+  if (!closeDistanceApplies && hasTravelEstimate && travelTimeMinutes > standardTravelTimeMaxMinutes) {
+    if (travelTimeMinutes <= tierOneTravelTimeMaxMinutes) {
       travelFeePercent = tierOneTravelFeePercent;
       longDistanceTier = 'tier-one';
       longDistanceThresholdMinutes = standardTravelTimeMaxMinutes;
@@ -1231,7 +1236,7 @@ function renderQuote(quote) {
   if (feeMessage) {
     feeMessage.hidden = !quote.longDistanceApplies && !quote.closeDistanceApplies;
     feeMessage.textContent = quote.closeDistanceApplies
-      ? `Close-distance price applied because the estimated drive time plus ${quote.closeDistanceTrafficBufferMinutes} minutes for traffic is within ${quote.closeDistanceMaxMinutes} minutes.`
+      ? `Close-distance price applied because the estimated drive time is within ${quote.closeDistanceMaxMinutes} minutes. The arrival time includes ${quote.closeDistanceTrafficBufferMinutes} extra minutes for traffic.`
       : quote.longDistanceApplies
       ? `An additional ${quote.travelFeePercent}% travel fee has been applied because the estimated driving time is more than ${quote.longDistanceThresholdMinutes} minutes.`
       : '';

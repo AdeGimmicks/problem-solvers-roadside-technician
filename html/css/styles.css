@@ -1458,11 +1458,47 @@ textarea {
   text-align: center;
 }
 
+.quote-grid.quote-total-focus p {
+  padding: 24px;
+  text-align: left;
+}
+
+.quote-grid.quote-total-focus span {
+  font-size: 1.45rem;
+}
+
+.quote-grid.quote-total-focus strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 5rem;
+  line-height: 0.95;
+}
+
 .quote-grid.total-only strong {
   display: block;
   margin-top: 2px;
   font-size: clamp(2.2rem, 7vw, 4.5rem);
   line-height: 1;
+}
+
+.quote-grid.total-only.quote-total-focus strong {
+  margin-top: 8px;
+  font-size: 5rem;
+  line-height: 0.95;
+}
+
+@media (max-width: 700px) {
+  .quote-grid.quote-total-focus p {
+    padding: 18px;
+  }
+
+  .quote-grid.quote-total-focus span {
+    font-size: 1.2rem;
+  }
+
+  .quote-grid.total-only.quote-total-focus strong {
+    font-size: 3.8rem;
+  }
 }
 
 .confirmation-panel h2 {

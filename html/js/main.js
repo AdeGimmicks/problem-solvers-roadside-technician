@@ -772,6 +772,11 @@ function money(value) {
   return `$${Math.round(value)}`;
 }
 
+function positiveQuoteNumber(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
 function buildBaseQuote(problem) {
   const basePrice = servicePricing[problem] || 75;
 
@@ -948,9 +953,9 @@ async function calculateQuote(form) {
   }
 
   const hasTravelEstimate = Number.isFinite(distanceMiles) && Number.isFinite(travelTimeMinutes);
-  const closeDistancePrice = Number(quoteConfig.closeDistancePrice ?? 40);
-  const closeDistanceMaxMinutes = Number(quoteConfig.closeDistanceMaxMinutes ?? 30);
-  const closeDistanceTrafficBufferMinutes = Number(quoteConfig.closeDistanceTrafficBufferMinutes ?? 5);
+  const closeDistancePrice = 40;
+  const closeDistanceMaxMinutes = positiveQuoteNumber(quoteConfig.closeDistanceMaxMinutes, 30);
+  const closeDistanceTrafficBufferMinutes = Math.max(0, Number(quoteConfig.closeDistanceTrafficBufferMinutes ?? 5) || 5);
   const pricingTravelTimeMinutes = hasTravelEstimate
     ? travelTimeMinutes + Math.max(0, closeDistanceTrafficBufferMinutes)
     : null;
@@ -958,7 +963,7 @@ async function calculateQuote(form) {
   const travelFee = hasTravelEstimate ? Math.ceil(extraMiles * quoteConfig.travelFeePerExtraMile) : 0;
   const closeDistanceApplies = hasTravelEstimate
     && closeDistancePrice > 0
-    && pricingTravelTimeMinutes <= closeDistanceMaxMinutes;
+    && travelTimeMinutes <= closeDistanceMaxMinutes;
   const totalPrice = closeDistanceApplies ? closeDistancePrice : basePrice + travelFee;
 
   return {
@@ -967,7 +972,7 @@ async function calculateQuote(form) {
     totalPrice,
     distanceMiles: hasTravelEstimate ? distanceMiles : null,
     travelTimeMinutes: hasTravelEstimate ? travelTimeMinutes : null,
-    estimatedArrivalMinutes: hasTravelEstimate ? pricingTravelTimeMinutes + quoteConfig.dispatchBufferMinutes : null,
+    estimatedArrivalMinutes: hasTravelEstimate ? pricingTravelTimeMinutes + Number(quoteConfig.dispatchBufferMinutes || 0) : null,
     travelEstimateStatus: hasTravelEstimate ? 'estimated' : 'needs-confirmation',
     closeDistanceApplies,
     closeDistanceMaxMinutes,
