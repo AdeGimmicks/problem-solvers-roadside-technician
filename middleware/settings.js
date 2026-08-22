@@ -23,7 +23,10 @@ const fallbackSettings = {
     tierOneTravelTimeMaxMinutes: Number(process.env.TIER_ONE_TRAVEL_TIME_MAX_MINUTES || 90),
     tierOneTravelFeePercent: Number(process.env.TIER_ONE_TRAVEL_FEE_PERCENT || 50),
     tierTwoTravelTimeMaxMinutes: Number(process.env.TIER_TWO_TRAVEL_TIME_MAX_MINUTES || 120),
-    tierTwoTravelFeePercent: Number(process.env.TIER_TWO_TRAVEL_FEE_PERCENT || 100)
+    tierTwoTravelFeePercent: Number(process.env.TIER_TWO_TRAVEL_FEE_PERCENT || 100),
+    closeDistancePrice: Number(process.env.CLOSE_DISTANCE_PRICE || 40),
+    closeDistanceMaxMinutes: Number(process.env.CLOSE_DISTANCE_MAX_MINUTES || 30),
+    closeDistanceTrafficBufferMinutes: Number(process.env.CLOSE_DISTANCE_TRAFFIC_BUFFER_MINUTES || 5)
   },
   paymentMethods: {
     card: true,

@@ -393,7 +393,10 @@ const futureExpansionConfig = {
 const quoteConfig = {
   includedMiles: 10,
   travelFeePerExtraMile: 2,
-  dispatchBufferMinutes: 35
+  dispatchBufferMinutes: 35,
+  closeDistancePrice: 40,
+  closeDistanceMaxMinutes: 30,
+  closeDistanceTrafficBufferMinutes: 5
 };
 Object.assign(quoteConfig, window.problemSolversQuoteConfig || {});
 const servicePricing = {
@@ -945,18 +948,31 @@ async function calculateQuote(form) {
   }
 
   const hasTravelEstimate = Number.isFinite(distanceMiles) && Number.isFinite(travelTimeMinutes);
+  const closeDistancePrice = Number(quoteConfig.closeDistancePrice ?? 40);
+  const closeDistanceMaxMinutes = Number(quoteConfig.closeDistanceMaxMinutes ?? 30);
+  const closeDistanceTrafficBufferMinutes = Number(quoteConfig.closeDistanceTrafficBufferMinutes ?? 5);
+  const pricingTravelTimeMinutes = hasTravelEstimate
+    ? travelTimeMinutes + Math.max(0, closeDistanceTrafficBufferMinutes)
+    : null;
   const extraMiles = hasTravelEstimate ? Math.max(0, distanceMiles - quoteConfig.includedMiles) : 0;
   const travelFee = hasTravelEstimate ? Math.ceil(extraMiles * quoteConfig.travelFeePerExtraMile) : 0;
-  const totalPrice = basePrice + travelFee;
+  const closeDistanceApplies = hasTravelEstimate
+    && closeDistancePrice > 0
+    && pricingTravelTimeMinutes <= closeDistanceMaxMinutes;
+  const totalPrice = closeDistanceApplies ? closeDistancePrice : basePrice + travelFee;
 
   return {
-    basePrice,
-    travelFee,
+    basePrice: closeDistanceApplies ? closeDistancePrice : basePrice,
+    travelFee: closeDistanceApplies ? 0 : travelFee,
     totalPrice,
     distanceMiles: hasTravelEstimate ? distanceMiles : null,
     travelTimeMinutes: hasTravelEstimate ? travelTimeMinutes : null,
-    estimatedArrivalMinutes: hasTravelEstimate ? travelTimeMinutes + quoteConfig.dispatchBufferMinutes : null,
+    estimatedArrivalMinutes: hasTravelEstimate ? pricingTravelTimeMinutes + quoteConfig.dispatchBufferMinutes : null,
     travelEstimateStatus: hasTravelEstimate ? 'estimated' : 'needs-confirmation',
+    closeDistanceApplies,
+    closeDistanceMaxMinutes,
+    closeDistanceTrafficBufferMinutes,
+    pricingTravelTimeMinutes,
     referenceNumber: `PS-${Date.now().toString().slice(-6)}`
   };
 }

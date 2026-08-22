@@ -27,7 +27,6 @@ const htmlPages = {
   '/services': 'services.html',
   '/about': 'about.html',
   '/contact': 'contact.html',
-  '/request-service': 'request-service.html',
   '/privacy-policy': 'privacy-policy.html',
   '/terms-of-service': 'terms-of-service.html',
   '/payment-policy': 'payment-policy.html',

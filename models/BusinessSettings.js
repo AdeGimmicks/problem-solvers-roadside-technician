@@ -30,7 +30,10 @@ const businessSettingsSchema = new mongoose.Schema({
     tierOneTravelTimeMaxMinutes: { type: Number, default: 90 },
     tierOneTravelFeePercent: { type: Number, default: 50 },
     tierTwoTravelTimeMaxMinutes: { type: Number, default: 120 },
-    tierTwoTravelFeePercent: { type: Number, default: 100 }
+    tierTwoTravelFeePercent: { type: Number, default: 100 },
+    closeDistancePrice: { type: Number, default: 40 },
+    closeDistanceMaxMinutes: { type: Number, default: 30 },
+    closeDistanceTrafficBufferMinutes: { type: Number, default: 5 }
   },
   logo: String,
   coverImage: String,
