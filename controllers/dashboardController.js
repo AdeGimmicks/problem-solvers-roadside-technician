@@ -130,11 +130,103 @@ async function overview(req, res) {
   });
 }
 
+function pageLabel(path = '') {
+  const cleanPath = String(path || '/').split('?')[0] || '/';
+  const labels = {
+    '/': 'Home',
+    '/services': 'Services',
+    '/about': 'About',
+    '/contact': 'Contact',
+    '/request-service': 'Request Service',
+    '/service-area': 'Service Area',
+    '/privacy-policy': 'Privacy Policy',
+    '/terms-of-service': 'Terms of Service',
+    '/payment-policy': 'Payment Policy',
+    '/cancellation-policy': 'Cancellation Policy',
+    '/refund-policy': 'Refund Policy',
+    '/service-disclaimer': 'Service Disclaimer'
+  };
+  return labels[cleanPath] || cleanPath.replace(/^\/+/, '').replaceAll('-', ' ') || 'Home';
+}
+
+function actionLabel(eventType = '') {
+  return {
+    page_view: 'Page view',
+    service_interest: 'Service interest',
+    request_start: 'Started request',
+    quote_review: 'Reviewed quote',
+    request_submit: 'Submitted request'
+  }[eventType] || String(eventType).replaceAll('_', ' ');
+}
+
+function fallbackSource(event = {}) {
+  const path = String(event.landingPath || event.path || '');
+  const referrer = String(event.referrer || '');
+  if (event.sourceName) return event.sourceName;
+  if (/[?&](gclid|gbraid|wbraid|gad_source)=/i.test(path)) return 'Google Ads';
+  if (/[?&]fbclid=/i.test(path)) return 'Meta Ads';
+  if (/google\./i.test(referrer)) return 'Google Search';
+  if (referrer) return 'Referral';
+  return 'Direct visit';
+}
+
+function decorateEvent(event = {}) {
+  const plain = event.toObject ? event.toObject() : event;
+  return {
+    ...plain,
+    actionLabel: actionLabel(plain.eventType),
+    pageLabel: pageLabel(plain.path),
+    landingLabel: pageLabel(plain.landingPath || plain.path),
+    sourceLabel: fallbackSource(plain),
+    sourceCategory: plain.sourceCategory || (fallbackSource(plain).includes('Ads') ? 'Paid Ads' : 'Unclassified'),
+    visitorLabel: plain.visitorLabel || (plain.visitorType === 'owner' ? 'Owner' : 'Visitor'),
+    deviceLabel: [plain.deviceType, plain.browserName].filter(Boolean).join(' / ') || 'Unknown device',
+    locationLabel: [plain.location?.city, plain.location?.region, plain.location?.country].filter(Boolean).join(', ') || 'Location unavailable'
+  };
+}
+
+function buildVisitorJourneys(events) {
+  const groups = new Map();
+  events.forEach((event) => {
+    const key = event.sessionId || event.visitorId || event.ipHash || event._id.toString();
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(event);
+  });
+
+  return Array.from(groups.entries()).map(([key, group]) => {
+    const ordered = group.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const first = ordered[0] || {};
+    const last = ordered[ordered.length - 1] || {};
+    const services = [...new Set(ordered.map((item) => item.serviceName).filter(Boolean))];
+    const completed = ordered.some((item) => item.eventType === 'request_submit');
+    const started = ordered.some((item) => item.eventType === 'request_start' || item.eventType === 'quote_review');
+    const owner = ordered.some((item) => item.visitorType === 'owner');
+    return {
+      key,
+      visitorLabel: owner ? 'Owner' : (first.visitorLabel || 'Visitor'),
+      badge: owner ? 'Owner visit' : completed ? 'Booked' : started ? 'Started, no booking yet' : 'Browsed only',
+      sourceLabel: first.sourceLabel,
+      sourceCategory: first.sourceCategory,
+      landingLabel: first.landingLabel,
+      landingPath: first.landingPath || first.path,
+      lastPageLabel: last.pageLabel,
+      services,
+      ipAddress: first.ipAddress || 'Not stored',
+      locationLabel: first.locationLabel,
+      deviceLabel: first.deviceLabel,
+      firstSeen: first.createdAt,
+      lastSeen: last.createdAt,
+      events: ordered.slice(-8).reverse()
+    };
+  }).sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen));
+}
+
 async function getAudienceStats(since) {
   const baseMatch = { createdAt: { $gte: since } };
-  const [visits, uniqueVisitors, topServices, topPages, recentEvents, serviceEvents] = await Promise.all([
+  const [visits, uniqueVisitors, ownerVisits, topServices, topPages, topLandingPages, recentEvents, serviceEvents, journeyEvents] = await Promise.all([
     VisitorEvent.countDocuments({ ...baseMatch, eventType: 'page_view' }),
     VisitorEvent.distinct('visitorId', { ...baseMatch, visitorId: { $nin: ['', null] } }),
+    VisitorEvent.countDocuments({ ...baseMatch, eventType: 'page_view', visitorType: 'owner' }),
     VisitorEvent.aggregate([
       { $match: { ...baseMatch, serviceName: { $nin: [null, ''] } } },
       { $group: { _id: '$serviceName', count: { $sum: 1 } } },
@@ -147,28 +239,55 @@ async function getAudienceStats(since) {
       { $sort: { count: -1 } },
       { $limit: 8 }
     ]),
-    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(25).lean(),
+    VisitorEvent.aggregate([
+      { $match: { ...baseMatch, eventType: 'page_view', landingPath: { $nin: [null, ''] } } },
+      { $group: { _id: '$landingPath', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 8 }
+    ]),
+    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(50).lean(),
     VisitorEvent.find({ ...baseMatch, serviceName: { $in: PUBLIC_SERVICE_NAMES } })
       .sort({ createdAt: -1 })
       .limit(250)
-      .lean()
+      .lean(),
+    VisitorEvent.find(baseMatch).sort({ createdAt: -1 }).limit(600).lean()
   ]);
   const topServiceCounts = Object.fromEntries(topServices.map((item) => [item._id, item.count]));
+  const decoratedServiceEvents = serviceEvents.map(decorateEvent);
   const serviceGroups = PUBLIC_SERVICE_NAMES.map((serviceName) => ({
     serviceName,
     label: `${serviceName} Visitors`,
     count: topServiceCounts[serviceName] || 0,
-    events: serviceEvents.filter((event) => event.serviceName === serviceName).slice(0, 8)
+    events: decoratedServiceEvents.filter((event) => event.serviceName === serviceName).slice(0, 6)
   }));
+  const decoratedRecentEvents = recentEvents.map(decorateEvent);
+  const decoratedJourneyEvents = journeyEvents.map(decorateEvent);
+  const visitorJourneys = buildVisitorJourneys(decoratedJourneyEvents).slice(0, 30);
+  const sourceTotals = new Map();
+  visitorJourneys.forEach((journey) => {
+    const key = `${journey.sourceCategory}::${journey.sourceLabel}`;
+    const current = sourceTotals.get(key) || {
+      label: journey.sourceLabel,
+      category: journey.sourceCategory,
+      count: 0
+    };
+    current.count += 1;
+    sourceTotals.set(key, current);
+  });
 
   return {
     since,
     visits,
     uniqueVisitors: uniqueVisitors.length,
+    ownerVisits,
+    customerVisits: Math.max(0, visits - ownerVisits),
     topServices,
-    topPages,
-    recentEvents,
-    serviceGroups
+    topPages: topPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
+    topLandingPages: topLandingPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
+    sourceBreakdown: Array.from(sourceTotals.values()).sort((a, b) => b.count - a.count).slice(0, 8),
+    recentEvents: decoratedRecentEvents,
+    serviceGroups,
+    visitorJourneys
   };
 }
 

@@ -1,0 +1,17 @@
+{
+  "name": "Problem Solvers Store Manager",
+  "short_name": "PS Manager",
+  "start_url": "/dashboard/settings",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#ffcf18",
+  "icons": [
+    {
+      "src": "/images/brand/problem-solvers-icon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

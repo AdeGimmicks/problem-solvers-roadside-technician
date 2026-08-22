@@ -58,6 +58,7 @@ const problemInput = document.querySelector('[name="problem"]');
 
 const analyticsVisitorKey = 'problemSolversVisitorId';
 const analyticsSessionKey = 'problemSolversSessionId';
+const analyticsLandingKey = 'problemSolversLandingPath';
 
 function randomAnalyticsId(prefix) {
   if (window.crypto?.randomUUID) return `${prefix}-${window.crypto.randomUUID()}`;
@@ -77,6 +78,20 @@ function getAnalyticsId(key, prefix, storage = window.localStorage) {
   }
 }
 
+function getAnalyticsLandingPath() {
+  const currentPath = `${location.pathname}${location.search}`;
+  try {
+    let value = window.sessionStorage.getItem(analyticsLandingKey);
+    if (!value) {
+      value = currentPath;
+      window.sessionStorage.setItem(analyticsLandingKey, value);
+    }
+    return value;
+  } catch (error) {
+    return currentPath;
+  }
+}
+
 function trackVisitorEvent(eventType, data = {}) {
   if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/technician')) return;
   const payload = new URLSearchParams({
@@ -84,9 +99,12 @@ function trackVisitorEvent(eventType, data = {}) {
     visitorId: getAnalyticsId(analyticsVisitorKey, 'visitor'),
     sessionId: getAnalyticsId(analyticsSessionKey, 'session', window.sessionStorage),
     path: `${location.pathname}${location.search}`,
+    landingPath: getAnalyticsLandingPath(),
     pageTitle: document.title || '',
     referrer: document.referrer || '',
     screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+    language: navigator.language || '',
     ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined && value !== null && value !== ''))
   });
   const url = `/api/analytics/track?${payload.toString()}`;

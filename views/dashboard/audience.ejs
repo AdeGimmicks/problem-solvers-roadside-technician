@@ -1,10 +1,11 @@
 <%- include('partials/head') %>
 <%- include('partials/nav') %>
 <main class="dashboard-main">
-  <div class="dashboard-topline">
+  <div class="dashboard-topline audience-hero">
     <div>
       <p class="eyebrow">Website Analytics</p>
-      <h1>Audience</h1>
+      <h1>Visitor Journeys</h1>
+      <p class="muted-copy">Grouped by visitor/session so owner checks, ad clicks, landing pages, service interest, and booking attempts are easier to verify.</p>
     </div>
     <div class="manager-actions small">
       <a class="btn secondary" href="/dashboard/audience?days=1">24 Hours</a>
@@ -19,17 +20,113 @@
       <strong><%= audience.visits %></strong>
     </article>
     <article class="stat-card">
+      <span>Real Visitor Visits</span>
+      <strong><%= audience.customerVisits %></strong>
+    </article>
+    <article class="stat-card">
+      <span>Owner Visits</span>
+      <strong><%= audience.ownerVisits %></strong>
+    </article>
+    <article class="stat-card">
       <span>Known Visitors</span>
       <strong><%= audience.uniqueVisitors %></strong>
     </article>
-    <article class="stat-card">
-      <span>Top Service</span>
-      <strong><%= audience.topServices[0]?._id || 'None Yet' %></strong>
+  </section>
+
+  <section class="dashboard-grid audience-proof-grid">
+    <article class="dashboard-panel">
+      <div class="panel-heading-row">
+        <div>
+          <p class="eyebrow">Ad / Traffic Proof</p>
+          <h2>Where Visitors Came From</h2>
+        </div>
+      </div>
+      <% if (!audience.sourceBreakdown.length) { %>
+        <p class="muted-copy">No source records yet.</p>
+      <% } %>
+      <div class="audience-list">
+        <% audience.sourceBreakdown.forEach((item) => { %>
+          <div class="audience-row source-row">
+            <div>
+              <strong><%= item.label %></strong>
+              <small><%= item.category %></small>
+            </div>
+            <span><%= item.count %></span>
+          </div>
+        <% }) %>
+      </div>
     </article>
-    <article class="stat-card">
-      <span>Window</span>
-      <strong><%= days %>d</strong>
+
+    <article class="dashboard-panel">
+      <div class="panel-heading-row">
+        <div>
+          <p class="eyebrow">First Touch</p>
+          <h2>Top Landing Pages</h2>
+        </div>
+      </div>
+      <% if (!audience.topLandingPages.length) { %>
+        <p class="muted-copy">No landing pages recorded yet.</p>
+      <% } %>
+      <div class="audience-list">
+        <% audience.topLandingPages.forEach((item) => { %>
+          <div class="audience-row">
+            <div>
+              <strong><%= item.label %></strong>
+              <small><%= item._id %></small>
+            </div>
+            <span><%= item.count %></span>
+          </div>
+        <% }) %>
+      </div>
     </article>
+  </section>
+
+  <section class="dashboard-panel">
+    <div class="panel-heading-row">
+      <div>
+        <p class="eyebrow">Clear Visitor Story</p>
+        <h2>Recent Visitor Journeys</h2>
+      </div>
+    </div>
+    <% if (!audience.visitorJourneys.length) { %>
+      <p class="muted-copy">No visitor journeys recorded yet.</p>
+    <% } %>
+    <div class="visitor-journey-list">
+      <% audience.visitorJourneys.forEach((journey) => { %>
+        <article class="visitor-journey-card <%= journey.badge === 'Owner visit' ? 'is-owner' : '' %>">
+          <div class="journey-summary">
+            <div>
+              <span class="journey-badge"><%= journey.badge %></span>
+              <h3><%= journey.visitorLabel %></h3>
+              <p><strong>Source:</strong> <%= journey.sourceLabel %> <span class="muted-inline">(<%= journey.sourceCategory %>)</span></p>
+              <p><strong>Landed:</strong> <%= journey.landingLabel %> <span class="muted-inline"><%= journey.landingPath %></span></p>
+            </div>
+            <div class="journey-meta">
+              <p><strong>IP:</strong> <%= journey.ipAddress %></p>
+              <p><strong>Area:</strong> <%= journey.locationLabel %></p>
+              <p><strong>Device:</strong> <%= journey.deviceLabel %></p>
+              <p><strong>Last seen:</strong> <%= journey.lastSeen ? journey.lastSeen.toLocaleString() : '-' %></p>
+            </div>
+          </div>
+          <% if (journey.services.length) { %>
+            <div class="journey-services">
+              <% journey.services.forEach((serviceName) => { %>
+                <span><%= serviceName %></span>
+              <% }) %>
+            </div>
+          <% } %>
+          <ol class="journey-timeline">
+            <% journey.events.forEach((event) => { %>
+              <li>
+                <span><%= event.createdAt.toLocaleString() %></span>
+                <strong><%= event.actionLabel %></strong>
+                <small><%= event.serviceName || event.pageLabel %> - <%= event.path || '-' %></small>
+              </li>
+            <% }) %>
+          </ol>
+        </article>
+      <% }) %>
+    </div>
   </section>
 
   <section class="dashboard-panel">
@@ -54,8 +151,9 @@
             <div class="service-visitor-list">
               <% group.events.forEach((event) => { %>
                 <div class="service-visitor-event">
-                  <strong><%= event.eventType.replaceAll('_', ' ') %></strong>
+                  <strong><%= event.actionLabel %></strong>
                   <span><%= event.createdAt.toLocaleString() %></span>
+                  <small><%= event.visitorLabel %> - <%= event.sourceLabel %></small>
                   <small><%= event.path || '-' %></small>
                 </div>
               <% }) %>
@@ -66,7 +164,7 @@
     </div>
   </section>
 
-  <section class="dashboard-grid audience-grid">
+  <section class="dashboard-grid audience-proof-grid">
     <article class="dashboard-panel">
       <h2>Top Pages</h2>
       <% if (!audience.topPages.length) { %>
@@ -75,33 +173,28 @@
       <div class="audience-list">
         <% audience.topPages.forEach((item) => { %>
           <div class="audience-row">
-            <strong><%= item._id %></strong>
+            <div>
+              <strong><%= item.label %></strong>
+              <small><%= item._id %></small>
+            </div>
             <span><%= item.count %></span>
           </div>
         <% }) %>
       </div>
     </article>
-  </section>
 
-  <section class="dashboard-panel">
-    <h2>Recent Visitor Activity</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Time</th><th>Action</th><th>Service</th><th>Page</th></tr>
-        </thead>
-        <tbody>
-          <% audience.recentEvents.forEach((event) => { %>
-            <tr>
-              <td><%= event.createdAt.toLocaleString() %></td>
-              <td><%= event.eventType.replaceAll('_', ' ') %></td>
-              <td><%= event.serviceName || '-' %></td>
-              <td><%= event.path || '-' %></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
+    <article class="dashboard-panel">
+      <h2>Recent Raw Activity</h2>
+      <div class="compact-activity-list">
+        <% audience.recentEvents.forEach((event) => { %>
+          <div>
+            <strong><%= event.actionLabel %></strong>
+            <span><%= event.createdAt.toLocaleString() %></span>
+            <small><%= event.visitorLabel %> - <%= event.sourceLabel %> - <%= event.serviceName || event.pageLabel %></small>
+          </div>
+        <% }) %>
+      </div>
+    </article>
   </section>
 </main>
 </body>
