@@ -1208,7 +1208,7 @@ async function createServiceRequest(form) {
   return payload.request;
 }
 
-async function startStripeCheckout(request) {
+async function startStripeCheckout(request, options = {}) {
   const csrfToken = await getCsrfToken();
   const response = await fetch('/payments/checkout', {
     method: 'POST',
@@ -1220,17 +1220,54 @@ async function startStripeCheckout(request) {
     },
     body: JSON.stringify({
       serviceRequestId: request.id,
-      amount: request.totalPrice
+      amount: request.totalPrice,
+      customerAcceptedWait: options.customerAcceptedWait === true
     })
   });
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(payload.error || 'Stripe checkout is not ready yet.');
+    const error = new Error(payload.error || 'Stripe checkout is not ready yet.');
+    if (response.status === 409 && payload.availability) error.availability = payload.availability;
+    throw error;
   }
   if (!payload.url) throw new Error('Stripe did not return a checkout page.');
 
   window.location.href = payload.url;
+}
+
+function formatAvailabilityWarning(availability) {
+  const job = availability?.activeJob;
+  if (!job) {
+    return availability?.message || 'The technician is currently busy. You can continue only if you are willing to wait.';
+  }
+
+  const parts = [
+    `The technician is currently busy with ${job.service || 'another service'}.`
+  ];
+  if (job.status) parts.push(`Status: ${job.status}.`);
+  if (job.estimatedArrivalMinutes) parts.push(`Current job time showing: about ${job.estimatedArrivalMinutes} minutes.`);
+  parts.push('If you can wait, continue to secure payment. If this is urgent, call first before paying.');
+  return parts.join(' ');
+}
+
+function showAvailabilityWarning(availability) {
+  const panel = document.querySelector('[data-availability-warning]');
+  const message = document.querySelector('[data-availability-message]');
+  if (!panel) return;
+  if (message) message.textContent = formatAvailabilityWarning(availability);
+  panel.hidden = false;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function hideAvailabilityWarning() {
+  const panel = document.querySelector('[data-availability-warning]');
+  if (panel) panel.hidden = true;
+  const waitButton = document.querySelector('[data-confirm-wait]');
+  if (waitButton) {
+    waitButton.disabled = false;
+    waitButton.textContent = 'I can wait, continue to payment';
+  }
 }
 
 function setupStaticRequestSave() {
@@ -1238,16 +1275,35 @@ function setupStaticRequestSave() {
   if (!form) return;
   const submitButton = document.querySelector('[data-submit-request]');
   const summaryStep = form.querySelector('[data-request-step="summary"]');
+  const waitButton = form.querySelector('[data-confirm-wait]');
+  let pendingCheckoutRequest = null;
 
   renderSelectedServiceDetails();
   problemInput?.addEventListener('change', () => {
+    hideAvailabilityWarning();
+    pendingCheckoutRequest = null;
     renderSelectedServiceDetails();
     collectServiceDetails(form);
     validateServiceBusinessRules(form, { showMessage: false, lockButton: false });
   });
   setupRequestSteps(form);
   form.querySelector('[data-service-questions]')?.addEventListener('change', () => {
+    hideAvailabilityWarning();
+    pendingCheckoutRequest = null;
     validateServiceBusinessRules(form, { showMessage: false, lockButton: false });
+  });
+
+  waitButton?.addEventListener('click', async () => {
+    if (!pendingCheckoutRequest) return;
+    try {
+      waitButton.disabled = true;
+      waitButton.textContent = 'Opening Payment...';
+      await startStripeCheckout(pendingCheckoutRequest, { customerAcceptedWait: true });
+    } catch (error) {
+      alert(error.message || 'Unable to open payment. Please try again.');
+      waitButton.disabled = false;
+      waitButton.textContent = 'I can wait, continue to payment';
+    }
   });
 
   form.addEventListener('submit', async (event) => {
@@ -1275,6 +1331,8 @@ function setupStaticRequestSave() {
       latestQuote = await calculateQuote(form);
       renderQuote(latestQuote);
       updateRequestSummary(form);
+      hideAvailabilityWarning();
+      pendingCheckoutRequest = null;
 
       if (submitButton) submitButton.textContent = 'Preparing Payment...';
       savedRequest = await createServiceRequest(form);
@@ -1282,6 +1340,11 @@ function setupStaticRequestSave() {
       if (submitButton) submitButton.textContent = 'Opening Payment...';
       await startStripeCheckout(savedRequest);
     } catch (error) {
+      if (error.availability && savedRequest) {
+        pendingCheckoutRequest = savedRequest;
+        showAvailabilityWarning(error.availability);
+        return;
+      }
       if (savedRequest) showCustomerConfirmation(savedRequest);
       if (String(error.message || '').includes('usable spare tire')) return;
       alert(error.message || 'Unable to complete the request. Please try again.');

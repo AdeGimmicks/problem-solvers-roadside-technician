@@ -122,6 +122,15 @@
           <p><span>Location</span><strong data-summary-location>Location</strong></p>
           <p><span>Estimated Arrival</span><strong data-summary-arrival>Calculated at review</strong></p>
         </div>
+        <section class="availability-warning" data-availability-warning hidden>
+          <p class="eyebrow">Technician availability</p>
+          <h3>Technician currently busy</h3>
+          <p data-availability-message>Another service is active right now. You can continue only if you are willing to wait.</p>
+          <div class="form-actions compact">
+            <button class="btn primary" type="button" data-confirm-wait>I can wait, continue to payment</button>
+            <a class="btn ghost" href="tel:<%= settings.phoneNumber %>">Call First</a>
+          </div>
+        </section>
         <div class="form-actions">
           <button class="btn ghost" type="button" data-step-back>Go Back</button>
           <button class="btn primary" type="submit" data-submit-request>Pay Now</button>

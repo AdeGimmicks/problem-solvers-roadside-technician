@@ -5,6 +5,61 @@ const { sendPaymentStatusSms } = require('../services/smsService');
 
 const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
 const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
+const BUSY_REQUEST_STATUSES = ['Accepted', 'Technician Assigned', 'En Route', 'Arrived'];
+
+function serializeAvailabilityJob(job) {
+  if (!job) return null;
+
+  const minutes = Number(job.estimatedArrivalMinutes || job.travelTimeMinutes || 0);
+  return {
+    id: job._id.toString(),
+    referenceNumber: job.referenceNumber || job.requestId || '',
+    service: job.problem || 'Roadside Service',
+    status: job.status || 'Active',
+    location: job.currentLocation || job.location?.address || '',
+    estimatedArrivalMinutes: Number.isFinite(minutes) && minutes > 0 ? minutes : null,
+    acceptedAt: job.acceptedAt,
+    createdAt: job.createdAt
+  };
+}
+
+async function getTechnicianAvailability(excludeRequestId) {
+  const query = {
+    status: { $nin: ['Completed', 'Cancelled'] },
+    $or: [
+      { status: { $in: BUSY_REQUEST_STATUSES } },
+      { paymentStatus: 'Paid' }
+    ]
+  };
+
+  if (excludeRequestId) {
+    query._id = { $ne: excludeRequestId };
+  }
+
+  const activeJob = await ServiceRequest.findOne(query)
+    .sort({ acceptedAt: -1, updatedAt: -1, createdAt: -1 })
+    .lean();
+
+  if (!activeJob) {
+    return {
+      available: true,
+      busy: false,
+      message: 'Technician is available.'
+    };
+  }
+
+  const job = serializeAvailabilityJob(activeJob);
+  const waitText = job.estimatedArrivalMinutes
+    ? ` The current job has about ${job.estimatedArrivalMinutes} minutes showing in the system.`
+    : '';
+
+  return {
+    available: false,
+    busy: true,
+    activeJob: job,
+    message: `The technician is currently handling another service request.${waitText} You can still continue if you are willing to wait, or call first before paying.`
+  };
+}
 
 async function recordStripeCheckoutPayment(session) {
   const serviceRequestId = session?.metadata?.serviceRequestId;
@@ -52,6 +107,14 @@ async function createCheckoutSession(req, res, next) {
 
     const serviceRequest = await ServiceRequest.findById(req.body.serviceRequestId);
     if (!serviceRequest) return res.status(404).json({ error: 'Service request not found.' });
+
+    const availability = await getTechnicianAvailability(serviceRequest._id);
+    if (availability.busy && req.body.customerAcceptedWait !== true) {
+      return res.status(409).json({
+        error: 'Technician is currently busy. Please confirm you are willing to wait before paying.',
+        availability
+      });
+    }
 
     const amount = Number(serviceRequest.totalPrice || serviceRequest.estimatedPrice || 0);
     if (amount <= 0) return res.status(422).json({ error: 'A valid payment amount is required.' });

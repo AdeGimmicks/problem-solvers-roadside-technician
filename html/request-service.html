@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/styles.css?v=close-distance-total-20260822">
+  <link rel="stylesheet" href="./css/styles.css?v=availability-gate-20260822">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -190,6 +190,15 @@
           <p><span>Location</span><strong data-summary-location>Location</strong></p>
           <p><span>Estimated Arrival</span><strong data-summary-arrival>Calculated at review</strong></p>
         </div>
+        <section class="availability-warning" data-availability-warning hidden>
+          <p class="eyebrow">Technician availability</p>
+          <h3>Technician currently busy</h3>
+          <p data-availability-message>Another service is active right now. You can continue only if you are willing to wait.</p>
+          <div class="form-actions compact">
+            <button class="btn primary" type="button" data-confirm-wait>I can wait, continue to payment</button>
+            <a class="btn ghost" href="tel:+13129007711">Call First</a>
+          </div>
+        </section>
         <div class="form-actions">
           <button class="btn ghost" type="button" data-step-back>Go Back</button>
           <button class="btn primary" type="submit" data-submit-request>Pay Now</button>
@@ -261,6 +270,6 @@
     <a href="/contact">Contact</a>
   </div>
 </footer>
-<script src="./js/main.js?v=close-distance-total-20260822" defer></script>
+<script src="./js/main.js?v=availability-gate-20260822" defer></script>
 </body>
 </html>
