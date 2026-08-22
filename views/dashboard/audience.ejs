@@ -15,32 +15,53 @@
   </div>
 
   <section class="stat-grid audience-stat-grid">
-    <article class="stat-card">
-      <span>Page Visits</span>
-      <strong><%= audience.visits %></strong>
-    </article>
-    <article class="stat-card">
-      <span>Real Visitor Visits</span>
-      <strong><%= audience.customerVisits %></strong>
-    </article>
-    <article class="stat-card">
-      <span>Owner Visits</span>
-      <strong><%= audience.ownerVisits %></strong>
-    </article>
-    <article class="stat-card">
-      <span>Known Visitors</span>
-      <strong><%= audience.uniqueVisitors %></strong>
-    </article>
+    <details class="stat-card metric-card">
+      <summary><span>Page Visits</span><strong><%= audience.visits %></strong></summary>
+      <div class="metric-drilldown">
+        <% audience.pageVisitEvents.forEach((event) => { %>
+          <p><strong><%= event.pageLabel %></strong><span><%= event.createdAt.toLocaleString() %> - <%= event.path || '-' %></span></p>
+        <% }) %>
+        <% if (!audience.pageVisitEvents.length) { %><p>No page visits in this window.</p><% } %>
+      </div>
+    </details>
+    <details class="stat-card metric-card">
+      <summary><span>Real Visitor Visits</span><strong><%= audience.customerVisits %></strong></summary>
+      <div class="metric-drilldown">
+        <% audience.customerVisitEvents.forEach((event) => { %>
+          <p><strong><%= event.sourceLabel %></strong><span><%= event.pageLabel %> - <%= event.ipAddress || 'No IP stored' %></span></p>
+        <% }) %>
+        <% if (!audience.customerVisitEvents.length) { %><p>No real visitor visits in this window.</p><% } %>
+      </div>
+    </details>
+    <details class="stat-card metric-card">
+      <summary><span>Owner Visits</span><strong><%= audience.ownerVisits %></strong></summary>
+      <div class="metric-drilldown">
+        <% audience.ownerVisitEvents.forEach((event) => { %>
+          <p><strong><%= event.pageLabel %></strong><span><%= event.createdAt.toLocaleString() %> - <%= event.ipAddress || 'No IP stored' %></span></p>
+        <% }) %>
+        <% if (!audience.ownerVisitEvents.length) { %><p>No owner visits in this window.</p><% } %>
+      </div>
+    </details>
+    <details class="stat-card metric-card">
+      <summary><span>Known Visitors</span><strong><%= audience.uniqueVisitors %></strong></summary>
+      <div class="metric-drilldown">
+        <% audience.knownVisitorRows.forEach((journey) => { %>
+          <p><strong><%= journey.visitorLabel %></strong><span><%= journey.sourceLabel %> - <%= journey.ipAddress %> - <%= journey.lastSeen.toLocaleString() %></span></p>
+        <% }) %>
+        <% if (!audience.knownVisitorRows.length) { %><p>No known visitors in this window.</p><% } %>
+      </div>
+    </details>
   </section>
 
   <section class="dashboard-grid audience-proof-grid">
-    <article class="dashboard-panel">
-      <div class="panel-heading-row">
+    <details class="dashboard-panel collapsible-panel">
+      <summary class="panel-heading-row">
         <div>
           <p class="eyebrow">Ad / Traffic Proof</p>
           <h2>Where Visitors Came From</h2>
         </div>
-      </div>
+        <span class="panel-toggle">Open</span>
+      </summary>
       <% if (!audience.sourceBreakdown.length) { %>
         <p class="muted-copy">No source records yet.</p>
       <% } %>
@@ -55,15 +76,16 @@
           </div>
         <% }) %>
       </div>
-    </article>
+    </details>
 
-    <article class="dashboard-panel">
-      <div class="panel-heading-row">
+    <details class="dashboard-panel collapsible-panel">
+      <summary class="panel-heading-row">
         <div>
           <p class="eyebrow">First Touch</p>
           <h2>Top Landing Pages</h2>
         </div>
-      </div>
+        <span class="panel-toggle">Open</span>
+      </summary>
       <% if (!audience.topLandingPages.length) { %>
         <p class="muted-copy">No landing pages recorded yet.</p>
       <% } %>
@@ -78,16 +100,17 @@
           </div>
         <% }) %>
       </div>
-    </article>
+    </details>
   </section>
 
-  <section class="dashboard-panel">
-    <div class="panel-heading-row">
+  <details class="dashboard-panel collapsible-panel">
+    <summary class="panel-heading-row">
       <div>
         <p class="eyebrow">Clear Visitor Story</p>
         <h2>Recent Visitor Journeys</h2>
       </div>
-    </div>
+      <span class="panel-toggle">Open</span>
+    </summary>
     <% if (!audience.visitorJourneys.length) { %>
       <p class="muted-copy">No visitor journeys recorded yet.</p>
     <% } %>
@@ -130,15 +153,16 @@
         </details>
       <% }) %>
     </div>
-  </section>
+  </details>
 
-  <section class="dashboard-panel">
-    <div class="dashboard-topline">
+  <details class="dashboard-panel collapsible-panel">
+    <summary class="dashboard-topline panel-heading-row">
       <div>
         <p class="eyebrow">Roadside Service Visitors</p>
         <h2>Visitors By Service</h2>
       </div>
-    </div>
+      <span class="panel-toggle">Open</span>
+    </summary>
     <div class="service-visitor-grid">
       <% audience.serviceGroups.forEach((group) => { %>
         <article class="service-visitor-card">
@@ -165,11 +189,14 @@
         </article>
       <% }) %>
     </div>
-  </section>
+  </details>
 
   <section class="dashboard-grid audience-proof-grid">
-    <article class="dashboard-panel">
-      <h2>Top Pages</h2>
+    <details class="dashboard-panel collapsible-panel">
+      <summary class="panel-heading-row">
+        <h2>Top Pages</h2>
+        <span class="panel-toggle">Open</span>
+      </summary>
       <% if (!audience.topPages.length) { %>
         <p class="muted-copy">No page visits recorded yet.</p>
       <% } %>
@@ -184,10 +211,13 @@
           </div>
         <% }) %>
       </div>
-    </article>
+    </details>
 
-    <article class="dashboard-panel">
-      <h2>Recent Raw Activity</h2>
+    <details class="dashboard-panel collapsible-panel">
+      <summary class="panel-heading-row">
+        <h2>Recent Raw Activity</h2>
+        <span class="panel-toggle">Open</span>
+      </summary>
       <div class="compact-activity-list">
         <% audience.recentEvents.forEach((event) => { %>
           <div>
@@ -197,7 +227,7 @@
           </div>
         <% }) %>
       </div>
-    </article>
+    </details>
   </section>
 </main>
 </body>

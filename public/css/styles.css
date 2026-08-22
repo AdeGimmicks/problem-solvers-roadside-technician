@@ -2035,6 +2035,51 @@ textarea {
   text-decoration: none;
 }
 
+.stat-card summary,
+.collapsible-panel summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.stat-card summary::-webkit-details-marker,
+.collapsible-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.metric-card summary {
+  display: grid;
+  gap: 8px;
+}
+
+.metric-card[open] {
+  border-color: rgba(255, 210, 31, 0.45);
+}
+
+.metric-drilldown {
+  display: grid;
+  max-height: 340px;
+  gap: 8px;
+  overflow: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 210, 31, 0.14);
+}
+
+.metric-drilldown p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.metric-drilldown span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .dashboard-main > .stat-grid {
   grid-template-columns: repeat(4, minmax(170px, 1fr));
   overflow-x: auto;
@@ -2189,6 +2234,44 @@ td {
   align-items: flex-start;
   gap: 16px;
   margin-bottom: 14px;
+}
+
+.collapsible-panel {
+  align-self: start;
+}
+
+.collapsible-panel:not([open]) {
+  padding-bottom: 18px;
+}
+
+.collapsible-panel:not([open]) > :not(summary) {
+  display: none;
+}
+
+.collapsible-panel[open] {
+  border-color: rgba(255, 210, 31, 0.32);
+}
+
+.panel-toggle {
+  display: inline-flex;
+  min-width: 86px;
+  justify-content: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 210, 31, 0.35);
+  border-radius: 8px;
+  color: var(--white);
+  font-weight: 900;
+}
+
+.collapsible-panel[open] .panel-toggle {
+  color: var(--black);
+  background: var(--gold);
+  font-size: 0;
+}
+
+.collapsible-panel[open] .panel-toggle::after {
+  content: "Close";
+  font-size: 1rem;
 }
 
 .audience-summary-panel {

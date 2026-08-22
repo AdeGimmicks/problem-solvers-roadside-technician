@@ -263,6 +263,9 @@ async function getAudienceStats(since) {
   const decoratedRecentEvents = recentEvents.map(decorateEvent);
   const decoratedJourneyEvents = journeyEvents.map(decorateEvent);
   const visitorJourneys = buildVisitorJourneys(decoratedJourneyEvents).slice(0, 30);
+  const pageVisitEvents = decoratedRecentEvents.filter((event) => event.eventType === 'page_view');
+  const ownerVisitEvents = pageVisitEvents.filter((event) => event.visitorType === 'owner');
+  const customerVisitEvents = pageVisitEvents.filter((event) => event.visitorType !== 'owner');
   const sourceTotals = new Map();
   visitorJourneys.forEach((journey) => {
     const key = `${journey.sourceCategory}::${journey.sourceLabel}`;
@@ -285,6 +288,10 @@ async function getAudienceStats(since) {
     topPages: topPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
     topLandingPages: topLandingPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
     sourceBreakdown: Array.from(sourceTotals.values()).sort((a, b) => b.count - a.count).slice(0, 8),
+    pageVisitEvents: pageVisitEvents.slice(0, 12),
+    customerVisitEvents: customerVisitEvents.slice(0, 12),
+    ownerVisitEvents: ownerVisitEvents.slice(0, 12),
+    knownVisitorRows: visitorJourneys.slice(0, 12),
     recentEvents: decoratedRecentEvents,
     serviceGroups,
     visitorJourneys
