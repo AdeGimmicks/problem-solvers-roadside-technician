@@ -65,15 +65,49 @@
       <% if (!audience.sourceBreakdown.length) { %>
         <p class="muted-copy">No source records yet.</p>
       <% } %>
-      <div class="audience-list">
+      <div class="source-group-list">
         <% audience.sourceBreakdown.forEach((item) => { %>
-          <div class="audience-row source-row">
-            <div>
-              <strong><%= item.label %></strong>
-              <small><%= item.category %></small>
+          <details class="source-group">
+            <summary class="audience-row source-row">
+              <div>
+                <strong><%= item.label %></strong>
+                <small><%= item.category %></small>
+              </div>
+              <span><%= item.count %></span>
+            </summary>
+            <div class="source-date-list">
+              <% item.dateGroups.forEach((dateGroup) => { %>
+                <details class="source-date-group">
+                  <summary>
+                    <strong><%= dateGroup.date === 'Unknown date' ? dateGroup.date : new Date(`${dateGroup.date}T00:00:00`).toLocaleDateString() %></strong>
+                    <span><%= dateGroup.journeys.length %></span>
+                  </summary>
+                  <div class="source-journey-list">
+                    <% dateGroup.journeys.forEach((journey) => { %>
+                      <details class="source-journey">
+                        <summary>
+                          <div>
+                            <strong><%= journey.badge %></strong>
+                            <small><%= journey.landingLabel %> - <%= journey.ipAddress %> - <%= journey.lastSeen.toLocaleString() %></small>
+                          </div>
+                          <span>Open</span>
+                        </summary>
+                        <ol class="journey-timeline">
+                          <% journey.events.forEach((event) => { %>
+                            <li>
+                              <span><%= event.createdAt.toLocaleString() %></span>
+                              <strong><%= event.actionLabel %></strong>
+                              <small><%= event.serviceName || event.pageLabel %> - <%= event.path || '-' %></small>
+                            </li>
+                          <% }) %>
+                        </ol>
+                      </details>
+                    <% }) %>
+                  </div>
+                </details>
+              <% }) %>
             </div>
-            <span><%= item.count %></span>
-          </div>
+          </details>
         <% }) %>
       </div>
     </details>

@@ -221,6 +221,37 @@ function buildVisitorJourneys(events) {
   }).sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen));
 }
 
+function buildJourneyGroups(journeys, getGroup) {
+  const groups = new Map();
+  journeys.forEach((journey) => {
+    const group = getGroup(journey);
+    const key = `${group.category}::${group.label}`;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        label: group.label,
+        category: group.category,
+        count: 0,
+        dateGroups: new Map()
+      });
+    }
+    const current = groups.get(key);
+    const dateKey = journey.lastSeen ? new Date(journey.lastSeen).toISOString().slice(0, 10) : 'Unknown date';
+    if (!current.dateGroups.has(dateKey)) current.dateGroups.set(dateKey, []);
+    current.dateGroups.get(dateKey).push(journey);
+    current.count += 1;
+  });
+
+  return Array.from(groups.values()).map((group) => ({
+    label: group.label,
+    category: group.category,
+    count: group.count,
+    dateGroups: Array.from(group.dateGroups.entries()).map(([date, journeysForDate]) => ({
+      date,
+      journeys: journeysForDate.sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen))
+    })).sort((a, b) => String(b.date).localeCompare(String(a.date)))
+  })).sort((a, b) => b.count - a.count);
+}
+
 async function getAudienceStats(since) {
   const baseMatch = { createdAt: { $gte: since } };
   const [visits, uniqueVisitors, ownerVisits, topServices, topPages, topLandingPages, recentEvents, serviceEvents, journeyEvents] = await Promise.all([
@@ -266,17 +297,10 @@ async function getAudienceStats(since) {
   const pageVisitEvents = decoratedRecentEvents.filter((event) => event.eventType === 'page_view');
   const ownerVisitEvents = pageVisitEvents.filter((event) => event.visitorType === 'owner');
   const customerVisitEvents = pageVisitEvents.filter((event) => event.visitorType !== 'owner');
-  const sourceTotals = new Map();
-  visitorJourneys.forEach((journey) => {
-    const key = `${journey.sourceCategory}::${journey.sourceLabel}`;
-    const current = sourceTotals.get(key) || {
-      label: journey.sourceLabel,
-      category: journey.sourceCategory,
-      count: 0
-    };
-    current.count += 1;
-    sourceTotals.set(key, current);
-  });
+  const sourceGroups = buildJourneyGroups(visitorJourneys, (journey) => ({
+    label: journey.badge === 'Owner visit' ? 'Owner Visits' : journey.sourceLabel,
+    category: journey.badge === 'Owner visit' ? 'Owner' : journey.sourceCategory
+  }));
 
   return {
     since,
@@ -287,7 +311,7 @@ async function getAudienceStats(since) {
     topServices,
     topPages: topPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
     topLandingPages: topLandingPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
-    sourceBreakdown: Array.from(sourceTotals.values()).sort((a, b) => b.count - a.count).slice(0, 8),
+    sourceBreakdown: sourceGroups.slice(0, 8),
     pageVisitEvents: pageVisitEvents.slice(0, 12),
     customerVisitEvents: customerVisitEvents.slice(0, 12),
     ownerVisitEvents: ownerVisitEvents.slice(0, 12),

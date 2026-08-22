@@ -2400,6 +2400,84 @@ td {
   color: var(--white);
 }
 
+.source-group-list,
+.source-date-list,
+.source-journey-list {
+  display: grid;
+  gap: 10px;
+}
+
+.source-group,
+.source-date-group,
+.source-journey {
+  border-radius: 8px;
+}
+
+.source-group summary,
+.source-date-group summary,
+.source-journey summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.source-group summary::-webkit-details-marker,
+.source-date-group summary::-webkit-details-marker,
+.source-journey summary::-webkit-details-marker {
+  display: none;
+}
+
+.source-group[open] > .source-row {
+  border-color: rgba(255, 210, 31, 0.42);
+}
+
+.source-date-list {
+  margin-top: 10px;
+  padding-left: 10px;
+  border-left: 2px solid rgba(255, 210, 31, 0.18);
+}
+
+.source-date-group > summary,
+.source-journey > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 210, 31, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.source-date-group > summary span,
+.source-journey > summary span {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.source-date-group[open] > summary,
+.source-journey[open] > summary {
+  border-color: rgba(255, 210, 31, 0.36);
+}
+
+.source-journey-list {
+  margin-top: 10px;
+  padding-left: 10px;
+}
+
+.source-journey > summary div {
+  min-width: 0;
+}
+
+.source-journey > summary small {
+  display: block;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.source-journey .journey-timeline {
+  margin-top: 10px;
+}
+
 .visitor-journey-list {
   display: grid;
   gap: 14px;
