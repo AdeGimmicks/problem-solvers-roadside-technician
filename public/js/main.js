@@ -1711,7 +1711,7 @@ function setupStaticRequestSave() {
       hideAvailabilityWarning();
       pendingCheckoutRequest = null;
 
-      if (submitButton) submitButton.textContent = 'Preparing Payment...';
+      if (submitButton) submitButton.textContent = 'Checking Availability...';
       savedRequest = await createServiceRequest(form);
       if (existingRequestField) existingRequestField.value = savedRequest.id;
       trackVisitorEvent('request_submit', { serviceName: new FormData(form).get('problem') });

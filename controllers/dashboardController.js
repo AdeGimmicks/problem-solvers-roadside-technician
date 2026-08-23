@@ -27,6 +27,13 @@ async function ensureDefaultAdmin() {
   });
 }
 
+async function writeAllBusinessSettings(setFields) {
+  const result = await BusinessSettings.updateMany({}, { $set: setFields });
+  const matched = result.matchedCount ?? result.n ?? 0;
+  if (!matched) return BusinessSettings.create(setFields);
+  return BusinessSettings.findOne().sort({ acceptingJobsUpdatedAt: -1, updatedAt: -1 });
+}
+
 async function loginPage(req, res) {
   await ensureDefaultAdmin();
   const adminCount = await Admin.countDocuments();
@@ -661,12 +668,13 @@ async function updateLiveLocation(req, res, next) {
     const query = technicianId ? { technician: technicianId } : { technician: null };
     if (hasAcceptingJobs && !Object.prototype.hasOwnProperty.call(req.body, 'lat')) {
       const acceptingJobs = req.body.acceptingJobs !== false && req.body.acceptingJobs !== 'false';
+      const settingsUpdate = {
+        acceptingJobs,
+        acceptingJobsUpdatedAt: new Date(),
+        acceptingJobsUpdatedBy: label
+      };
       const [settings, availability] = await Promise.all([
-        BusinessSettings.findOneAndUpdate({}, {
-          acceptingJobs,
-          acceptingJobsUpdatedAt: new Date(),
-          acceptingJobsUpdatedBy: label
-        }, { sort: { acceptingJobsUpdatedAt: -1, updatedAt: -1 }, upsert: true, new: true }),
+        writeAllBusinessSettings(settingsUpdate),
         TechnicianLocation.findOneAndUpdate(query, {
           technician: technicianId,
           label,
@@ -743,7 +751,7 @@ async function updateLiveLocation(req, res, next) {
     }
 
     const [settings, technicianLocation] = await Promise.all([
-      BusinessSettings.findOneAndUpdate({}, settingsUpdate, { sort: { acceptingJobsUpdatedAt: -1, updatedAt: -1 }, upsert: true, new: true }),
+      writeAllBusinessSettings(settingsUpdate),
       TechnicianLocation.findOneAndUpdate(query, technicianLocationUpdate, { upsert: true, new: true })
     ]);
 

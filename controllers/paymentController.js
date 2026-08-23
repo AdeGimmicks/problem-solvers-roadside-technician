@@ -80,14 +80,15 @@ async function createCheckoutSession(req, res, next) {
     if (!serviceRequest) return res.status(404).json({ error: 'Service request not found.' });
 
     const availability = await getTechnicianAvailability();
-    if (availability.busy && req.body.customerAcceptedWait !== true) {
+    const customerAcceptedWait = req.body.customerAcceptedWait === true || req.body.customerAcceptedWait === 'true';
+    if (availability.busy && !customerAcceptedWait) {
       return res.status(409).json({
         error: 'No technician is currently accepting immediate jobs. Please confirm you are willing to wait before paying.',
         availability
       });
     }
 
-    if (availability.busy && req.body.customerAcceptedWait === true) {
+    if (availability.busy && customerAcceptedWait) {
       serviceRequest.waitlisted = true;
       serviceRequest.waitlistedAt = serviceRequest.waitlistedAt || new Date();
       serviceRequest.waitlistReason = 'Customer chose to wait while Store Manager was not accepting immediate jobs.';

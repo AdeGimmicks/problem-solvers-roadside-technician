@@ -56,6 +56,85 @@ const params = new URLSearchParams(window.location.search);
 const requestedService = params.get('service');
 const problemInput = document.querySelector('[name="problem"]');
 
+const analyticsVisitorKey = 'problemSolversVisitorId';
+const analyticsSessionKey = 'problemSolversSessionId';
+const analyticsLandingKey = 'problemSolversLandingPath';
+
+function randomAnalyticsId(prefix) {
+  if (window.crypto?.randomUUID) return `${prefix}-${window.crypto.randomUUID()}`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getAnalyticsId(key, prefix, storage = window.localStorage) {
+  try {
+    let value = storage.getItem(key);
+    if (!value) {
+      value = randomAnalyticsId(prefix);
+      storage.setItem(key, value);
+    }
+    return value;
+  } catch (error) {
+    return randomAnalyticsId(prefix);
+  }
+}
+
+function getAnalyticsLandingPath() {
+  const currentPath = `${location.pathname}${location.search}`;
+  try {
+    let value = window.sessionStorage.getItem(analyticsLandingKey);
+    if (!value) {
+      value = currentPath;
+      window.sessionStorage.setItem(analyticsLandingKey, value);
+    }
+    return value;
+  } catch (error) {
+    return currentPath;
+  }
+}
+
+function trackVisitorEvent(eventType, data = {}) {
+  if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/technician')) return;
+  const payload = new URLSearchParams({
+    eventType,
+    visitorId: getAnalyticsId(analyticsVisitorKey, 'visitor'),
+    sessionId: getAnalyticsId(analyticsSessionKey, 'session', window.sessionStorage),
+    path: `${location.pathname}${location.search}`,
+    landingPath: getAnalyticsLandingPath(),
+    pageTitle: document.title || '',
+    referrer: document.referrer || '',
+    screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+    language: navigator.language || '',
+    ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined && value !== null && value !== ''))
+  });
+  const url = `/api/analytics/track?${payload.toString()}`;
+
+  fetch(url, {
+    method: 'GET',
+    keepalive: true,
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' }
+  }).catch(() => {});
+}
+
+trackVisitorEvent('page_view', requestedService ? { serviceName: requestedService } : {});
+
+if (requestedService) {
+  trackVisitorEvent('service_interest', { serviceName: requestedService });
+}
+
+document.querySelectorAll('a[href*="/request-service"]').forEach((link) => {
+  link.addEventListener('click', () => {
+    try {
+      const target = new URL(link.href, window.location.href);
+      const serviceName = target.searchParams.get('service') || link.textContent.trim();
+      trackVisitorEvent('service_interest', { serviceName });
+    } catch (error) {
+      trackVisitorEvent('service_interest', { serviceName: link.textContent.trim() });
+    }
+  });
+});
+
 if (requestedService && problemInput && !problemInput.value) {
   problemInput.value = requestedService;
 }
@@ -393,7 +472,14 @@ const futureExpansionConfig = {
 const quoteConfig = {
   includedMiles: 10,
   travelFeePerExtraMile: 2,
-  dispatchBufferMinutes: 35,
+  dispatchBufferMinutes: 0,
+  maxTravelTimeMinutes: 60,
+  longDistanceFee: 50,
+  standardTravelTimeMaxMinutes: 60,
+  tierOneTravelTimeMaxMinutes: 90,
+  tierOneTravelFeePercent: 50,
+  tierTwoTravelTimeMaxMinutes: 120,
+  tierTwoTravelFeePercent: 100,
   closeDistancePrice: 40,
   closeDistanceMaxMinutes: 30,
   closeDistanceTrafficBufferMinutes: 5
@@ -840,7 +926,7 @@ function setupDispatchLocationTool() {
       const lngInput = document.querySelector('[data-dispatch-lng]');
       if (latInput) latInput.value = location.lat;
       if (lngInput) lngInput.value = location.lng;
-      status.textContent = `Starting point set: ${formatCoordinateLocation(location)}`;
+      status.textContent = `Starting point added: ${formatCoordinateLocation(location)}. Click Save Settings to keep it.`;
     }, () => {
       status.textContent = 'Could not get your location. Allow location access and try again.';
     }, {
@@ -848,6 +934,159 @@ function setupDispatchLocationTool() {
       timeout: 12000,
       maximumAge: 60000
     });
+  });
+}
+
+function setupLiveLocationTool() {
+  const panel = document.querySelector('[data-live-location-panel]');
+  if (!panel) return;
+
+  const startButton = panel.querySelector('[data-live-location-start]');
+  const stopButton = panel.querySelector('[data-live-location-stop]');
+  const availabilityToggleButton = panel.querySelector('[data-job-availability-toggle]');
+  const statusText = panel.querySelector('[data-live-location-status]');
+  const onlineText = panel.querySelector('[data-live-location-online]');
+  const acceptingText = panel.querySelector('[data-live-location-accepting]');
+  const currentText = panel.querySelector('[data-live-location-current]');
+  const updatedText = panel.querySelector('[data-live-location-updated]');
+  const liveLocationEndpoint = panel.dataset.liveLocationEndpoint || '/dashboard/live-location';
+  const liveLocationLocked = panel.dataset.liveLocationLocked === 'true';
+  const liveLocationLockedMessage = panel.dataset.liveLocationLockedMessage || 'Submit your technician application before going online.';
+  let watchId = null;
+  let lastSaveAt = 0;
+
+  const setStatus = (message) => {
+    if (statusText) statusText.textContent = message;
+  };
+
+  const setOnlineState = (isOnline) => {
+    if (onlineText) onlineText.textContent = isOnline ? 'Online' : 'Offline';
+    if (startButton) startButton.disabled = false;
+    if (stopButton) stopButton.disabled = !isOnline && watchId === null;
+  };
+
+  const setAcceptingState = (isAccepting) => {
+    if (acceptingText) acceptingText.textContent = isAccepting ? 'Accepting jobs' : 'Not accepting jobs';
+    if (availabilityToggleButton) {
+      availabilityToggleButton.disabled = false;
+      availabilityToggleButton.textContent = isAccepting ? 'Do Not Accept Jobs' : 'Accept Jobs';
+      availabilityToggleButton.dataset.nextAccepting = isAccepting ? 'false' : 'true';
+    }
+  };
+
+  async function postLiveLocation(payload) {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(liveLocationEndpoint, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('Could not save live location.');
+    return response.json();
+  }
+
+  async function setAcceptingJobs(isAccepting) {
+    try {
+      if (availabilityToggleButton) availabilityToggleButton.disabled = true;
+      const result = await postLiveLocation({ acceptingJobs: isAccepting });
+      const nextAcceptingState = result.acceptingJobs !== false;
+      panel.dataset.liveLocationInitialAccepting = nextAcceptingState ? 'true' : 'false';
+      setAcceptingState(nextAcceptingState);
+      setStatus(result.message || (isAccepting
+        ? 'Accepting jobs. Customers can continue to payment normally.'
+        : 'Not accepting immediate jobs. Customers will see the wait-list warning.'));
+    } catch (error) {
+      setAcceptingState(panel.dataset.liveLocationInitialAccepting !== 'false');
+      setStatus(error.message || 'Could not update job availability.');
+    }
+  }
+
+  async function saveLiveLocation(position, force = false, acceptingJobs = null) {
+    const now = Date.now();
+    if (!force && now - lastSaveAt < 25000) return;
+    lastSaveAt = now;
+
+    const payload = {
+      online: true,
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+      accuracy: position.coords.accuracy
+    };
+    if (acceptingJobs !== null) payload.acceptingJobs = acceptingJobs;
+    await postLiveLocation(payload);
+    if (currentText) currentText.textContent = `${payload.lat.toFixed(5)}, ${payload.lng.toFixed(5)}`;
+    if (updatedText) updatedText.textContent = new Date().toLocaleString();
+    setOnlineState(true);
+    setStatus('Live location is active.');
+  }
+
+  function startSharing() {
+    if (liveLocationLocked) {
+      setStatus(liveLocationLockedMessage);
+      return;
+    }
+    if (!navigator.geolocation) {
+      setStatus('Location is not available in this browser.');
+      return;
+    }
+
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    setStatus('Requesting location permission...');
+    if (startButton) startButton.disabled = true;
+    lastSaveAt = 0;
+    navigator.geolocation.getCurrentPosition((position) => {
+      saveLiveLocation(position, true, true).catch((error) => {
+        setOnlineState(false);
+        setStatus(error.message || 'Could not save live location.');
+      });
+    }, () => {
+      setOnlineState(false);
+      setStatus('Could not get your location. Allow location access and try again.');
+    }, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    });
+
+    watchId = navigator.geolocation.watchPosition((position) => {
+      saveLiveLocation(position).catch((error) => {
+        setStatus(error.message || 'Could not save live location.');
+      });
+    }, () => {
+      setOnlineState(false);
+      setStatus('Could not get your location. Allow location access and try again.');
+    }, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 30000
+    });
+  }
+
+  async function stopSharing() {
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    try {
+      await postLiveLocation({ online: false });
+      setOnlineState(false);
+      setStatus('You are offline. Customer quotes will not use this device as an online technician.');
+    } catch (error) {
+      setOnlineState(false);
+      setStatus(error.message || 'Live sharing stopped on this device, but the server could not be updated.');
+    }
+  }
+
+  setOnlineState(panel.dataset.liveLocationInitialOnline === 'true');
+  setAcceptingState(panel.dataset.liveLocationInitialAccepting !== 'false');
+  startButton?.addEventListener('click', startSharing);
+  stopButton?.addEventListener('click', stopSharing);
+  availabilityToggleButton?.addEventListener('click', () => {
+    setAcceptingJobs(availabilityToggleButton.dataset.nextAccepting !== 'false');
   });
 }
 
@@ -938,6 +1177,7 @@ async function calculateQuote(form) {
   const googleEstimate = await estimateWithGoogleMaps(dispatchCenter, destination);
   let distanceMiles = googleEstimate?.distanceMiles;
   let travelTimeMinutes = googleEstimate?.travelTimeMinutes;
+  let travelEstimateSource = googleEstimate?.originSource || null;
 
   if (!googleEstimate && dispatchCenter && destination) {
     const routeEstimate = await estimateWithOpenRoute(dispatchCenter, destination);
@@ -945,10 +1185,12 @@ async function calculateQuote(form) {
     if (routeEstimate) {
       distanceMiles = routeEstimate.distanceMiles;
       travelTimeMinutes = routeEstimate.travelTimeMinutes;
+      travelEstimateSource = 'browser-route-fallback';
     } else {
       const straightLineMiles = distanceMilesBetween(dispatchCenter, destination);
       distanceMiles = Math.max(1, Math.round(straightLineMiles * 1.25));
       travelTimeMinutes = Math.max(10, Math.round(distanceMiles * 1.9));
+      travelEstimateSource = 'browser-distance-fallback';
     }
   }
 
@@ -959,21 +1201,49 @@ async function calculateQuote(form) {
   const pricingTravelTimeMinutes = hasTravelEstimate
     ? travelTimeMinutes + Math.max(0, closeDistanceTrafficBufferMinutes)
     : null;
-  const extraMiles = hasTravelEstimate ? Math.max(0, distanceMiles - quoteConfig.includedMiles) : 0;
-  const travelFee = hasTravelEstimate ? Math.ceil(extraMiles * quoteConfig.travelFeePerExtraMile) : 0;
+  const standardTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.standardTravelTimeMaxMinutes ?? quoteConfig.maxTravelTimeMinutes, 60);
+  const tierOneTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.tierOneTravelTimeMaxMinutes, 90);
+  const tierOneTravelFeePercent = positiveQuoteNumber(quoteConfig.tierOneTravelFeePercent, 50);
+  const tierTwoTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.tierTwoTravelTimeMaxMinutes, 120);
+  const tierTwoTravelFeePercent = positiveQuoteNumber(quoteConfig.tierTwoTravelFeePercent, 100);
+  let travelFeePercent = 0;
+  let longDistanceTier = '';
+  let longDistanceThresholdMinutes = standardTravelTimeMaxMinutes;
   const closeDistanceApplies = hasTravelEstimate
     && closeDistancePrice > 0
     && travelTimeMinutes <= closeDistanceMaxMinutes;
+
+  if (!closeDistanceApplies && hasTravelEstimate && travelTimeMinutes > standardTravelTimeMaxMinutes) {
+    if (travelTimeMinutes <= tierOneTravelTimeMaxMinutes) {
+      travelFeePercent = tierOneTravelFeePercent;
+      longDistanceTier = 'tier-one';
+      longDistanceThresholdMinutes = standardTravelTimeMaxMinutes;
+    } else {
+      travelFeePercent = tierTwoTravelFeePercent;
+      longDistanceTier = 'tier-two';
+      longDistanceThresholdMinutes = tierOneTravelTimeMaxMinutes;
+    }
+  }
+
+  const longDistanceApplies = travelFeePercent > 0;
+  const travelFee = longDistanceApplies ? Math.ceil(basePrice * (travelFeePercent / 100)) : 0;
   const totalPrice = closeDistanceApplies ? closeDistancePrice : basePrice + travelFee;
 
   return {
     basePrice: closeDistanceApplies ? closeDistancePrice : basePrice,
-    travelFee: closeDistanceApplies ? 0 : travelFee,
+    travelFee,
     totalPrice,
     distanceMiles: hasTravelEstimate ? distanceMiles : null,
     travelTimeMinutes: hasTravelEstimate ? travelTimeMinutes : null,
     estimatedArrivalMinutes: hasTravelEstimate ? pricingTravelTimeMinutes + Number(quoteConfig.dispatchBufferMinutes || 0) : null,
     travelEstimateStatus: hasTravelEstimate ? 'estimated' : 'needs-confirmation',
+    travelEstimateSource: hasTravelEstimate ? travelEstimateSource : '',
+    longDistanceApplies,
+    maxTravelTimeMinutes: standardTravelTimeMaxMinutes,
+    longDistanceTier,
+    travelFeePercent,
+    longDistanceThresholdMinutes,
+    tierTwoTravelTimeMaxMinutes,
     closeDistanceApplies,
     closeDistanceMaxMinutes,
     closeDistanceTrafficBufferMinutes,
@@ -988,6 +1258,19 @@ function renderQuote(quote) {
   if (!quotePanel) return;
 
   document.querySelector('[data-quote-total]').textContent = money(quote.totalPrice);
+  const baseElement = document.querySelector('[data-quote-base]');
+  const feeRow = document.querySelector('[data-quote-long-distance]');
+  const feeElement = document.querySelector('[data-quote-long-distance-fee]');
+  const feeMessage = document.querySelector('[data-quote-long-distance-message]');
+  if (baseElement) baseElement.textContent = money(quote.basePrice);
+  if (feeElement) feeElement.textContent = money(quote.travelFee || 0);
+  if (feeRow) feeRow.hidden = !quote.longDistanceApplies;
+  if (feeMessage) {
+    feeMessage.hidden = !quote.longDistanceApplies;
+    feeMessage.textContent = quote.longDistanceApplies
+      ? `An additional ${quote.travelFeePercent}% travel fee has been applied because the estimated driving time is more than ${quote.longDistanceThresholdMinutes} minutes.`
+      : '';
+  }
   quotePanel.hidden = false;
   if (submitButton) submitButton.textContent = 'Pay Now';
   Object.entries(quote).forEach(([key, value]) => {
@@ -1065,6 +1348,60 @@ function renderSelectedServiceDetails() {
       ? config.questions.map((question, index) => renderQuestion(question, serviceName, index)).join('')
       : '<p class="summary-note">Choose a service to continue.</p>';
   }
+}
+
+function readServiceDetailsFromForm(form) {
+  const hiddenField = form.querySelector('[data-service-details-field]');
+  if (!hiddenField?.value) return {};
+
+  try {
+    const details = JSON.parse(hiddenField.value);
+    return details && typeof details === 'object' && !Array.isArray(details) ? details : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function restoreServiceDetailInputs(form) {
+  const details = readServiceDetailsFromForm(form);
+  Object.entries(details).forEach(([key, value]) => {
+    form.querySelectorAll(`[data-service-question="${CSS.escape(key)}"]`).forEach((field) => {
+      if (field.type === 'radio') {
+        field.checked = field.value === String(value);
+        return;
+      }
+      field.value = value;
+    });
+  });
+}
+
+function quoteFromForm(form) {
+  const data = new FormData(form);
+  const numberValue = (key) => {
+    const value = Number(data.get(key));
+    return Number.isFinite(value) ? value : null;
+  };
+  const totalPrice = numberValue('totalPrice');
+  if (!totalPrice) return null;
+
+  return {
+    basePrice: numberValue('basePrice') || totalPrice,
+    travelFee: numberValue('travelFee') || 0,
+    totalPrice,
+    distanceMiles: numberValue('distanceMiles'),
+    travelTimeMinutes: numberValue('travelTimeMinutes'),
+    estimatedArrivalMinutes: numberValue('estimatedArrivalMinutes'),
+    travelEstimateSource: data.get('travelEstimateSource') || '',
+    longDistanceApplies: data.get('longDistanceApplies') === 'true',
+    longDistanceTier: data.get('longDistanceTier') || '',
+    travelFeePercent: numberValue('travelFeePercent') || 0,
+    longDistanceThresholdMinutes: numberValue('longDistanceThresholdMinutes') || 0,
+    closeDistanceApplies: data.get('closeDistanceApplies') === 'true',
+    closeDistanceMaxMinutes: numberValue('closeDistanceMaxMinutes') || 30,
+    closeDistanceTrafficBufferMinutes: numberValue('closeDistanceTrafficBufferMinutes') || 5,
+    pricingTravelTimeMinutes: numberValue('pricingTravelTimeMinutes'),
+    referenceNumber: data.get('referenceNumber') || ''
+  };
 }
 
 function collectServiceDetails(form) {
@@ -1185,8 +1522,10 @@ async function getCsrfToken() {
   return csrfTokenPromise;
 }
 
-async function createServiceRequest(form) {
+async function createServiceRequest(form, options = {}) {
   const csrfToken = await getCsrfToken();
+  const body = new FormData(form);
+  if (options.customerAcceptedWait === true) body.set('customerAcceptedWait', 'true');
   const response = await fetch('/api/service-requests', {
     method: 'POST',
     credentials: 'same-origin',
@@ -1194,7 +1533,7 @@ async function createServiceRequest(form) {
       Accept: 'application/json',
       'X-CSRF-Token': csrfToken
     },
-    body: new FormData(form)
+    body
   });
 
   const payload = await response.json().catch(() => ({}));
@@ -1202,7 +1541,9 @@ async function createServiceRequest(form) {
     const message = payload.errors?.map((error) => error.msg).join('\n')
       || payload.error
       || 'Please check the form and try again.';
-    throw new Error(message);
+    const error = new Error(message);
+    if (response.status === 409 && payload.availability) error.availability = payload.availability;
+    throw error;
   }
 
   return payload.request;
@@ -1270,16 +1611,28 @@ function setupStaticRequestSave() {
   if (!form) return;
   const submitButton = document.querySelector('[data-submit-request]');
   const summaryStep = form.querySelector('[data-request-step="summary"]');
+  const existingRequestField = form.querySelector('[data-existing-request-id]');
   const waitButton = form.querySelector('[data-confirm-wait]');
   let pendingCheckoutRequest = null;
 
   renderSelectedServiceDetails();
+  restoreServiceDetailInputs(form);
+  const restoredQuote = quoteFromForm(form);
+  if (restoredQuote) {
+    latestQuote = restoredQuote;
+    renderQuote(restoredQuote);
+    updateRequestSummary(form);
+  }
+  if (problemInput?.value) {
+    trackVisitorEvent('request_start', { serviceName: problemInput.value });
+  }
   problemInput?.addEventListener('change', () => {
     hideAvailabilityWarning();
     pendingCheckoutRequest = null;
     renderSelectedServiceDetails();
     collectServiceDetails(form);
     validateServiceBusinessRules(form, { showMessage: false, lockButton: false });
+    trackVisitorEvent('service_interest', { serviceName: problemInput.value });
   });
   setupRequestSteps(form);
   form.querySelector('[data-service-questions]')?.addEventListener('change', () => {
@@ -1289,15 +1642,39 @@ function setupStaticRequestSave() {
   });
 
   waitButton?.addEventListener('click', async () => {
-    if (!pendingCheckoutRequest) return;
+    const resetWaitButton = () => {
+      waitButton.disabled = false;
+      waitButton.textContent = 'I can wait, join wait list and pay';
+    };
     try {
       waitButton.disabled = true;
       waitButton.textContent = 'Opening Payment...';
-      await startStripeCheckout(pendingCheckoutRequest, { customerAcceptedWait: true });
+      let waitlistedRequest = pendingCheckoutRequest;
+      if (!waitlistedRequest) {
+        if (!validateVehicleSelection()) {
+          vehicleModelInput?.reportValidity();
+          resetWaitButton();
+          return;
+        }
+        if (!validatePhotoUpload(form)) {
+          resetWaitButton();
+          return;
+        }
+        collectServiceDetails(form);
+        if (!validateServiceBusinessRules(form, { showMessage: false, lockButton: true })) {
+          resetWaitButton();
+          return;
+        }
+        latestQuote = latestQuote || await calculateQuote(form);
+        renderQuote(latestQuote);
+        updateRequestSummary(form);
+        waitlistedRequest = await createServiceRequest(form, { customerAcceptedWait: true });
+        if (existingRequestField) existingRequestField.value = waitlistedRequest.id;
+      }
+      await startStripeCheckout(waitlistedRequest, { customerAcceptedWait: true });
     } catch (error) {
       alert(error.message || 'Unable to open payment. Please try again.');
-      waitButton.disabled = false;
-      waitButton.textContent = 'I can wait, join wait list and pay';
+      resetWaitButton();
     }
   });
 
@@ -1323,20 +1700,27 @@ function setupStaticRequestSave() {
         submitButton.disabled = true;
         submitButton.textContent = 'Checking Quote...';
       }
+      const existingReferenceNumber = new FormData(form).get('referenceNumber');
       latestQuote = await calculateQuote(form);
+      if (existingRequestField?.value && existingReferenceNumber) {
+        latestQuote.referenceNumber = existingReferenceNumber;
+      }
+      trackVisitorEvent('quote_review', { serviceName: new FormData(form).get('problem') });
       renderQuote(latestQuote);
       updateRequestSummary(form);
       hideAvailabilityWarning();
       pendingCheckoutRequest = null;
 
-      if (submitButton) submitButton.textContent = 'Preparing Payment...';
+      if (submitButton) submitButton.textContent = 'Checking Availability...';
       savedRequest = await createServiceRequest(form);
+      if (existingRequestField) existingRequestField.value = savedRequest.id;
+      trackVisitorEvent('request_submit', { serviceName: new FormData(form).get('problem') });
 
       if (submitButton) submitButton.textContent = 'Opening Payment...';
       await startStripeCheckout(savedRequest);
     } catch (error) {
-      if (error.availability && savedRequest) {
-        pendingCheckoutRequest = savedRequest;
+      if (error.availability) {
+        pendingCheckoutRequest = savedRequest || null;
         showAvailabilityWarning(error.availability);
         return;
       }
@@ -1410,6 +1794,7 @@ function setupRequestSteps(form) {
           nextButton.textContent = 'Calculating Quote...';
         }
         latestQuote = await calculateQuote(form);
+        trackVisitorEvent('quote_review', { serviceName: new FormData(form).get('problem') });
         renderQuote(latestQuote);
         updateRequestSummary(form);
       } catch (error) {
@@ -1442,3 +1827,4 @@ function setupRequestSteps(form) {
 setupStaticRequestSave();
 setupManagerDashboard();
 setupDispatchLocationTool();
+setupLiveLocationTool();
