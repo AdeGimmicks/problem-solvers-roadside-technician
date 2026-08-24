@@ -15,11 +15,10 @@ const { REQUEST_STATUSES, PUBLIC_SERVICE_NAMES } = require('../utils/constants')
 const { cleanObject } = require('../utils/sanitize');
 
 const dashboardTimeZone = process.env.DASHBOARD_TIME_ZONE || 'America/Chicago';
-const fixedAudienceWindow = {
+const audienceStartWindow = {
   start: new Date('2026-08-17T05:00:00.000Z'),
-  end: new Date('2026-08-22T05:00:00.000Z'),
-  label: 'August 17-21, 2026',
-  slug: 'august-17-21-2026'
+  label: 'August 17, 2026 onward',
+  slug: 'august-17-2026-onward'
 };
 
 async function ensureDefaultAdmin() {
@@ -349,11 +348,11 @@ function audienceDays(req) {
 }
 
 function audienceWindow() {
-  return { ...fixedAudienceWindow };
+  return { ...audienceStartWindow };
 }
 
 async function getAudienceStats(window) {
-  const baseMatch = { createdAt: { $gte: window.start, $lt: window.end } };
+  const baseMatch = { createdAt: { $gte: window.start } };
   const [visits, uniqueVisitors, ownerVisits, topServices, topPages, topLandingPages, recentEvents, serviceEvents, journeyEvents] = await Promise.all([
     VisitorEvent.countDocuments({ ...baseMatch, eventType: 'page_view' }),
     VisitorEvent.distinct('visitorId', { ...baseMatch, visitorId: { $nin: ['', null] } }),
@@ -404,7 +403,6 @@ async function getAudienceStats(window) {
 
   return {
     since: window.start,
-    until: window.end,
     windowLabel: window.label,
     visits,
     uniqueVisitors: uniqueVisitors.length,
@@ -544,7 +542,7 @@ function exportFilter(req, window) {
   const type = String(req.query.type || 'all');
   const sourceName = String(req.query.sourceName || '').trim();
   const sourceCategory = String(req.query.sourceCategory || '').trim();
-  const query = { createdAt: { $gte: window.start, $lt: window.end } };
+  const query = { createdAt: { $gte: window.start } };
   let label = 'all-visits';
 
   if (type === 'page') {
