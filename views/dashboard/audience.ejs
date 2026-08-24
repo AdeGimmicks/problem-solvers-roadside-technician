@@ -5,12 +5,10 @@
     <div>
       <p class="eyebrow">Website Analytics</p>
       <h1>Visitor Journeys</h1>
-      <p class="muted-copy">Grouped by visitor/session so owner checks, ad clicks, landing pages, service interest, and booking attempts are easier to verify.</p>
+      <p class="muted-copy">Showing visits from <%= audienceWindow.label %> only. Visits outside this date range are hidden for now.</p>
     </div>
     <div class="manager-actions small">
-      <a class="btn secondary" href="/dashboard/audience?days=1">24 Hours</a>
-      <a class="btn secondary" href="/dashboard/audience?days=7">7 Days</a>
-      <a class="btn secondary" href="/dashboard/audience?days=30">30 Days</a>
+      <span class="btn secondary">Aug 17-21</span>
       <a class="btn secondary" href="/dashboard/audience/export.csv?days=<%= days %>">Download CSV</a>
     </div>
   </div>

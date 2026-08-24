@@ -15,6 +15,12 @@ const { REQUEST_STATUSES, PUBLIC_SERVICE_NAMES } = require('../utils/constants')
 const { cleanObject } = require('../utils/sanitize');
 
 const dashboardTimeZone = process.env.DASHBOARD_TIME_ZONE || 'America/Chicago';
+const fixedAudienceWindow = {
+  start: new Date('2026-08-17T05:00:00.000Z'),
+  end: new Date('2026-08-22T05:00:00.000Z'),
+  label: 'August 17-21, 2026',
+  slug: 'august-17-21-2026'
+};
 
 async function ensureDefaultAdmin() {
   const count = await Admin.countDocuments();
@@ -117,13 +123,12 @@ function logout(req, res) {
 }
 
 async function overview(req, res) {
-  const since = new Date(Date.now() - (1000 * 60 * 60 * 24 * 7));
   const [counts, paymentCounts, recentRequests, payments, audience] = await Promise.all([
     ServiceRequest.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
     ServiceRequest.aggregate([{ $group: { _id: '$paymentStatus', count: { $sum: 1 } } }]),
     ServiceRequest.find().sort({ createdAt: -1 }).limit(8).lean(),
     Payment.find().sort({ createdAt: -1 }).limit(6).populate('serviceRequest').lean(),
-    getAudienceStats(since)
+    getAudienceStats(audienceWindow())
   ]);
   const statusCounts = Object.fromEntries(counts.map((item) => [item._id, item.count]));
   const paymentStatusCounts = Object.fromEntries(paymentCounts.map((item) => [item._id || 'Payment Pending', item.count]));
@@ -343,12 +348,12 @@ function audienceDays(req) {
   return Math.max(1, Math.min(Number(req.query.days || 7), 90));
 }
 
-function audienceSince(days) {
-  return new Date(Date.now() - (1000 * 60 * 60 * 24 * days));
+function audienceWindow() {
+  return { ...fixedAudienceWindow };
 }
 
-async function getAudienceStats(since) {
-  const baseMatch = { createdAt: { $gte: since } };
+async function getAudienceStats(window) {
+  const baseMatch = { createdAt: { $gte: window.start, $lt: window.end } };
   const [visits, uniqueVisitors, ownerVisits, topServices, topPages, topLandingPages, recentEvents, serviceEvents, journeyEvents] = await Promise.all([
     VisitorEvent.countDocuments({ ...baseMatch, eventType: 'page_view' }),
     VisitorEvent.distinct('visitorId', { ...baseMatch, visitorId: { $nin: ['', null] } }),
@@ -398,7 +403,9 @@ async function getAudienceStats(since) {
   }));
 
   return {
-    since,
+    since: window.start,
+    until: window.end,
+    windowLabel: window.label,
     visits,
     uniqueVisitors: uniqueVisitors.length,
     ownerVisits,
@@ -513,12 +520,13 @@ async function payments(req, res) {
 
 async function audience(req, res) {
   const days = audienceDays(req);
-  const since = audienceSince(days);
-  const stats = await getAudienceStats(since);
+  const window = audienceWindow();
+  const stats = await getAudienceStats(window);
   res.render('dashboard/audience', {
     title: 'Website Audience',
     metaDescription: 'Website visitor and service interest analytics.',
     days,
+    audienceWindow: window,
     audience: stats
   });
 }
@@ -532,11 +540,11 @@ function csvRow(values) {
   return values.map(csvValue).join(',');
 }
 
-function exportFilter(req, since) {
+function exportFilter(req, window) {
   const type = String(req.query.type || 'all');
   const sourceName = String(req.query.sourceName || '').trim();
   const sourceCategory = String(req.query.sourceCategory || '').trim();
-  const query = { createdAt: { $gte: since } };
+  const query = { createdAt: { $gte: window.start, $lt: window.end } };
   let label = 'all-visits';
 
   if (type === 'page') {
@@ -571,9 +579,8 @@ function exportFilter(req, since) {
 
 async function audienceExport(req, res, next) {
   try {
-    const days = audienceDays(req);
-    const since = audienceSince(days);
-    const filter = exportFilter(req, since);
+    const window = audienceWindow();
+    const filter = exportFilter(req, window);
     const events = await VisitorEvent.find(filter.query).sort({ createdAt: -1 }).lean();
     const decorated = events.map(decorateEvent);
     const rows = [
@@ -630,7 +637,7 @@ async function audienceExport(req, res, next) {
     ];
     const filenameDate = new Date().toISOString().slice(0, 10);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${filter.label}-${days}d-${filenameDate}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${filter.label}-${window.slug}-${filenameDate}.csv"`);
     res.send(rows.join('\n'));
   } catch (error) {
     next(error);
