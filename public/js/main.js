@@ -529,6 +529,17 @@ const servicePricing = {
   'Car Diagnostic Scanner': 50,
   'Light Roadside Repairs': 75
 };
+
+function quotePriceForArrivalMinutes(minutes) {
+  if (!Number.isFinite(minutes)) return null;
+  if (minutes <= 25) return { price: 40, tier: '1-25-minutes' };
+  if (minutes <= 35) return { price: 50, tier: '26-35-minutes' };
+  if (minutes <= 45) return { price: 60, tier: '36-45-minutes' };
+  if (minutes <= 50) return { price: 80, tier: '46-50-minutes' };
+  if (minutes <= 60) return { price: 100, tier: '51-60-minutes' };
+  return null;
+}
+
 const serviceDetailsConfig = {
   'Tire Change': {
     icon: '◎',
@@ -1203,7 +1214,6 @@ async function geocodeLocation(location) {
 async function calculateQuote(form) {
   const data = new FormData(form);
   const problem = data.get('problem');
-  const basePrice = servicePricing[problem] || 75;
   const dispatchCenter = getDispatchCenter();
   const locationInput = form.querySelector('input[name="currentLocation"]');
   const destination = parseCoordinates(locationInput?.dataset.coordinates) || await geocodeLocation(data.get('currentLocation'));
@@ -1228,57 +1238,34 @@ async function calculateQuote(form) {
   }
 
   const hasTravelEstimate = Number.isFinite(distanceMiles) && Number.isFinite(travelTimeMinutes);
-  const closeDistancePrice = 40;
-  const closeDistanceMaxMinutes = positiveQuoteNumber(quoteConfig.closeDistanceMaxMinutes, 30);
   const closeDistanceTrafficBufferMinutes = Math.max(0, Number(quoteConfig.closeDistanceTrafficBufferMinutes ?? 5) || 5);
   const pricingTravelTimeMinutes = hasTravelEstimate
     ? travelTimeMinutes + Math.max(0, closeDistanceTrafficBufferMinutes)
     : null;
-  const standardTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.standardTravelTimeMaxMinutes ?? quoteConfig.maxTravelTimeMinutes, 60);
-  const tierOneTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.tierOneTravelTimeMaxMinutes, 90);
-  const tierOneTravelFeePercent = positiveQuoteNumber(quoteConfig.tierOneTravelFeePercent, 50);
-  const tierTwoTravelTimeMaxMinutes = positiveQuoteNumber(quoteConfig.tierTwoTravelTimeMaxMinutes, 120);
-  const tierTwoTravelFeePercent = positiveQuoteNumber(quoteConfig.tierTwoTravelFeePercent, 100);
-  let travelFeePercent = 0;
-  let longDistanceTier = '';
-  let longDistanceThresholdMinutes = standardTravelTimeMaxMinutes;
-  const closeDistanceApplies = hasTravelEstimate
-    && closeDistancePrice > 0
-    && travelTimeMinutes <= closeDistanceMaxMinutes;
-
-  if (!closeDistanceApplies && hasTravelEstimate && travelTimeMinutes > standardTravelTimeMaxMinutes) {
-    if (travelTimeMinutes <= tierOneTravelTimeMaxMinutes) {
-      travelFeePercent = tierOneTravelFeePercent;
-      longDistanceTier = 'tier-one';
-      longDistanceThresholdMinutes = standardTravelTimeMaxMinutes;
-    } else {
-      travelFeePercent = tierTwoTravelFeePercent;
-      longDistanceTier = 'tier-two';
-      longDistanceThresholdMinutes = tierOneTravelTimeMaxMinutes;
-    }
+  const maxServiceTravelMinutes = positiveQuoteNumber(quoteConfig.maxTravelTimeMinutes, 60);
+  if (hasTravelEstimate && pricingTravelTimeMinutes > maxServiceTravelMinutes) {
+    throw new Error(`This service location is more than ${maxServiceTravelMinutes} minutes away, so online booking is not available right now. Please call or text first so we can confirm whether service is possible.`);
   }
-
-  const longDistanceApplies = travelFeePercent > 0;
-  const travelFee = longDistanceApplies ? Math.ceil(basePrice * (travelFeePercent / 100)) : 0;
-  const totalPrice = closeDistanceApplies ? closeDistancePrice : basePrice + travelFee;
+  const tieredQuote = hasTravelEstimate ? quotePriceForArrivalMinutes(pricingTravelTimeMinutes) : null;
+  const totalPrice = tieredQuote?.price || servicePricing[problem] || 75;
 
   return {
-    basePrice: closeDistanceApplies ? closeDistancePrice : basePrice,
-    travelFee,
+    basePrice: totalPrice,
+    travelFee: 0,
     totalPrice,
     distanceMiles: hasTravelEstimate ? distanceMiles : null,
     travelTimeMinutes: hasTravelEstimate ? travelTimeMinutes : null,
     estimatedArrivalMinutes: hasTravelEstimate ? pricingTravelTimeMinutes + Number(quoteConfig.dispatchBufferMinutes || 0) : null,
     travelEstimateStatus: hasTravelEstimate ? 'estimated' : 'needs-confirmation',
     travelEstimateSource: hasTravelEstimate ? travelEstimateSource : '',
-    longDistanceApplies,
-    maxTravelTimeMinutes: standardTravelTimeMaxMinutes,
-    longDistanceTier,
-    travelFeePercent,
-    longDistanceThresholdMinutes,
-    tierTwoTravelTimeMaxMinutes,
-    closeDistanceApplies,
-    closeDistanceMaxMinutes,
+    longDistanceApplies: false,
+    maxTravelTimeMinutes: maxServiceTravelMinutes,
+    longDistanceTier: tieredQuote?.tier || '',
+    travelFeePercent: 0,
+    longDistanceThresholdMinutes: maxServiceTravelMinutes,
+    tierTwoTravelTimeMaxMinutes: maxServiceTravelMinutes,
+    closeDistanceApplies: tieredQuote?.tier === '1-25-minutes',
+    closeDistanceMaxMinutes: 25,
     closeDistanceTrafficBufferMinutes,
     pricingTravelTimeMinutes,
     referenceNumber: `PS-${Date.now().toString().slice(-6)}`
