@@ -535,7 +535,7 @@ function quotePriceForArrivalMinutes(minutes) {
   if (minutes <= 25) return { price: 40, tier: '1-25-minutes' };
   if (minutes <= 35) return { price: 50, tier: '26-35-minutes' };
   if (minutes <= 45) return { price: 60, tier: '36-45-minutes' };
-  if (minutes <= 50) return { price: 80, tier: '46-50-minutes' };
+  if (minutes <= 50) return { price: 70, tier: '46-50-minutes' };
   if (minutes <= 60) return { price: 100, tier: '51-60-minutes' };
   return null;
 }
