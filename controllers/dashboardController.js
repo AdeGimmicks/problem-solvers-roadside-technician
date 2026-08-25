@@ -205,9 +205,15 @@ function dashboardDateKey(value) {
 function actionLabel(eventType = '') {
   return {
     page_view: 'Page view',
+    page_duration: 'Page time',
+    button_click: 'Button click',
     service_interest: 'Service interest',
+    request_open: 'Opened Request Service',
+    form_start: 'Started form',
     request_start: 'Started request',
     quote_review: 'Reviewed quote',
+    checkout_reached: 'Reached checkout',
+    payment_success: 'Payment successful',
     request_submit: 'Submitted request'
   }[eventType] || String(eventType).replaceAll('_', ' ');
 }
@@ -225,6 +231,11 @@ function fallbackSource(event = {}) {
 
 function decorateEvent(event = {}) {
   const plain = event.toObject ? event.toObject() : event;
+  const durationSeconds = Number(plain.metadata?.durationSeconds || 0);
+  const gclid = plain.metadata?.gclid || '';
+  const gbraid = plain.metadata?.gbraid || '';
+  const wbraid = plain.metadata?.wbraid || '';
+  const gadSource = plain.metadata?.gadSource || '';
   return {
     ...plain,
     actionLabel: actionLabel(plain.eventType),
@@ -232,14 +243,46 @@ function decorateEvent(event = {}) {
     landingLabel: pageLabel(plain.landingPath || plain.path),
     sourceLabel: fallbackSource(plain),
     sourceCategory: plain.sourceCategory || (fallbackSource(plain).includes('Ads') ? 'Paid Ads' : 'Unclassified'),
+    sourceMedium: plain.metadata?.sourceMedium || plain.sourceCategory || (fallbackSource(plain).includes('Ads') ? 'Paid Ads' : 'Unclassified'),
     visitorLabel: plain.visitorLabel || (plain.visitorType === 'owner' ? 'Owner' : 'Visitor'),
     deviceLabel: [plain.deviceType, plain.browserName].filter(Boolean).join(' / ') || 'Unknown device',
     locationLabel: [plain.location?.city, plain.location?.region, plain.location?.country].filter(Boolean).join(', ') || 'Location unavailable',
     ispLabel: plain.location?.isp || 'ISP unavailable',
     ipLabel: plain.ipAddress || 'Not stored on older record',
+    gclidLabel: gclid || 'Not stored',
+    gbraidLabel: gbraid || 'Not stored',
+    wbraidLabel: wbraid || 'Not stored',
+    gadSourceLabel: gadSource || 'Not stored',
+    primaryAdClickId: plain.adClickId || gclid || gbraid || wbraid || 'Not stored',
+    buttonLabel: plain.metadata?.buttonText || plain.metadata?.buttonName || 'Not stored',
+    buttonHref: plain.metadata?.buttonHref || '',
+    durationSeconds,
+    durationDisplay: durationSeconds ? `${durationSeconds}s` : 'Not stored',
     displayTime: formatDashboardTime(plain.createdAt),
     displayDate: formatDashboardDate(plain.createdAt)
   };
+}
+
+function journeyPages(ordered) {
+  return ordered
+    .filter((event) => event.eventType === 'page_view')
+    .map((event) => {
+      const laterDuration = ordered.find((item) => (
+        item.eventType === 'page_duration'
+        && item.path === event.path
+        && new Date(item.createdAt) >= new Date(event.createdAt)
+      ));
+      return {
+        label: event.pageLabel,
+        path: event.path,
+        time: event.displayTime,
+        durationDisplay: laterDuration?.durationDisplay || 'Not stored'
+      };
+    });
+}
+
+function uniqueValues(values) {
+  return [...new Set(values.filter(Boolean))];
 }
 
 function buildVisitorJourneys(events) {
@@ -255,30 +298,94 @@ function buildVisitorJourneys(events) {
     const first = ordered[0] || {};
     const last = ordered[ordered.length - 1] || {};
     const services = [...new Set(ordered.map((item) => item.serviceName).filter(Boolean))];
-    const completed = ordered.some((item) => item.eventType === 'request_submit');
-    const started = ordered.some((item) => item.eventType === 'request_start' || item.eventType === 'quote_review');
+    const completed = ordered.some((item) => item.eventType === 'payment_success' || item.eventType === 'request_submit');
+    const requestOpened = ordered.some((item) => item.eventType === 'request_open' || pageLabel(item.path) === 'Request Service');
+    const formStarted = ordered.some((item) => item.eventType === 'form_start' || item.eventType === 'request_start');
+    const quoteRequested = ordered.some((item) => item.eventType === 'quote_review');
+    const checkoutReached = ordered.some((item) => item.eventType === 'checkout_reached');
+    const started = formStarted || quoteRequested || checkoutReached;
+    const buttonsClicked = ordered.filter((item) => item.eventType === 'button_click');
+    const pagesViewed = journeyPages(ordered);
+    const totalDurationSeconds = ordered.reduce((sum, item) => sum + (Number(item.durationSeconds) || 0), 0);
+    const engaged = requestOpened || formStarted || quoteRequested || checkoutReached || completed || buttonsClicked.length > 0 || pagesViewed.length > 1 || totalDurationSeconds >= 10;
     const owner = ordered.some((item) => item.visitorType === 'owner');
+    const adClickIds = uniqueValues(ordered.map((item) => item.adClickId || item.primaryAdClickId).filter((item) => item && item !== 'Not stored'));
+    const gclids = uniqueValues(ordered.map((item) => item.metadata?.gclid).filter(Boolean));
+    const gbraids = uniqueValues(ordered.map((item) => item.metadata?.gbraid).filter(Boolean));
+    const wbraids = uniqueValues(ordered.map((item) => item.metadata?.wbraid).filter(Boolean));
     return {
       key,
       visitorLabel: owner ? 'Owner' : (first.visitorLabel || 'Visitor'),
       badge: owner ? 'Owner visit' : completed ? 'Booked' : started ? 'Started, no booking yet' : 'Browsed only',
       sourceLabel: first.sourceLabel,
       sourceCategory: first.sourceCategory,
+      sourceMedium: first.sourceMedium,
       landingLabel: first.landingLabel,
       landingPath: first.landingPath || first.path,
       lastPageLabel: last.pageLabel,
       services,
+      sessionId: first.sessionId || 'Not stored',
+      visitorId: first.visitorId || 'Not stored',
+      adClickId: adClickIds[0] || first.primaryAdClickId || 'Not stored',
+      gclid: gclids[0] || first.gclidLabel || 'Not stored',
+      gbraid: gbraids[0] || first.gbraidLabel || 'Not stored',
+      wbraid: wbraids[0] || first.wbraidLabel || 'Not stored',
       ipAddress: first.ipAddress || 'Not stored',
       locationLabel: first.locationLabel,
       ispLabel: first.ispLabel,
       deviceLabel: first.deviceLabel,
+      browserName: first.browserName || 'Unknown',
+      operatingSystem: first.operatingSystem || 'Unknown',
+      pagesViewed,
+      buttonsClicked,
+      totalDurationSeconds,
+      totalDurationDisplay: totalDurationSeconds ? `${totalDurationSeconds}s` : 'Not stored',
+      requestOpened,
+      formStarted,
+      quoteRequested,
+      checkoutReached,
+      bookingCompleted: completed,
+      exitedWithoutAction: !engaged,
+      engaged,
       firstSeen: first.createdAt,
       lastSeen: last.createdAt,
       firstSeenDisplay: formatDashboardTime(first.createdAt),
       lastSeenDisplay: formatDashboardTime(last.createdAt),
-      events: ordered.slice(-8).reverse()
+      events: ordered
     };
   }).sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen));
+}
+
+function buildGoogleAdsAudit(journeys) {
+  const googleJourneys = journeys.filter((journey) => journey.sourceLabel === 'Google Ads');
+  const dateGroups = buildJourneyLandingDateGroups(googleJourneys).map((dateGroup) => {
+    const clickIds = uniqueValues(dateGroup.journeys.map((journey) => journey.adClickId).filter((item) => item !== 'Not stored'));
+    return {
+      ...dateGroup,
+      totals: {
+        landings: dateGroup.journeys.length,
+        uniqueAdClickIds: clickIds.length,
+        engagedVisitors: dateGroup.journeys.filter((journey) => journey.engaged).length,
+        serviceRequestStarts: dateGroup.journeys.filter((journey) => journey.formStarted || journey.requestOpened).length,
+        completedBookings: dateGroup.journeys.filter((journey) => journey.bookingCompleted).length,
+        abandonedVisits: dateGroup.journeys.filter((journey) => journey.exitedWithoutAction).length
+      }
+    };
+  });
+  const allClickIds = uniqueValues(googleJourneys.map((journey) => journey.adClickId).filter((item) => item !== 'Not stored'));
+
+  return {
+    journeys: googleJourneys,
+    dateGroups,
+    totals: {
+      landings: googleJourneys.length,
+      uniqueAdClickIds: allClickIds.length,
+      engagedVisitors: googleJourneys.filter((journey) => journey.engaged).length,
+      serviceRequestStarts: googleJourneys.filter((journey) => journey.formStarted || journey.requestOpened).length,
+      completedBookings: googleJourneys.filter((journey) => journey.bookingCompleted).length,
+      abandonedVisits: googleJourneys.filter((journey) => journey.exitedWithoutAction).length
+    }
+  };
 }
 
 function buildJourneyGroups(journeys, getGroup) {
@@ -343,6 +450,21 @@ function buildJourneyDateGroups(journeys) {
   })).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
+function buildJourneyLandingDateGroups(journeys) {
+  const groups = new Map();
+  journeys.forEach((journey) => {
+    const dateKey = dashboardDateKey(journey.firstSeen);
+    if (!groups.has(dateKey)) groups.set(dateKey, []);
+    groups.get(dateKey).push(journey);
+  });
+
+  return Array.from(groups.entries()).map(([date, journeysForDate]) => ({
+    date,
+    displayDate: journeysForDate[0]?.firstSeen ? formatDashboardDate(journeysForDate[0].firstSeen) : 'Unknown date',
+    journeys: journeysForDate.sort((a, b) => new Date(b.firstSeen) - new Date(a.firstSeen))
+  })).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+
 function audienceDays(req) {
   return Math.max(1, Math.min(Number(req.query.days || 7), 90));
 }
@@ -400,6 +522,7 @@ async function getAudienceStats(window) {
     label: journey.sourceLabel,
     category: journey.sourceCategory
   }));
+  const googleAdsAudit = buildGoogleAdsAudit(allVisitorJourneys);
 
   return {
     since: window.start,
@@ -412,6 +535,7 @@ async function getAudienceStats(window) {
     topPages: topPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
     topLandingPages: topLandingPages.map((item) => ({ ...item, label: pageLabel(item._id) })),
     sourceBreakdown: sourceGroups,
+    googleAdsAudit,
     pageVisitEvents,
     pageVisitDateGroups: buildEventDateGroups(pageVisitEvents),
     customerVisitEvents,
@@ -603,6 +727,13 @@ async function audienceExport(req, res, next) {
         'Operating System',
         'Campaign',
         'Ad Click ID',
+        'GCLID',
+        'GBRAID',
+        'WBRAID',
+        'Source Medium',
+        'Duration Seconds',
+        'Button Text',
+        'Button Link',
         'Referrer',
         'Visitor ID',
         'Session ID'
@@ -628,6 +759,13 @@ async function audienceExport(req, res, next) {
         event.operatingSystem,
         event.campaignName,
         event.adClickId,
+        event.gclidLabel,
+        event.gbraidLabel,
+        event.wbraidLabel,
+        event.sourceMedium,
+        event.durationSeconds,
+        event.buttonLabel,
+        event.buttonHref,
         event.referrer,
         event.visitorId,
         event.sessionId

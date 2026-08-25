@@ -5,7 +5,19 @@ const visitorEventSchema = new mongoose.Schema({
   sessionId: { type: String, trim: true, index: true },
   eventType: {
     type: String,
-    enum: ['page_view', 'service_interest', 'request_start', 'quote_review', 'request_submit'],
+    enum: [
+      'page_view',
+      'page_duration',
+      'button_click',
+      'service_interest',
+      'request_open',
+      'form_start',
+      'request_start',
+      'quote_review',
+      'checkout_reached',
+      'payment_success',
+      'request_submit'
+    ],
     required: true,
     index: true
   },

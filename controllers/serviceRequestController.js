@@ -38,6 +38,7 @@ function serializeRequest(serviceRequest) {
     id: serviceRequest._id.toString(),
     requestId: serviceRequest.requestId,
     referenceNumber: serviceRequest.referenceNumber || serviceRequest.requestId,
+    problem: serviceRequest.problem,
     preferredPaymentMethod: serviceRequest.preferredPaymentMethod,
     paymentStatus: serviceRequest.paymentStatus,
     estimatedArrivalMinutes: serviceRequest.estimatedArrivalMinutes,

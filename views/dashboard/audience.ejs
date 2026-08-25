@@ -20,6 +20,127 @@
     <article class="stat-card metric-card"><span>Known Visitors</span><strong><%= audience.uniqueVisitors %></strong></article>
   </section>
 
+  <details class="request-manager-card audience-manager-card google-audit-card" open>
+    <summary class="request-manager-summary audience-manager-summary google-audit-summary">
+      <span class="request-summary-customer">Google Ads Journey Audit</span>
+      <span class="request-summary-id"><%= audience.googleAdsAudit.totals.landings %> landings</span>
+      <span class="request-summary-service"><%= audience.googleAdsAudit.totals.uniqueAdClickIds %> unique ad IDs</span>
+      <span class="request-summary-payment is-unpaid">Ads</span>
+      <span class="request-summary-date">Grouped by visit date</span>
+    </summary>
+    <div class="request-manager-body audience-manager-body">
+      <section class="request-manager-main audience-manager-main">
+        <div class="audience-export-row">
+          <a class="btn secondary dashboard-action-btn" href="/dashboard/audience/export.csv?days=<%= days %>&type=source&sourceName=Google%20Ads&sourceCategory=Paid%20Ads">Download Google Ads CSV</a>
+        </div>
+        <div class="google-daily-total-grid">
+          <article><span>Google Ads Landings</span><strong><%= audience.googleAdsAudit.totals.landings %></strong></article>
+          <article><span>Unique Ad Click IDs</span><strong><%= audience.googleAdsAudit.totals.uniqueAdClickIds %></strong></article>
+          <article><span>Engaged Visitors</span><strong><%= audience.googleAdsAudit.totals.engagedVisitors %></strong></article>
+          <article><span>Service Starts</span><strong><%= audience.googleAdsAudit.totals.serviceRequestStarts %></strong></article>
+          <article><span>Completed Bookings</span><strong><%= audience.googleAdsAudit.totals.completedBookings %></strong></article>
+          <article><span>Abandoned Visits</span><strong><%= audience.googleAdsAudit.totals.abandonedVisits %></strong></article>
+        </div>
+        <div class="audience-expanded-list">
+          <% audience.googleAdsAudit.dateGroups.forEach((dateGroup) => { %>
+            <details class="audience-date-group">
+              <summary class="audience-date-summary">
+                <strong><%= dateGroup.displayDate %></strong>
+                <span><%= dateGroup.totals.landings %> landings · <%= dateGroup.totals.uniqueAdClickIds %> unique IDs · <%= dateGroup.totals.abandonedVisits %> abandoned</span>
+              </summary>
+              <div class="google-daily-total-grid compact">
+                <article><span>Landings</span><strong><%= dateGroup.totals.landings %></strong></article>
+                <article><span>Unique IDs</span><strong><%= dateGroup.totals.uniqueAdClickIds %></strong></article>
+                <article><span>Engaged</span><strong><%= dateGroup.totals.engagedVisitors %></strong></article>
+                <article><span>Service Starts</span><strong><%= dateGroup.totals.serviceRequestStarts %></strong></article>
+                <article><span>Bookings</span><strong><%= dateGroup.totals.completedBookings %></strong></article>
+                <article><span>Abandoned</span><strong><%= dateGroup.totals.abandonedVisits %></strong></article>
+              </div>
+              <div class="google-journey-list">
+                <% dateGroup.journeys.forEach((journey) => { %>
+                  <details class="visitor-journey-card google-journey-card <%= journey.visitorLabel === 'Owner' ? 'is-owner' : '' %>">
+                    <summary class="journey-summary">
+                      <div>
+                        <span class="journey-badge"><%= journey.badge %></span>
+                        <h3><%= journey.visitorLabel %></h3>
+                        <p><strong>Timestamp:</strong> <%= journey.firstSeenDisplay %></p>
+                        <p><strong>Landed:</strong> <%= journey.landingLabel %> <span class="muted-inline"><%= journey.landingPath %></span></p>
+                      </div>
+                      <div class="journey-meta">
+                        <p><strong>GCLID / GBRAID / WBRAID:</strong> <%= journey.adClickId %></p>
+                        <p><strong>Session:</strong> <%= journey.sessionId %></p>
+                        <p><strong>Visitor:</strong> <%= journey.visitorId %></p>
+                        <p><strong>Device:</strong> <%= journey.deviceLabel %></p>
+                      </div>
+                      <span class="journey-toggle">View audit</span>
+                    </summary>
+                    <div class="journey-details google-journey-details">
+                      <div class="google-audit-grid">
+                        <p><span>Source / Medium</span><strong><%= journey.sourceLabel %> / <%= journey.sourceMedium %></strong></p>
+                        <p><span>IP / Area</span><strong><%= journey.ipAddress %> · <%= journey.locationLabel %></strong></p>
+                        <p><span>Browser</span><strong><%= journey.browserName %> · <%= journey.operatingSystem %></strong></p>
+                        <p><span>Total Page Time</span><strong><%= journey.totalDurationDisplay %></strong></p>
+                        <p><span>Request Service Opened</span><strong><%= journey.requestOpened ? 'Yes' : 'No' %></strong></p>
+                        <p><span>Form Started</span><strong><%= journey.formStarted ? 'Yes' : 'No' %></strong></p>
+                        <p><span>Quote Requested</span><strong><%= journey.quoteRequested ? 'Yes' : 'No' %></strong></p>
+                        <p><span>Checkout Reached</span><strong><%= journey.checkoutReached ? 'Yes' : 'No' %></strong></p>
+                        <p><span>Exited Without Action</span><strong><%= journey.exitedWithoutAction ? 'Yes' : 'No' %></strong></p>
+                      </div>
+                      <div>
+                        <h4>Pages Viewed In Order</h4>
+                        <ol class="journey-timeline google-timeline">
+                          <% journey.pagesViewed.forEach((page) => { %>
+                            <li>
+                              <span><%= page.time %></span>
+                              <strong><%= page.label %></strong>
+                              <small><%= page.path || '-' %></small>
+                              <small>Time on page: <%= page.durationDisplay %></small>
+                            </li>
+                          <% }) %>
+                        </ol>
+                        <% if (!journey.pagesViewed.length) { %><p class="muted-copy">No page views stored for this journey.</p><% } %>
+                      </div>
+                      <div>
+                        <h4>Buttons Clicked</h4>
+                        <ol class="journey-timeline google-timeline">
+                          <% journey.buttonsClicked.forEach((event) => { %>
+                            <li>
+                              <span><%= event.displayTime %></span>
+                              <strong><%= event.buttonLabel %></strong>
+                              <small><%= event.buttonHref || event.path || '-' %></small>
+                            </li>
+                          <% }) %>
+                        </ol>
+                        <% if (!journey.buttonsClicked.length) { %><p class="muted-copy">No button clicks stored for this journey.</p><% } %>
+                      </div>
+                      <div>
+                        <h4>Complete Event Path</h4>
+                        <ol class="journey-timeline google-timeline">
+                          <% journey.events.forEach((event) => { %>
+                            <li>
+                              <span><%= event.displayTime %></span>
+                              <strong><%= event.actionLabel %></strong>
+                              <small><%= event.serviceName || event.pageLabel %> - <%= event.path || '-' %></small>
+                              <% if (event.eventType === 'button_click') { %><small>Button: <%= event.buttonLabel %></small><% } %>
+                              <% if (event.eventType === 'page_duration') { %><small>Time spent: <%= event.durationDisplay %></small><% } %>
+                            </li>
+                          <% }) %>
+                        </ol>
+                      </div>
+                    </div>
+                  </details>
+                <% }) %>
+              </div>
+            </details>
+          <% }) %>
+          <% if (!audience.googleAdsAudit.journeys.length) { %>
+            <p class="muted-copy">No Google Ads journeys are recorded in this window.</p>
+          <% } %>
+        </div>
+      </section>
+    </div>
+  </details>
+
   <section class="request-manager-list audience-manager-list" aria-label="Visitor visit breakdown">
     <details class="request-manager-card audience-manager-card">
       <summary class="request-manager-summary audience-manager-summary">

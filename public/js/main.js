@@ -59,6 +59,9 @@ const problemInput = document.querySelector('[name="problem"]');
 const analyticsVisitorKey = 'problemSolversVisitorId';
 const analyticsSessionKey = 'problemSolversSessionId';
 const analyticsLandingKey = 'problemSolversLandingPath';
+const analyticsPageStartedAt = Date.now();
+let analyticsDurationSent = false;
+let requestFormStartedTracked = false;
 
 function randomAnalyticsId(prefix) {
   if (window.crypto?.randomUUID) return `${prefix}-${window.crypto.randomUUID()}`;
@@ -117,10 +120,21 @@ function trackVisitorEvent(eventType, data = {}) {
   }).catch(() => {});
 }
 
+function trackPageDuration() {
+  if (analyticsDurationSent || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/technician')) return;
+  const durationSeconds = Math.max(1, Math.round((Date.now() - analyticsPageStartedAt) / 1000));
+  analyticsDurationSent = true;
+  trackVisitorEvent('page_duration', { durationSeconds });
+}
+
 trackVisitorEvent('page_view', requestedService ? { serviceName: requestedService } : {});
 
 if (requestedService) {
   trackVisitorEvent('service_interest', { serviceName: requestedService });
+}
+
+if (location.pathname === '/payments/success') {
+  trackVisitorEvent('payment_success');
 }
 
 document.querySelectorAll('a[href*="/request-service"]').forEach((link) => {
@@ -128,11 +142,30 @@ document.querySelectorAll('a[href*="/request-service"]').forEach((link) => {
     try {
       const target = new URL(link.href, window.location.href);
       const serviceName = target.searchParams.get('service') || link.textContent.trim();
+      trackVisitorEvent('request_open', { serviceName, buttonText: link.textContent.trim(), buttonHref: `${target.pathname}${target.search}` });
       trackVisitorEvent('service_interest', { serviceName });
     } catch (error) {
+      trackVisitorEvent('request_open', { serviceName: link.textContent.trim(), buttonText: link.textContent.trim(), buttonHref: link.getAttribute('href') || '' });
       trackVisitorEvent('service_interest', { serviceName: link.textContent.trim() });
     }
   });
+});
+
+document.addEventListener('click', (event) => {
+  const target = event.target.closest('button, a');
+  if (!target || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/technician')) return;
+  const text = target.textContent?.trim().replace(/\s+/g, ' ') || target.getAttribute('aria-label') || target.name || target.href || 'Clicked';
+  const href = target.href ? new URL(target.href, window.location.href) : null;
+  trackVisitorEvent('button_click', {
+    buttonText: text,
+    buttonName: target.name || target.dataset.progressStep || target.dataset.requestStep || '',
+    buttonHref: href ? `${href.pathname}${href.search}` : ''
+  });
+});
+
+window.addEventListener('pagehide', trackPageDuration);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') trackPageDuration();
 });
 
 if (requestedService && problemInput && !problemInput.value) {
@@ -1574,6 +1607,7 @@ async function startStripeCheckout(request, options = {}) {
   }
   if (!payload.url) throw new Error('Stripe did not return a checkout page.');
 
+  trackVisitorEvent('checkout_reached', { serviceName: request.problem || request.serviceName || request.service });
   window.location.href = payload.url;
 }
 
@@ -1616,6 +1650,11 @@ function setupStaticRequestSave() {
   let pendingCheckoutRequest = null;
 
   renderSelectedServiceDetails();
+  form.addEventListener('input', () => {
+    if (requestFormStartedTracked) return;
+    requestFormStartedTracked = true;
+    trackVisitorEvent('form_start', { serviceName: problemInput?.value || new FormData(form).get('problem') });
+  }, { once: true });
   restoreServiceDetailInputs(form);
   const restoredQuote = quoteFromForm(form);
   if (restoredQuote) {

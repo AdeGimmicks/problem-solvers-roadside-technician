@@ -2,7 +2,19 @@ const crypto = require('crypto');
 const VisitorEvent = require('../models/VisitorEvent');
 const { PUBLIC_SERVICE_NAMES } = require('../utils/constants');
 
-const EVENT_TYPES = ['page_view', 'service_interest', 'request_start', 'quote_review', 'request_submit'];
+const EVENT_TYPES = [
+  'page_view',
+  'page_duration',
+  'button_click',
+  'service_interest',
+  'request_open',
+  'form_start',
+  'request_start',
+  'quote_review',
+  'checkout_reached',
+  'payment_success',
+  'request_submit'
+];
 
 function clean(value, maxLength = 300) {
   return String(value || '').trim().slice(0, maxLength);
@@ -42,6 +54,11 @@ function firstParam(searchParams, names) {
   return names.map((name) => clean(searchParams.get(name), 120)).find(Boolean) || '';
 }
 
+function numberParam(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : fallback;
+}
+
 function classifySource(path, referrer) {
   const url = safeUrl(path);
   const params = url.searchParams;
@@ -50,6 +67,10 @@ function classifySource(path, referrer) {
   const utmSource = firstParam(params, ['utm_source']);
   const utmMedium = firstParam(params, ['utm_medium']);
   const campaignName = firstParam(params, ['utm_campaign', 'campaign']);
+  const gclid = clean(params.get('gclid'), 180);
+  const gbraid = clean(params.get('gbraid'), 180);
+  const wbraid = clean(params.get('wbraid'), 180);
+  const gadSource = clean(params.get('gad_source'), 80);
   const adClickId = firstParam(params, ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid', 'ttclid']);
   const hasGoogleAdClick = Boolean(params.get('gclid') || params.get('gbraid') || params.get('wbraid'));
   const hasFacebookAdClick = Boolean(params.get('fbclid'));
@@ -57,26 +78,26 @@ function classifySource(path, referrer) {
   const paidMedium = /^(cpc|ppc|paid|paid_social|paid-search|display)$/i.test(utmMedium);
 
   if (hasGoogleAdClick || (/google/i.test(utmSource) && paidMedium)) {
-    return { sourceCategory: 'Paid Ads', sourceName: 'Google Ads', campaignName, adClickId };
+    return { sourceCategory: 'Paid Ads', sourceName: 'Google Ads', campaignName, adClickId, sourceMedium: utmMedium || 'Paid Ads', gclid, gbraid, wbraid, gadSource };
   }
   if (hasFacebookAdClick || (/(facebook|instagram|meta)/i.test(utmSource) && paidMedium)) {
-    return { sourceCategory: 'Paid Ads', sourceName: 'Meta Ads', campaignName, adClickId };
+    return { sourceCategory: 'Paid Ads', sourceName: 'Meta Ads', campaignName, adClickId, sourceMedium: utmMedium || 'Paid Ads', gclid, gbraid, wbraid, gadSource };
   }
   if (hasMicrosoftAdClick || (/(bing|microsoft)/i.test(utmSource) && paidMedium)) {
-    return { sourceCategory: 'Paid Ads', sourceName: 'Microsoft Ads', campaignName, adClickId };
+    return { sourceCategory: 'Paid Ads', sourceName: 'Microsoft Ads', campaignName, adClickId, sourceMedium: utmMedium || 'Paid Ads', gclid, gbraid, wbraid, gadSource };
   }
   if (utmSource) {
-    return { sourceCategory: utmMedium || 'Campaign', sourceName: utmSource, campaignName, adClickId };
+    return { sourceCategory: utmMedium || 'Campaign', sourceName: utmSource, campaignName, adClickId, sourceMedium: utmMedium || 'Campaign', gclid, gbraid, wbraid, gadSource };
   }
   if (!refHost || refHost.includes('problemsolversroadside.com')) {
-    return { sourceCategory: 'Direct', sourceName: 'Direct visit', campaignName, adClickId };
+    return { sourceCategory: 'Direct', sourceName: 'Direct visit', campaignName, adClickId, sourceMedium: 'Direct', gclid, gbraid, wbraid, gadSource };
   }
-  if (/google\./i.test(refHost)) return { sourceCategory: 'Organic Search', sourceName: 'Google Search', campaignName, adClickId };
-  if (/bing\./i.test(refHost)) return { sourceCategory: 'Organic Search', sourceName: 'Bing Search', campaignName, adClickId };
+  if (/google\./i.test(refHost)) return { sourceCategory: 'Organic Search', sourceName: 'Google Search', campaignName, adClickId, sourceMedium: 'Organic Search', gclid, gbraid, wbraid, gadSource };
+  if (/bing\./i.test(refHost)) return { sourceCategory: 'Organic Search', sourceName: 'Bing Search', campaignName, adClickId, sourceMedium: 'Organic Search', gclid, gbraid, wbraid, gadSource };
   if (/(facebook|instagram|t\.co|twitter|x\.com|youtube|tiktok)/i.test(refHost)) {
-    return { sourceCategory: 'Social Referral', sourceName: refHost, campaignName, adClickId };
+    return { sourceCategory: 'Social Referral', sourceName: refHost, campaignName, adClickId, sourceMedium: 'Social Referral', gclid, gbraid, wbraid, gadSource };
   }
-  return { sourceCategory: 'Referral', sourceName: refHost, campaignName, adClickId };
+  return { sourceCategory: 'Referral', sourceName: refHost, campaignName, adClickId, sourceMedium: 'Referral', gclid, gbraid, wbraid, gadSource };
 }
 
 function parseDevice(userAgent) {
@@ -204,6 +225,16 @@ async function track(req, res) {
         screen: clean(req.query.screen, 40),
         timezone: clean(req.query.timezone, 80),
         language: clean(req.query.language, 40),
+        sourceMedium: source.sourceMedium,
+        gclid: source.gclid,
+        gbraid: source.gbraid,
+        wbraid: source.wbraid,
+        gadSource: source.gadSource,
+        durationSeconds: numberParam(req.query.durationSeconds),
+        buttonText: clean(req.query.buttonText, 120),
+        buttonHref: clean(req.query.buttonHref, 260),
+        buttonName: clean(req.query.buttonName, 80),
+        stepName: clean(req.query.stepName, 80),
         ownerMatchedBy: ownerVisit ? (req.session?.admin?.id ? 'dashboard-session' : 'configured-identity') : ''
       }
     });
