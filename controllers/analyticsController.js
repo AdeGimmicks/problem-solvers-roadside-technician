@@ -54,12 +54,16 @@ function firstParam(searchParams, names) {
   return names.map((name) => clean(searchParams.get(name), 120)).find(Boolean) || '';
 }
 
+function firstValue(...values) {
+  return values.map((value) => clean(value, 180)).find(Boolean) || '';
+}
+
 function numberParam(value, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) && number >= 0 ? number : fallback;
 }
 
-function classifySource(path, referrer) {
+function classifySource(path, referrer, preserved = {}) {
   const url = safeUrl(path);
   const params = url.searchParams;
   const ref = referrer ? safeUrl(referrer) : null;
@@ -67,12 +71,12 @@ function classifySource(path, referrer) {
   const utmSource = firstParam(params, ['utm_source']);
   const utmMedium = firstParam(params, ['utm_medium']);
   const campaignName = firstParam(params, ['utm_campaign', 'campaign']);
-  const gclid = clean(params.get('gclid'), 180);
-  const gbraid = clean(params.get('gbraid'), 180);
-  const wbraid = clean(params.get('wbraid'), 180);
-  const gadSource = clean(params.get('gad_source'), 80);
-  const adClickId = firstParam(params, ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid', 'ttclid']);
-  const hasGoogleAdClick = Boolean(params.get('gclid') || params.get('gbraid') || params.get('wbraid'));
+  const gclid = firstValue(params.get('gclid'), preserved.gclid);
+  const gbraid = firstValue(params.get('gbraid'), preserved.gbraid);
+  const wbraid = firstValue(params.get('wbraid'), preserved.wbraid);
+  const gadSource = firstValue(params.get('gad_source'), preserved.gadSource);
+  const adClickId = firstValue(gclid, gbraid, wbraid, firstParam(params, ['fbclid', 'msclkid', 'ttclid']), preserved.adClickId);
+  const hasGoogleAdClick = Boolean(gclid || gbraid || wbraid);
   const hasFacebookAdClick = Boolean(params.get('fbclid'));
   const hasMicrosoftAdClick = Boolean(params.get('msclkid'));
   const paidMedium = /^(cpc|ppc|paid|paid_social|paid-search|display)$/i.test(utmMedium);
@@ -102,8 +106,12 @@ function classifySource(path, referrer) {
 
 function parseDevice(userAgent) {
   const ua = String(userAgent || '');
-  const deviceType = /mobile|iphone|android/i.test(ua) ? 'Mobile' : /ipad|tablet/i.test(ua) ? 'Tablet' : 'Desktop';
-  const browserName = /Edg\//.test(ua) ? 'Edge'
+  const deviceType = /ipad|tablet/i.test(ua) ? 'Tablet'
+    : /mobile|iphone|android/i.test(ua) ? 'Mobile'
+      : ua ? 'Desktop' : 'Unknown device';
+  const browserName = /CriOS\//.test(ua) ? 'Chrome'
+    : /FxiOS\//.test(ua) ? 'Firefox'
+      : /Edg\//.test(ua) ? 'Edge'
     : /Chrome\//.test(ua) ? 'Chrome'
       : /Safari\//.test(ua) ? 'Safari'
         : /Firefox\//.test(ua) ? 'Firefox'
@@ -195,7 +203,13 @@ async function track(req, res) {
     const visitorId = clean(req.query.visitorId, 80);
     const ipAddress = clean(getClientIp(req), 80);
     const userAgent = clean(req.get('user-agent'), 500);
-    const source = classifySource(landingPath || path, referrer);
+    const source = classifySource(landingPath || path, referrer, {
+      adClickId: req.query.adClickId,
+      gclid: req.query.gclid,
+      gbraid: req.query.gbraid,
+      wbraid: req.query.wbraid,
+      gadSource: req.query.gadSource
+    });
     const device = parseDevice(userAgent);
     const ownerVisit = isOwnerVisit(req, ipAddress, visitorId);
 

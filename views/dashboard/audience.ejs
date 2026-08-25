@@ -35,26 +35,46 @@
         </div>
         <div class="google-daily-total-grid">
           <article><span>Google Ads Landings</span><strong><%= audience.googleAdsAudit.totals.landings %></strong></article>
+          <article><span>Unique Ad Visitors</span><strong><%= audience.googleAdsAudit.totals.uniqueVisitors %></strong></article>
+          <article><span>Sessions</span><strong><%= audience.googleAdsAudit.totals.sessions %></strong></article>
+          <article><span>Page Views</span><strong><%= audience.googleAdsAudit.totals.pageViews %></strong></article>
           <article><span>Unique Ad Click IDs</span><strong><%= audience.googleAdsAudit.totals.uniqueAdClickIds %></strong></article>
+          <article><span>Homepage Only</span><strong><%= audience.googleAdsAudit.totals.homepageOnlyVisits %></strong></article>
+          <article><span>Service Page Visits</span><strong><%= audience.googleAdsAudit.totals.servicePageVisits %></strong></article>
           <article><span>Engaged Visitors</span><strong><%= audience.googleAdsAudit.totals.engagedVisitors %></strong></article>
           <article><span>Service Starts</span><strong><%= audience.googleAdsAudit.totals.serviceRequestStarts %></strong></article>
+          <article><span>Quote Requests</span><strong><%= audience.googleAdsAudit.totals.quoteRequests %></strong></article>
+          <article><span>Checkout Reaches</span><strong><%= audience.googleAdsAudit.totals.checkoutReaches %></strong></article>
           <article><span>Completed Bookings</span><strong><%= audience.googleAdsAudit.totals.completedBookings %></strong></article>
+          <article><span>Repeat Visitors</span><strong><%= audience.googleAdsAudit.totals.repeatVisitors %></strong></article>
           <article><span>Abandoned Visits</span><strong><%= audience.googleAdsAudit.totals.abandonedVisits %></strong></article>
+          <article><span>Abandonment Rate</span><strong><%= audience.googleAdsAudit.totals.abandonmentRate %>%</strong></article>
+          <article><span>Owner Ad Visits</span><strong><%= audience.googleAdsAudit.ownerTotals.landings %></strong></article>
         </div>
         <div class="audience-expanded-list">
           <% audience.googleAdsAudit.dateGroups.forEach((dateGroup) => { %>
             <details class="audience-date-group">
               <summary class="audience-date-summary">
                 <strong><%= dateGroup.displayDate %></strong>
-                <span><%= dateGroup.totals.landings %> landings · <%= dateGroup.totals.uniqueAdClickIds %> unique IDs · <%= dateGroup.totals.abandonedVisits %> abandoned</span>
+                <span><%= dateGroup.totals.landings %> external landings · <%= dateGroup.totals.uniqueVisitors %> visitors · <%= dateGroup.ownerVisits %> owner · <%= dateGroup.totals.abandonedVisits %> abandoned</span>
               </summary>
               <div class="google-daily-total-grid compact">
                 <article><span>Landings</span><strong><%= dateGroup.totals.landings %></strong></article>
+                <article><span>Visitors</span><strong><%= dateGroup.totals.uniqueVisitors %></strong></article>
+                <article><span>Sessions</span><strong><%= dateGroup.totals.sessions %></strong></article>
+                <article><span>Page Views</span><strong><%= dateGroup.totals.pageViews %></strong></article>
                 <article><span>Unique IDs</span><strong><%= dateGroup.totals.uniqueAdClickIds %></strong></article>
+                <article><span>Homepage Only</span><strong><%= dateGroup.totals.homepageOnlyVisits %></strong></article>
+                <article><span>Service Pages</span><strong><%= dateGroup.totals.servicePageVisits %></strong></article>
                 <article><span>Engaged</span><strong><%= dateGroup.totals.engagedVisitors %></strong></article>
                 <article><span>Service Starts</span><strong><%= dateGroup.totals.serviceRequestStarts %></strong></article>
+                <article><span>Quotes</span><strong><%= dateGroup.totals.quoteRequests %></strong></article>
+                <article><span>Checkout</span><strong><%= dateGroup.totals.checkoutReaches %></strong></article>
                 <article><span>Bookings</span><strong><%= dateGroup.totals.completedBookings %></strong></article>
+                <article><span>Repeat</span><strong><%= dateGroup.totals.repeatVisitors %></strong></article>
                 <article><span>Abandoned</span><strong><%= dateGroup.totals.abandonedVisits %></strong></article>
+                <article><span>Abandonment</span><strong><%= dateGroup.totals.abandonmentRate %>%</strong></article>
+                <article><span>Owner</span><strong><%= dateGroup.ownerVisits %></strong></article>
               </div>
               <div class="google-journey-list">
                 <% dateGroup.journeys.forEach((journey) => { %>
@@ -70,6 +90,7 @@
                         <p><strong>GCLID / GBRAID / WBRAID:</strong> <%= journey.adClickId %></p>
                         <p><strong>Session:</strong> <%= journey.sessionId %></p>
                         <p><strong>Visitor:</strong> <%= journey.visitorId %></p>
+                        <p><strong>Page Views:</strong> <%= journey.pageViewCount %></p>
                         <p><strong>Device:</strong> <%= journey.deviceLabel %></p>
                       </div>
                       <span class="journey-toggle">View audit</span>

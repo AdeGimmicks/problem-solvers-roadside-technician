@@ -59,6 +59,7 @@ const problemInput = document.querySelector('[name="problem"]');
 const analyticsVisitorKey = 'problemSolversVisitorId';
 const analyticsSessionKey = 'problemSolversSessionId';
 const analyticsLandingKey = 'problemSolversLandingPath';
+const analyticsAttributionKey = 'problemSolversAdAttribution';
 const analyticsPageStartedAt = Date.now();
 let analyticsDurationSent = false;
 let requestFormStartedTracked = false;
@@ -95,8 +96,36 @@ function getAnalyticsLandingPath() {
   }
 }
 
+function getAnalyticsAttribution() {
+  const searchParams = new URLSearchParams(window.location.search);
+  const current = {
+    gclid: searchParams.get('gclid') || '',
+    gbraid: searchParams.get('gbraid') || '',
+    wbraid: searchParams.get('wbraid') || '',
+    gadSource: searchParams.get('gad_source') || ''
+  };
+  const hasCurrentAdId = Boolean(current.gclid || current.gbraid || current.wbraid);
+  try {
+    if (hasCurrentAdId) {
+      const value = {
+        ...current,
+        adClickId: current.gclid || current.gbraid || current.wbraid,
+        landingPath: `${location.pathname}${location.search}`,
+        capturedAt: new Date().toISOString()
+      };
+      window.sessionStorage.setItem(analyticsAttributionKey, JSON.stringify(value));
+      return value;
+    }
+    const stored = JSON.parse(window.sessionStorage.getItem(analyticsAttributionKey) || '{}');
+    return stored && typeof stored === 'object' ? stored : {};
+  } catch (error) {
+    return hasCurrentAdId ? { ...current, adClickId: current.gclid || current.gbraid || current.wbraid } : {};
+  }
+}
+
 function trackVisitorEvent(eventType, data = {}) {
   if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/technician')) return;
+  const attribution = getAnalyticsAttribution();
   const payload = new URLSearchParams({
     eventType,
     visitorId: getAnalyticsId(analyticsVisitorKey, 'visitor'),
@@ -108,6 +137,11 @@ function trackVisitorEvent(eventType, data = {}) {
     screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
     language: navigator.language || '',
+    adClickId: attribution.adClickId || '',
+    gclid: attribution.gclid || '',
+    gbraid: attribution.gbraid || '',
+    wbraid: attribution.wbraid || '',
+    gadSource: attribution.gadSource || '',
     ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined && value !== null && value !== ''))
   });
   const url = `/api/analytics/track?${payload.toString()}`;

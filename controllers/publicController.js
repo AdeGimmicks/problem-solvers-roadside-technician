@@ -16,11 +16,15 @@ const POLICIES = {
     sections: [
       {
         heading: 'Information We Collect',
-        body: 'We may collect your name, phone number, email address, vehicle details, service requested, service location, uploaded photos, messages, payment status, and request details.'
+        body: 'We may collect your name, phone number, email address, vehicle details, service requested, service location, uploaded photos, messages, payment status, request details, website visit activity, advertising click identifiers, browser/device information, IP/network information, and approximate city, region, or country when available.'
       },
       {
         heading: 'How We Use Information',
         body: 'We use this information to respond to service requests, communicate by call or text, process payments, dispatch roadside help, maintain records, and improve the website and customer experience.'
+      },
+      {
+        heading: 'Website Analytics And Advertising',
+        body: 'We may use visit and advertising information, such as pages viewed, buttons clicked, Google Ads identifiers, session identifiers, device type, browser, operating system, IP address, network provider, and approximate location to verify ad traffic, prevent abuse, understand customer journeys, and improve service availability. Approximate location from IP/network data may be unavailable or imprecise and is not created when it cannot be determined.'
       },
       {
         heading: 'Payments',

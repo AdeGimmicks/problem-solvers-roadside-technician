@@ -222,6 +222,7 @@ function fallbackSource(event = {}) {
   const path = String(event.landingPath || event.path || '');
   const referrer = String(event.referrer || '');
   if (event.sourceName) return event.sourceName;
+  if (event.gclid || event.gbraid || event.wbraid || event.metadata?.gclid || event.metadata?.gbraid || event.metadata?.wbraid) return 'Google Ads';
   if (/[?&](gclid|gbraid|wbraid|gad_source)=/i.test(path)) return 'Google Ads';
   if (/[?&]fbclid=/i.test(path)) return 'Meta Ads';
   if (/google\./i.test(referrer)) return 'Google Search';
@@ -232,10 +233,11 @@ function fallbackSource(event = {}) {
 function decorateEvent(event = {}) {
   const plain = event.toObject ? event.toObject() : event;
   const durationSeconds = Number(plain.metadata?.durationSeconds || 0);
-  const gclid = plain.metadata?.gclid || '';
-  const gbraid = plain.metadata?.gbraid || '';
-  const wbraid = plain.metadata?.wbraid || '';
-  const gadSource = plain.metadata?.gadSource || '';
+  const gclid = plain.gclid || plain.metadata?.gclid || '';
+  const gbraid = plain.gbraid || plain.metadata?.gbraid || '';
+  const wbraid = plain.wbraid || plain.metadata?.wbraid || '';
+  const gadSource = plain.gadSource || plain.metadata?.gadSource || '';
+  const sourceMedium = plain.sourceMedium || plain.metadata?.sourceMedium || plain.sourceCategory || (fallbackSource(plain).includes('Ads') ? 'Paid Ads' : 'Unclassified');
   return {
     ...plain,
     actionLabel: actionLabel(plain.eventType),
@@ -243,7 +245,7 @@ function decorateEvent(event = {}) {
     landingLabel: pageLabel(plain.landingPath || plain.path),
     sourceLabel: fallbackSource(plain),
     sourceCategory: plain.sourceCategory || (fallbackSource(plain).includes('Ads') ? 'Paid Ads' : 'Unclassified'),
-    sourceMedium: plain.metadata?.sourceMedium || plain.sourceCategory || (fallbackSource(plain).includes('Ads') ? 'Paid Ads' : 'Unclassified'),
+    sourceMedium,
     visitorLabel: plain.visitorLabel || (plain.visitorType === 'owner' ? 'Owner' : 'Visitor'),
     deviceLabel: [plain.deviceType, plain.browserName].filter(Boolean).join(' / ') || 'Unknown device',
     locationLabel: [plain.location?.city, plain.location?.region, plain.location?.country].filter(Boolean).join(', ') || 'Location unavailable',
@@ -253,7 +255,7 @@ function decorateEvent(event = {}) {
     gbraidLabel: gbraid || 'Not stored',
     wbraidLabel: wbraid || 'Not stored',
     gadSourceLabel: gadSource || 'Not stored',
-    primaryAdClickId: plain.adClickId || gclid || gbraid || wbraid || 'Not stored',
+    primaryAdClickId: gclid || gbraid || wbraid || plain.adClickId || 'Not stored',
     buttonLabel: plain.metadata?.buttonText || plain.metadata?.buttonName || 'Not stored',
     buttonHref: plain.metadata?.buttonHref || '',
     durationSeconds,
@@ -310,9 +312,10 @@ function buildVisitorJourneys(events) {
     const engaged = requestOpened || formStarted || quoteRequested || checkoutReached || completed || buttonsClicked.length > 0 || pagesViewed.length > 1 || totalDurationSeconds >= 10;
     const owner = ordered.some((item) => item.visitorType === 'owner');
     const adClickIds = uniqueValues(ordered.map((item) => item.adClickId || item.primaryAdClickId).filter((item) => item && item !== 'Not stored'));
-    const gclids = uniqueValues(ordered.map((item) => item.metadata?.gclid).filter(Boolean));
-    const gbraids = uniqueValues(ordered.map((item) => item.metadata?.gbraid).filter(Boolean));
-    const wbraids = uniqueValues(ordered.map((item) => item.metadata?.wbraid).filter(Boolean));
+    const gclids = uniqueValues(ordered.map((item) => item.gclid || item.metadata?.gclid).filter(Boolean));
+    const gbraids = uniqueValues(ordered.map((item) => item.gbraid || item.metadata?.gbraid).filter(Boolean));
+    const wbraids = uniqueValues(ordered.map((item) => item.wbraid || item.metadata?.wbraid).filter(Boolean));
+    const pageViewCount = ordered.filter((item) => item.eventType === 'page_view').length;
     return {
       key,
       visitorLabel: owner ? 'Owner' : (first.visitorLabel || 'Visitor'),
@@ -337,6 +340,7 @@ function buildVisitorJourneys(events) {
       browserName: first.browserName || 'Unknown',
       operatingSystem: first.operatingSystem || 'Unknown',
       pagesViewed,
+      pageViewCount,
       buttonsClicked,
       totalDurationSeconds,
       totalDurationDisplay: totalDurationSeconds ? `${totalDurationSeconds}s` : 'Not stored',
@@ -358,33 +362,53 @@ function buildVisitorJourneys(events) {
 
 function buildGoogleAdsAudit(journeys) {
   const googleJourneys = journeys.filter((journey) => journey.sourceLabel === 'Google Ads');
+  const externalGoogleJourneys = googleJourneys.filter((journey) => journey.visitorLabel !== 'Owner');
+  const ownerGoogleJourneys = googleJourneys.filter((journey) => journey.visitorLabel === 'Owner');
+  const servicePagePattern = /^\/(tire-change|jump-start|lockout|fuel-delivery)(\?|$)/i;
+  const countUniqueVisitors = (items) => uniqueValues(items.map((journey) => journey.visitorId).filter((item) => item !== 'Not stored')).length;
+  const countRepeatVisitors = (items) => {
+    const counts = new Map();
+    items.forEach((journey) => {
+      const key = journey.visitorId !== 'Not stored' ? journey.visitorId : journey.key;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return Array.from(counts.values()).filter((count) => count > 1).length;
+  };
+  const buildTotals = (items) => {
+    const clickIds = uniqueValues(items.map((journey) => journey.adClickId).filter((item) => item !== 'Not stored'));
+    const abandonedVisits = items.filter((journey) => !journey.bookingCompleted && !journey.checkoutReached && !journey.quoteRequested && !journey.formStarted && !journey.requestOpened).length;
+    return {
+      landings: items.length,
+      sessions: uniqueValues(items.map((journey) => journey.sessionId).filter((item) => item !== 'Not stored')).length,
+      pageViews: items.reduce((sum, journey) => sum + (Number(journey.pageViewCount) || 0), 0),
+      uniqueAdClickIds: clickIds.length,
+      uniqueVisitors: countUniqueVisitors(items),
+      homepageOnlyVisits: items.filter((journey) => journey.pagesViewed.length === 1 && String(journey.landingPath || '').replace(/\?.*$/, '') === '/').length,
+      servicePageVisits: items.filter((journey) => journey.pagesViewed.some((page) => servicePagePattern.test(page.path || ''))).length,
+      engagedVisitors: items.filter((journey) => journey.engaged).length,
+      serviceRequestStarts: items.filter((journey) => journey.formStarted || journey.requestOpened).length,
+      quoteRequests: items.filter((journey) => journey.quoteRequested).length,
+      checkoutReaches: items.filter((journey) => journey.checkoutReached).length,
+      completedBookings: items.filter((journey) => journey.bookingCompleted).length,
+      repeatVisitors: countRepeatVisitors(items),
+      abandonedVisits,
+      abandonmentRate: items.length ? Math.round((abandonedVisits / items.length) * 100) : 0
+    };
+  };
   const dateGroups = buildJourneyLandingDateGroups(googleJourneys).map((dateGroup) => {
-    const clickIds = uniqueValues(dateGroup.journeys.map((journey) => journey.adClickId).filter((item) => item !== 'Not stored'));
+    const externalJourneys = dateGroup.journeys.filter((journey) => journey.visitorLabel !== 'Owner');
     return {
       ...dateGroup,
-      totals: {
-        landings: dateGroup.journeys.length,
-        uniqueAdClickIds: clickIds.length,
-        engagedVisitors: dateGroup.journeys.filter((journey) => journey.engaged).length,
-        serviceRequestStarts: dateGroup.journeys.filter((journey) => journey.formStarted || journey.requestOpened).length,
-        completedBookings: dateGroup.journeys.filter((journey) => journey.bookingCompleted).length,
-        abandonedVisits: dateGroup.journeys.filter((journey) => journey.exitedWithoutAction).length
-      }
+      totals: buildTotals(externalJourneys),
+      ownerVisits: dateGroup.journeys.filter((journey) => journey.visitorLabel === 'Owner').length
     };
   });
-  const allClickIds = uniqueValues(googleJourneys.map((journey) => journey.adClickId).filter((item) => item !== 'Not stored'));
 
   return {
     journeys: googleJourneys,
     dateGroups,
-    totals: {
-      landings: googleJourneys.length,
-      uniqueAdClickIds: allClickIds.length,
-      engagedVisitors: googleJourneys.filter((journey) => journey.engaged).length,
-      serviceRequestStarts: googleJourneys.filter((journey) => journey.formStarted || journey.requestOpened).length,
-      completedBookings: googleJourneys.filter((journey) => journey.bookingCompleted).length,
-      abandonedVisits: googleJourneys.filter((journey) => journey.exitedWithoutAction).length
-    }
+    totals: buildTotals(externalGoogleJourneys),
+    ownerTotals: buildTotals(ownerGoogleJourneys)
   };
 }
 
