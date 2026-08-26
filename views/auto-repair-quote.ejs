@@ -1,0 +1,35 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main>
+  <section class="page-hero request-hero">
+    <p class="eyebrow">Final repair quote</p>
+    <h1>Review Your Auto Repair Quote</h1>
+    <p>Approve the final quote when you are ready to continue to secure payment.</p>
+  </section>
+  <section class="form-layout single request-layout">
+    <article class="form-card wide request-card auto-repair-quote-card">
+      <div class="request-step-heading">
+        <p class="step-label">Approved final quote</p>
+        <p><strong>Reference:</strong> <%= request.referenceNumber || request.requestId || request._id %></p>
+      </div>
+      <section class="quote-panel request-quote-panel">
+        <p class="eyebrow">Amount due</p>
+        <div class="quote-grid total-only quote-total-focus">
+          <p><span>Final quote</span><strong>$<%= Number(request.finalQuotePrice || request.totalPrice || 0).toFixed(2) %></strong></p>
+        </div>
+        <% if (request.finalQuoteNote) { %><small><%= request.finalQuoteNote %></small><% } %>
+      </section>
+      <div class="request-summary-grid">
+        <p><span>Repair</span><strong><%= request.problem %></strong></p>
+        <p><span>Vehicle</span><strong><%= [request.vehicleYear, request.vehicleColor, request.vehicleMake, request.vehicleModel].filter(Boolean).join(' ') %><% if (request.engineSize) { %> - <%= request.engineSize %><% } %></strong></p>
+        <p><span>Service Location</span><strong><%= request.currentLocation %></strong></p>
+        <p><span>Customer</span><strong><%= request.customerName %></strong></p>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" type="button" data-auto-repair-pay data-request-id="<%= request._id %>" data-amount="<%= request.finalQuotePrice || request.totalPrice %>">Pay Final Quote</button>
+        <a class="btn ghost" href="tel:<%= settings.phoneNumber %>">Call First</a>
+      </div>
+    </article>
+  </section>
+</main>
+<%- include('partials/footer') %>

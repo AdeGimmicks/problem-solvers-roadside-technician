@@ -3,7 +3,7 @@ const Review = require('../models/Review');
 const Photo = require('../models/Photo');
 const ServiceArea = require('../models/ServiceArea');
 const ServiceRequest = require('../models/ServiceRequest');
-const { SERVICES } = require('../utils/constants');
+const { SERVICES, AUTO_REPAIR_SERVICES } = require('../utils/constants');
 const { hasDatabase } = require('../utils/dbState');
 
 const POLICY_HTML_DIR = path.join(__dirname, '..', 'html');
@@ -273,6 +273,34 @@ function services(req, res) {
   });
 }
 
+function autoRepair(req, res) {
+  const selectedService = AUTO_REPAIR_SERVICES.find((service) => service.slug === req.query.service || service.name === req.query.service);
+  res.render('auto-repair', {
+    title: 'Mobile Auto Repair',
+    metaDescription: 'Request a final quote for mobile brake service, alternator replacement, starter replacement, and diagnostics.',
+    services: AUTO_REPAIR_SERVICES,
+    form: { problem: selectedService?.name || req.query.service || '' },
+    errors: []
+  });
+}
+
+async function autoRepairQuote(req, res, next) {
+  const request = await ServiceRequest.findOne({
+    _id: req.params.id,
+    requestType: 'autoRepair',
+    finalQuotePrice: { $gt: 0 },
+    paymentStatus: { $ne: 'Paid' }
+  }).lean().catch(() => null);
+
+  if (!request) return next();
+
+  res.render('auto-repair-quote', {
+    title: 'Approve Auto Repair Quote',
+    metaDescription: 'Review and pay your approved mobile auto repair quote.',
+    request
+  });
+}
+
 function servicePage(req, res, next) {
   const directServicePages = getDirectServicePages();
   const service = directServicePages.find((item) => item.slug === req.params.serviceSlug);
@@ -374,6 +402,7 @@ function sitemap(req, res) {
   const urls = [
     '',
     ...DIRECT_SERVICE_SLUGS.map((slug) => `/${slug}`),
+    '/auto-repair',
     '/services',
     '/about',
     '/contact',
@@ -383,4 +412,18 @@ function sitemap(req, res) {
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((url) => `  <url><loc>${baseUrl}${url}</loc></url>`).join('\n')}\n</urlset>`);
 }
 
-module.exports = { home, home2, chooseService, services, servicePage, about, contact, requestService, policy, robots, sitemap };
+module.exports = {
+  home,
+  home2,
+  chooseService,
+  services,
+  servicePage,
+  autoRepair,
+  autoRepairQuote,
+  about,
+  contact,
+  requestService,
+  policy,
+  robots,
+  sitemap
+};

@@ -1,0 +1,167 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main>
+  <section class="direct-service-hero auto-repair-hero">
+    <div class="direct-service-copy">
+      <p class="eyebrow">Mobile auto repair</p>
+      <h1>Auto Repair At Your Location</h1>
+      <p class="direct-service-summary">Request brake service, alternator replacement, starter replacement, or diagnostic help. Mechanical work gets a final quote after your vehicle details are reviewed.</p>
+      <div class="direct-service-actions">
+        <a class="btn primary" href="#auto-repair-request">Request Final Quote</a>
+        <a class="btn secondary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
+        <a class="btn ghost" href="sms:<%= settings.textNumber || settings.phoneNumber %>">Text Us</a>
+      </div>
+    </div>
+    <aside class="direct-service-panel">
+      <p class="eyebrow">Separate from roadside</p>
+      <h2>Final Quote First</h2>
+      <p class="direct-service-notice">Auto repair requests do not go straight to payment. We review the vehicle, symptoms, parts, location, and photos before approving a final price.</p>
+    </aside>
+  </section>
+
+  <section class="section">
+    <div class="section-heading">
+      <p class="eyebrow">Repair services</p>
+      <h2>Choose The Repair Needed</h2>
+    </div>
+    <div class="direct-service-grid services-direct-grid">
+      <% services.forEach((service) => { %>
+        <a class="direct-service-card services-direct-card" href="/auto-repair?service=<%= encodeURIComponent(service.slug) %>#auto-repair-request">
+          <span>●</span>
+          <h3><%= service.name %></h3>
+          <p><%= service.description %></p>
+          <strong>Starting at $<%= service.startingLaborPrice %> labor</strong>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+
+  <section id="auto-repair-request" class="form-layout single request-layout">
+    <form class="form-card wide request-card" action="/auto-repair" method="post" enctype="multipart/form-data" data-request-form data-auto-repair-form novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <%- include('partials/form-errors', { errors }) %>
+      <ol class="request-progress" data-request-progress aria-label="Auto repair request progress">
+        <li class="is-active" data-progress-step="service"><span>1</span><strong>Service</strong></li>
+        <li data-progress-step="details"><span>2</span><strong>Repair Details</strong></li>
+        <li data-progress-step="vehicle"><span>3</span><strong>Vehicle</strong></li>
+        <li data-progress-step="contact"><span>4</span><strong>Location</strong></li>
+        <li data-progress-step="summary"><span>5</span><strong>Quote</strong></li>
+      </ol>
+      <input type="hidden" name="preferredPaymentMethod" value="Quote Request">
+      <input type="hidden" name="serviceDetails" value="<%= form.serviceDetails || '' %>" data-service-details-field>
+
+      <section class="request-step" data-request-step="service">
+        <div class="request-step-heading">
+          <p class="step-label">Choose auto repair service</p>
+          <p>Select the mechanical repair or diagnostic visit you need.</p>
+        </div>
+        <label>Service
+          <select name="problem" required>
+            <option value="">Select service</option>
+            <% services.forEach((service) => { %>
+              <option value="<%= service.name %>" data-starting-price="<%= service.startingLaborPrice %>" <%= (form.problem || '') === service.name ? 'selected' : '' %>><%= service.name %> - Starting at $<%= service.startingLaborPrice %> labor</option>
+            <% }) %>
+          </select>
+        </label>
+        <div class="selected-service-card">
+          <span data-selected-service-icon>●</span>
+          <div>
+            <strong data-selected-service-name>Select a service</strong>
+            <p data-selected-service-copy>Choose the repair so we can ask the right questions.</p>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="button" data-step-next>Continue</button>
+        </div>
+      </section>
+
+      <section class="request-step" data-request-step="details" hidden>
+        <div class="request-step-heading">
+          <p class="step-label">Repair details</p>
+          <p>Answer the questions for the selected repair. Photos are helpful when available.</p>
+        </div>
+        <div class="service-question-list" data-service-questions></div>
+        <div class="form-actions">
+          <button class="btn ghost" type="button" data-step-back>Go Back</button>
+          <button class="btn primary" type="button" data-step-next>Continue</button>
+        </div>
+      </section>
+
+      <section class="request-step" data-request-step="vehicle" hidden>
+        <p class="step-label">Vehicle details</p>
+        <div class="form-grid">
+          <label>Vehicle Make<input name="vehicleMake" value="<%= form.vehicleMake || '' %>" list="vehicleMakes" placeholder="Start typing make" autocomplete="new-password" autocapitalize="words" data-vehicle-make required></label>
+          <label>Vehicle Model<input name="vehicleModel" value="<%= form.vehicleModel || '' %>" list="vehicleModels" placeholder="Choose make first, then type model" autocomplete="new-password" autocapitalize="words" data-vehicle-model required></label>
+          <label>Vehicle Year<input name="vehicleYear" value="<%= form.vehicleYear || '' %>" list="vehicleYears" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="Type any 4-digit year" required></label>
+          <label>Engine / Engine Size If Known<input name="engineSize" value="<%= form.engineSize || '' %>" placeholder="Example: 2.4L, V6, not sure"></label>
+          <label>Vehicle Color<input name="vehicleColor" value="<%= form.vehicleColor || '' %>" placeholder="Vehicle color" autocapitalize="words" required></label>
+          <label>Selected Service<input value="" data-selected-service-readonly readonly></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn ghost" type="button" data-step-back>Go Back</button>
+          <button class="btn primary" type="button" data-step-next>Continue</button>
+        </div>
+      </section>
+
+      <section class="request-step" data-request-step="contact" hidden>
+        <p class="step-label">Contact and service location</p>
+        <div class="form-grid">
+          <label>Customer Name<input name="customerName" value="<%= form.customerName || '' %>" placeholder="Your name" required></label>
+          <label>Phone<input type="tel" name="phone" value="<%= form.phone || '' %>" placeholder="Your phone number" required></label>
+          <label>Email<input type="email" name="email" value="<%= form.email || '' %>" placeholder="Optional"></label>
+          <label>Service Location
+            <span class="address-field">
+              <input name="currentLocation" value="<%= form.currentLocation || '' %>" placeholder="Enter the service address" autocomplete="off" data-address-autocomplete required>
+              <span class="address-suggestions" data-address-suggestions hidden></span>
+            </span>
+            <button class="btn ghost location-btn" type="button" data-use-location>Use My Current Location</button>
+          </label>
+          <label>Photo Upload<input type="file" name="photos" accept="image/jpeg,image/png,image/heic,image/heif" multiple data-photo-upload><small>Upload up to 5 JPG, PNG, or HEIC images.</small></label>
+        </div>
+        <label>Message<textarea name="message" placeholder="Add symptoms, parking details, parts information, or anything helpful."><%= form.message || '' %></textarea></label>
+        <div class="form-actions">
+          <button class="btn ghost" type="button" data-step-back>Go Back</button>
+          <button class="btn primary" type="button" data-step-next>Review Request</button>
+        </div>
+      </section>
+
+      <section class="request-step" data-request-step="summary" hidden>
+        <div class="request-step-heading">
+          <p class="step-label">Quote request summary</p>
+          <p>Review the repair request. We will contact you with the final approved quote before payment.</p>
+        </div>
+        <section class="quote-panel request-quote-panel">
+          <p class="eyebrow">Starting labor price</p>
+          <div class="quote-grid total-only quote-total-focus">
+            <p><span>Starting at</span><strong data-auto-repair-starting-price>Review required</strong></p>
+          </div>
+          <small>Final price is approved after review of your repair details, vehicle, location, photos, parts, and labor needs.</small>
+        </section>
+        <div class="request-summary-grid">
+          <p><span>Requested Repair</span><strong data-summary-service>Service</strong></p>
+          <p><span>Vehicle</span><strong data-summary-vehicle>Vehicle</strong></p>
+          <p><span>Service Location</span><strong data-summary-location>Location</strong></p>
+          <p><span>Customer</span><strong data-auto-summary-customer>Customer</strong></p>
+        </div>
+        <div class="form-actions">
+          <button class="btn ghost" type="button" data-step-back>Go Back</button>
+          <button class="btn primary" type="submit" data-submit-request>Submit Repair Request</button>
+        </div>
+      </section>
+
+      <input type="hidden" name="locationLat" value="<%= form.locationLat || '' %>" data-location-lat>
+      <input type="hidden" name="locationLng" value="<%= form.locationLng || '' %>" data-location-lng>
+      <section class="confirmation-panel" data-confirmation-panel hidden>
+        <h2>Repair quote request received.</h2>
+        <p>Reference number: <strong data-reference-number></strong></p>
+        <p>We will review the details and contact you with the final quote.</p>
+      </section>
+      <datalist id="vehicleMakes"></datalist>
+      <datalist id="vehicleModels"></datalist>
+      <datalist id="vehicleYears">
+        <% for (let year = 2027; year >= 1980; year--) { %><option value="<%= year %>"><% } %>
+      </datalist>
+    </form>
+  </section>
+</main>
+<%- include('partials/footer') %>

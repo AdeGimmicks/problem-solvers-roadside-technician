@@ -34,11 +34,12 @@
       <% const serviceDetailText = formatDetails(item.serviceDetails); %>
       <% const itemPublicId = item.requestId || item.referenceNumber || item._id; %>
       <% const isOpenRequest = openRequestId && [item._id, item.requestId, item.referenceNumber].filter(Boolean).some((value) => String(value) === String(openRequestId)); %>
+      <% const isAutoRepair = item.requestType === 'autoRepair'; %>
       <details id="request-<%= item._id %>" class="request-manager-card" <%= isOpenRequest ? 'open' : '' %>>
         <summary class="request-manager-summary">
           <span class="request-summary-customer"><%= item.customerName %></span>
           <span class="request-summary-id"><%= itemPublicId %></span>
-          <span class="request-summary-service"><%= item.problem %></span>
+          <span class="request-summary-service"><%= isAutoRepair ? 'AUTO REPAIR: ' : '' %><%= item.problem %></span>
           <span class="request-summary-payment <%= item.paymentStatus === 'Paid' ? 'is-paid' : 'is-unpaid' %>"><%= item.paymentStatus === 'Paid' ? 'Paid' : 'Unpaid' %></span>
           <span class="request-summary-date"><%= formatDateTime(item.createdAt) %></span>
         </summary>
@@ -50,6 +51,7 @@
             <time><%= formatDateTime(item.createdAt) %></time>
           </div>
           <span class="status-pill"><%= item.status %></span>
+          <% if (isAutoRepair) { %><span class="status-pill manager-status">Auto Repair Request</span><% } %>
           <% if (item.waitlisted) { %><span class="status-pill manager-status">Wait list</span><% } %>
         </div>
 
@@ -64,6 +66,7 @@
               <div class="request-info-item">
                 <span>Vehicle</span>
                 <strong><%= vehicleText(item) || 'Vehicle not listed' %></strong>
+                <% if (item.engineSize) { %><small>Engine: <%= item.engineSize %></small><% } %>
               </div>
               <div class="request-info-item">
                 <span>Service</span>
@@ -85,7 +88,7 @@
               <p><span>Distance</span><strong><%= item.distanceMiles ? `${item.distanceMiles} mi` : 'Not estimated' %></strong></p>
               <p><span>Drive Time</span><strong><%= item.travelTimeMinutes ? `${item.travelTimeMinutes} min` : 'Not estimated' %></strong></p>
               <p><span>ETA</span><strong><%= item.estimatedArrivalMinutes ? `${item.estimatedArrivalMinutes} min` : 'Review needed' %></strong><small><%= item.travelEstimateSource === 'online-technician' ? 'Live technician' : item.travelEstimateSource ? 'Dispatch estimate' : '' %></small></p>
-              <p><span>Quote</span><strong><%= item.totalPrice ? `$${item.totalPrice}` : 'Not quoted' %></strong><small><% if (item.basePrice) { %>Base $<%= item.basePrice %><% if (item.travelFee) { %> + travel $<%= item.travelFee %><% if (item.travelFeePercent) { %> (<%= item.travelFeePercent %>%)<% } %><% } %><% } %></small></p>
+              <p><span><%= isAutoRepair ? 'Final Quote' : 'Quote' %></span><strong><%= item.totalPrice ? `$${item.totalPrice}` : 'Not quoted' %></strong><small><% if (isAutoRepair && item.startingLaborPrice) { %>Starting labor $<%= item.startingLaborPrice %><% } else if (item.basePrice) { %>Base $<%= item.basePrice %><% if (item.travelFee) { %> + travel $<%= item.travelFee %><% if (item.travelFeePercent) { %> (<%= item.travelFeePercent %>%)<% } %><% } %><% } %></small></p>
               <p><span>Payment</span><strong><%= item.preferredPaymentMethod || 'Not selected' %></strong><small><%= item.paymentStatus || 'Payment Pending' %></small></p>
             </div>
 
@@ -111,6 +114,17 @@
 
             <form class="request-update-form" action="/dashboard/requests/<%= item._id %>/status" method="post">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <% if (isAutoRepair) { %>
+                <label>Approved Final Quote
+                  <input name="finalQuotePrice" type="number" min="1" step="0.01" value="<%= item.finalQuotePrice || item.totalPrice || '' %>" placeholder="Enter final quote">
+                </label>
+                <label>Final quote note
+                  <input name="finalQuoteNote" value="<%= item.finalQuoteNote || '' %>" placeholder="Parts/labor note for customer">
+                </label>
+                <% if (item.finalQuotePrice || item.totalPrice) { %>
+                  <p class="summary-note">Customer quote link: <a href="/auto-repair/quote/<%= item._id %>" target="_blank" rel="noreferrer">Open payment quote</a></p>
+                <% } %>
+              <% } %>
               <label>Status
                 <select name="status"><% statuses.forEach((status) => { %><option <%= status === item.status ? 'selected' : '' %>><%= status %></option><% }) %></select>
               </label>

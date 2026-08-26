@@ -693,6 +693,69 @@ const serviceDetailsConfig = {
       { key: 'partsAvailable', label: 'Do you already have the part?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
       { key: 'safeLocation', label: 'Are you parked in a safe location?', type: 'radio', options: ['Yes', 'No'] }
     ]
+  },
+  'Brake Pad Replacement': {
+    icon: '●',
+    copy: 'Brake pad replacement quote request.',
+    questions: [
+      { key: 'axlePosition', label: 'Front / Rear / Not Sure', type: 'radio', options: ['Front', 'Rear', 'Not Sure'] },
+      { key: 'padsOnly', label: 'Pads only?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'grindingNoise', label: 'Grinding noise?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'vehicleDrivable', label: 'Vehicle drivable?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'customerHasParts', label: 'Customer already has parts?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Brake Pads & Rotor Replacement': {
+    icon: '●',
+    copy: 'Brake pads and rotors quote request.',
+    questions: [
+      { key: 'axlePosition', label: 'Front / Rear / Not Sure', type: 'radio', options: ['Front', 'Rear', 'Not Sure'] },
+      { key: 'padsAndRotorsNeeded', label: 'Pads and rotors needed?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'grindingVibration', label: 'Grinding/vibration while braking?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'vehicleDrivable', label: 'Vehicle drivable?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'customerHasParts', label: 'Customer already has parts?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Alternator Replacement': {
+    icon: '●',
+    copy: 'Alternator replacement quote request.',
+    questions: [
+      { key: 'vehicleStarts', label: 'Does vehicle start?', type: 'radio', options: ['Yes', 'No', 'Sometimes'] },
+      { key: 'chargingLight', label: 'Battery/charging warning light on?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'diagnosedBad', label: 'Alternator already diagnosed as bad?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'customerHasAlternator', label: 'Customer already has replacement alternator?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Starter Replacement': {
+    icon: '●',
+    copy: 'Starter replacement quote request.',
+    questions: [
+      { key: 'vehicleCranks', label: 'Does vehicle crank?', type: 'radio', options: ['Yes', 'No', 'Sometimes'] },
+      { key: 'clickingSound', label: 'Clicking when attempting to start?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'diagnosedBad', label: 'Starter already diagnosed as bad?', type: 'radio', options: ['Yes', 'No', 'Not sure'] },
+      { key: 'customerHasStarter', label: 'Customer already has replacement starter?', type: 'radio', options: ['Yes', 'No'] }
+    ]
+  },
+  'Diagnostic Visit': {
+    icon: '●',
+    copy: 'Diagnostic visit quote request.',
+    questions: [
+      { key: 'vehicleStarts', label: 'Does vehicle start?', type: 'radio', options: ['Yes', 'No', 'Sometimes'] },
+      { key: 'checkEngineLight', label: 'Check Engine light on?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'warningLights', label: 'Warning lights displayed?', type: 'text', placeholder: 'List warning lights or type none' },
+      { key: 'symptoms', label: 'Main problem/symptoms description.', type: 'text', placeholder: 'Describe what the vehicle is doing' }
+    ]
+  },
+  'Advanced Diagnostic / Troubleshooting': {
+    icon: '●',
+    copy: 'Advanced diagnostic and troubleshooting quote request.',
+    questions: [
+      { key: 'vehicleStarts', label: 'Does vehicle start?', type: 'radio', options: ['Yes', 'No', 'Sometimes'] },
+      { key: 'vehicleDrivable', label: 'Is vehicle drivable?', type: 'radio', options: ['Yes', 'No'] },
+      { key: 'warningLights', label: 'Warning lights?', type: 'text', placeholder: 'List warning lights or type none' },
+      { key: 'problemStarted', label: 'When did the problem begin?', type: 'text', placeholder: 'Today, last week, after repair, etc.' },
+      { key: 'detailedSymptoms', label: 'Detailed symptom/problem description.', type: 'text', placeholder: 'Describe the issue in detail' }
+    ]
   }
 };
 const tireChangeNoSpareMessage = 'A tire change requires that you already have a usable spare tire. Unfortunately, we cannot complete this service without one. Please contact a towing company or another provider if you do not have a spare tire available.';
@@ -1554,10 +1617,19 @@ function updateRequestSummary(form) {
   const vehicleElement = document.querySelector('[data-summary-vehicle]');
   const locationElement = document.querySelector('[data-summary-location]');
   const arrivalElement = document.querySelector('[data-summary-arrival]');
+  const customerElement = document.querySelector('[data-auto-summary-customer]');
+  const autoStartingPriceElement = document.querySelector('[data-auto-repair-starting-price]');
 
   if (serviceElement) serviceElement.textContent = data.get('problem') || 'Service';
   if (vehicleElement) vehicleElement.textContent = vehicle || 'Vehicle';
   if (locationElement) locationElement.textContent = location;
+  if (customerElement) customerElement.textContent = data.get('customerName') || 'Customer';
+  if (autoStartingPriceElement) {
+    const selectedOption = form.querySelector('select[name="problem"] option:checked');
+    autoStartingPriceElement.textContent = selectedOption?.dataset.startingPrice
+      ? `$${selectedOption.dataset.startingPrice}`
+      : 'Review required';
+  }
   if (arrivalElement) {
     arrivalElement.textContent = latestQuote?.estimatedArrivalMinutes
       ? `${latestQuote.estimatedArrivalMinutes} minutes`
@@ -1640,6 +1712,30 @@ async function createServiceRequest(form, options = {}) {
   return payload.request;
 }
 
+async function createAutoRepairRequest(form) {
+  const csrfToken = await getCsrfToken();
+  const body = new FormData(form);
+  const response = await fetch('/api/auto-repair-requests', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      Accept: 'application/json',
+      'X-CSRF-Token': csrfToken
+    },
+    body
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload.errors?.map((error) => error.msg).join('\n')
+      || payload.error
+      || 'Please check the repair request and try again.';
+    throw new Error(message);
+  }
+
+  return payload.request;
+}
+
 async function startStripeCheckout(request, options = {}) {
   const csrfToken = await getCsrfToken();
   const response = await fetch('/payments/checkout', {
@@ -1667,6 +1763,25 @@ async function startStripeCheckout(request, options = {}) {
 
   trackVisitorEvent('checkout_reached', { serviceName: request.problem || request.serviceName || request.service });
   window.location.href = payload.url;
+}
+
+function setupAutoRepairQuotePayment() {
+  document.querySelector('[data-auto-repair-pay]')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    try {
+      button.disabled = true;
+      button.textContent = 'Opening Payment...';
+      await startStripeCheckout({
+        id: button.dataset.requestId,
+        totalPrice: Number(button.dataset.amount),
+        problem: 'Auto Repair'
+      });
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = 'Pay Final Quote';
+      alert(error.message || 'Unable to open payment. Please call or text us.');
+    }
+  });
 }
 
 function formatAvailabilityWarning(availability) {
@@ -1701,6 +1816,7 @@ function hideAvailabilityWarning() {
 function setupStaticRequestSave() {
   const form = document.querySelector('[data-request-form]');
   if (!form) return;
+  const isAutoRepairForm = form.hasAttribute('data-auto-repair-form');
   const submitButton = document.querySelector('[data-submit-request]');
   const summaryStep = form.querySelector('[data-request-step="summary"]');
   const existingRequestField = form.querySelector('[data-existing-request-id]');
@@ -1789,6 +1905,36 @@ function setupStaticRequestSave() {
     if (!validatePhotoUpload(form)) return;
     collectServiceDetails(form);
     if (!validateServiceBusinessRules(form, { showMessage: false, lockButton: true })) return;
+
+    if (isAutoRepairForm) {
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = 'Submitting...';
+        }
+        updateRequestSummary(form);
+        const savedRepairRequest = await createAutoRepairRequest(form);
+        trackVisitorEvent('request_submit', { serviceName: new FormData(form).get('problem'), requestType: 'autoRepair' });
+        const panel = document.querySelector('[data-confirmation-panel]');
+        const reference = document.querySelector('[data-reference-number]');
+        if (reference) reference.textContent = savedRepairRequest.referenceNumber || savedRepairRequest.requestId || savedRepairRequest.id;
+        if (panel) {
+          panel.hidden = false;
+          panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          alert('Repair quote request received. We will contact you with the final quote.');
+        }
+        form.querySelectorAll('[data-request-step]').forEach((step) => { step.hidden = true; });
+      } catch (error) {
+        alert(error.message || 'Unable to submit the repair request. Please try again.');
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Submit Repair Request';
+        }
+      }
+      return;
+    }
 
     let savedRequest = null;
 
@@ -1884,6 +2030,12 @@ function setupRequestSteps(form) {
 
     if (activeName === 'contact') {
       if (!validateStepFields(activeStep) || !validatePhotoUpload(form)) return;
+      if (form.hasAttribute('data-auto-repair-form')) {
+        collectServiceDetails(form);
+        updateRequestSummary(form);
+        showStep(currentIndex + 1);
+        return;
+      }
       const nextButton = activeStep.querySelector('[data-step-next]');
       try {
         if (nextButton) {
@@ -1922,6 +2074,7 @@ function setupRequestSteps(form) {
 }
 
 setupStaticRequestSave();
+setupAutoRepairQuotePayment();
 setupManagerDashboard();
 setupDispatchLocationTool();
 setupLiveLocationTool();

@@ -83,8 +83,55 @@ const REQUEST_STATUSES = [
   'Cancelled'
 ];
 
+const AUTO_REPAIR_SERVICES = [
+  {
+    slug: 'brake-pad-replacement',
+    name: 'Brake Pad Replacement',
+    startingLaborPrice: 200,
+    description: 'Mobile brake pad replacement quote request for front, rear, or uncertain brake wear.'
+  },
+  {
+    slug: 'brake-pads-rotor-replacement',
+    name: 'Brake Pads & Rotor Replacement',
+    startingLaborPrice: 250,
+    description: 'Quote request for brake pads and rotor replacement after vehicle and symptom review.'
+  },
+  {
+    slug: 'alternator-replacement',
+    name: 'Alternator Replacement',
+    startingLaborPrice: 250,
+    description: 'Mobile alternator replacement quote request based on vehicle fitment and access.'
+  },
+  {
+    slug: 'starter-replacement',
+    name: 'Starter Replacement',
+    startingLaborPrice: 250,
+    description: 'Starter replacement quote request after no-start symptoms and vehicle details are reviewed.'
+  },
+  {
+    slug: 'diagnostic-visit',
+    name: 'Diagnostic Visit',
+    startingLaborPrice: 100,
+    description: 'Mobile diagnostic visit for warning lights, no-start, or drivability symptoms.'
+  },
+  {
+    slug: 'advanced-diagnostic-troubleshooting',
+    name: 'Advanced Diagnostic / Troubleshooting',
+    startingLaborPrice: 150,
+    description: 'Advanced troubleshooting quote request for complex vehicle symptoms.'
+  }
+];
+
 const PUBLIC_SERVICE_NAMES = SERVICES
   .filter((service) => service.publicRequest)
   .map((service) => service.name);
 
-module.exports = { SERVICES, REQUEST_STATUSES, PUBLIC_SERVICE_NAMES };
+const AUTO_REPAIR_SERVICE_NAMES = AUTO_REPAIR_SERVICES.map((service) => service.name);
+
+module.exports = {
+  SERVICES,
+  REQUEST_STATUSES,
+  PUBLIC_SERVICE_NAMES,
+  AUTO_REPAIR_SERVICES,
+  AUTO_REPAIR_SERVICE_NAMES
+};

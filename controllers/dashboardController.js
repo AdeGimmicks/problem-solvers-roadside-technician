@@ -641,6 +641,15 @@ async function updateRequestStatus(req, res, next) {
       paymentStatus: nextPaymentStatus,
       internalNotes: req.body.internalNotes || ''
     };
+    const finalQuotePrice = Number(req.body.finalQuotePrice);
+    if (item.requestType === 'autoRepair' && Number.isFinite(finalQuotePrice) && finalQuotePrice > 0) {
+      update.finalQuotePrice = Number(finalQuotePrice.toFixed(2));
+      update.totalPrice = Number(finalQuotePrice.toFixed(2));
+      update.estimatedPrice = Number(finalQuotePrice.toFixed(2));
+      update.finalQuoteApprovedAt = item.finalQuoteApprovedAt || new Date();
+      update.finalQuoteNote = req.body.finalQuoteNote || '';
+      if (adminId) update.finalQuoteApprovedBy = adminId;
+    }
     const push = {};
 
     if (nextStatus !== item.status) {

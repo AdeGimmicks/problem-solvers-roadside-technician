@@ -9,6 +9,7 @@ const statusEventSchema = new mongoose.Schema({
 }, { _id: false });
 
 const serviceRequestSchema = new mongoose.Schema({
+  requestType: { type: String, enum: ['roadside', 'autoRepair'], default: 'roadside', index: true },
   requestId: { type: String, unique: true, sparse: true, index: true },
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
   customerName: { type: String, required: true, trim: true },
@@ -18,6 +19,7 @@ const serviceRequestSchema = new mongoose.Schema({
   vehicleModel: { type: String, required: true, trim: true },
   vehicleColor: { type: String, required: true, trim: true },
   vehicleYear: { type: String, required: true, trim: true },
+  engineSize: { type: String, trim: true },
   problem: { type: String, required: true, trim: true },
   serviceDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
   currentLocation: { type: String, required: true, trim: true },
@@ -47,6 +49,11 @@ const serviceRequestSchema = new mongoose.Schema({
   longDistanceTier: String,
   travelFeePercent: Number,
   longDistanceThresholdMinutes: Number,
+  startingLaborPrice: Number,
+  finalQuotePrice: Number,
+  finalQuoteApprovedAt: Date,
+  finalQuoteApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+  finalQuoteNote: String,
   referenceNumber: { type: String, index: true },
   waitlisted: { type: Boolean, default: false, index: true },
   waitlistedAt: Date,

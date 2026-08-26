@@ -5,6 +5,7 @@ const ServiceRequest = require('../models/ServiceRequest');
 const { sendServiceRequestNotification } = require('../services/emailService');
 const { sendNewBookingPush } = require('../services/pushNotificationService');
 const { sendNewRequestSms } = require('../services/smsService');
+const { AUTO_REPAIR_SERVICES } = require('../utils/constants');
 const { cleanObject } = require('../utils/sanitize');
 
 function wantsJson(req) {
@@ -75,6 +76,7 @@ function serviceRequestPayload(data, customerId, serviceDetails, photoPaths = []
     vehicleModel: data.vehicleModel,
     vehicleColor: data.vehicleColor,
     vehicleYear: data.vehicleYear,
+    engineSize: data.engineSize,
     problem: data.problem,
     serviceDetails,
     currentLocation: data.currentLocation,
@@ -103,6 +105,23 @@ function serviceRequestPayload(data, customerId, serviceDetails, photoPaths = []
 
   if (photoPaths.length) payload.photoPaths = photoPaths;
   return payload;
+}
+
+function autoRepairPayload(data, customerId, serviceDetails, photoPaths = []) {
+  const selectedService = AUTO_REPAIR_SERVICES.find((service) => service.name === data.problem);
+  const payload = serviceRequestPayload(data, customerId, serviceDetails, photoPaths);
+  return {
+    ...payload,
+    requestType: 'autoRepair',
+    preferredPaymentMethod: 'Quote Request',
+    basePrice: selectedService?.startingLaborPrice || undefined,
+    startingLaborPrice: selectedService?.startingLaborPrice || undefined,
+    travelFee: undefined,
+    totalPrice: undefined,
+    estimatedPrice: undefined,
+    paymentStatus: 'Payment Pending',
+    travelEstimateSource: 'final-quote-required'
+  };
 }
 
 async function submitRequest(req, res, next) {
@@ -199,6 +218,59 @@ async function submitRequest(req, res, next) {
   }
 }
 
+async function submitAutoRepairRequest(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    const form = req.body;
+    if (!errors.isEmpty()) {
+      if (wantsJson(req)) return res.status(422).json({ errors: errors.array() });
+      return res.status(422).render('auto-repair', {
+        title: 'Mobile Auto Repair',
+        metaDescription: 'Request a final quote for mobile auto repair services.',
+        services: AUTO_REPAIR_SERVICES,
+        form,
+        errors: errors.array()
+      });
+    }
+
+    const data = cleanObject(req.body);
+    const serviceDetails = parseServiceDetails(data.serviceDetails);
+    let customer = await Customer.findOne({ phone: data.phone });
+    if (!customer) {
+      customer = await Customer.create({
+        name: data.customerName,
+        phone: data.phone,
+        email: data.email,
+        vehicles: [{
+          make: data.vehicleMake,
+          model: data.vehicleModel,
+          color: data.vehicleColor,
+          year: data.vehicleYear,
+          engineSize: data.engineSize
+        }]
+      });
+    }
+
+    const photoPaths = (req.files || []).map((file) => `/uploads/${file.filename}`);
+    const serviceRequest = await ServiceRequest.create(autoRepairPayload(data, customer._id, serviceDetails, photoPaths));
+    await sendServiceRequestNotification(serviceRequest);
+    await sendNewRequestSms(serviceRequest);
+    await sendNewBookingPush(serviceRequest);
+
+    if (wantsJson(req)) {
+      return res.status(201).json({ request: serializeRequest(serviceRequest) });
+    }
+
+    return res.render('success', {
+      title: 'Repair Quote Request Received',
+      metaDescription: 'Your mobile auto repair quote request has been received.',
+      request: serviceRequest
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function submitContact(req, res, next) {
   try {
     const errors = validationResult(req);
@@ -233,4 +305,4 @@ async function submitContact(req, res, next) {
   }
 }
 
-module.exports = { submitRequest, submitContact };
+module.exports = { submitRequest, submitAutoRepairRequest, submitContact };
