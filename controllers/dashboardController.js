@@ -16,9 +16,9 @@ const { cleanObject } = require('../utils/sanitize');
 
 const dashboardTimeZone = process.env.DASHBOARD_TIME_ZONE || 'America/Chicago';
 const audienceStartWindow = {
-  start: new Date('2026-08-17T05:00:00.000Z'),
-  label: 'August 17, 2026 onward',
-  slug: 'august-17-2026-onward'
+  start: new Date('2026-08-26T05:00:00.000Z'),
+  label: 'August 26, 2026 onward',
+  slug: 'august-26-2026-onward'
 };
 
 async function ensureDefaultAdmin() {
