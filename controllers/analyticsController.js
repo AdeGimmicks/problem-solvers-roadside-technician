@@ -20,6 +20,10 @@ function clean(value, maxLength = 300) {
   return String(value || '').trim().slice(0, maxLength);
 }
 
+function cleanUrl(value) {
+  return clean(value, 2000);
+}
+
 function getClientIp(req) {
   const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
   return normalizeIp(forwarded || req.ip || req.socket?.remoteAddress || '');
@@ -64,13 +68,14 @@ function numberParam(value, fallback = 0) {
 }
 
 function classifySource(path, referrer, preserved = {}) {
-  const url = safeUrl(path);
+  const url = safeUrl(preserved.originalRawLandingUrl || path);
   const params = url.searchParams;
   const ref = referrer ? safeUrl(referrer) : null;
   const refHost = ref?.hostname?.replace(/^www\./, '') || '';
   const utmSource = firstParam(params, ['utm_source']);
   const utmMedium = firstParam(params, ['utm_medium']);
   const campaignName = firstParam(params, ['utm_campaign', 'campaign']);
+  const campaignId = firstParam(params, ['utm_id', 'campaignid', 'gad_campaignid']);
   const gclid = firstValue(params.get('gclid'), preserved.gclid);
   const gbraid = firstValue(params.get('gbraid'), preserved.gbraid);
   const wbraid = firstValue(params.get('wbraid'), preserved.wbraid);
@@ -82,26 +87,26 @@ function classifySource(path, referrer, preserved = {}) {
   const paidMedium = /^(cpc|ppc|paid|paid_social|paid-search|display)$/i.test(utmMedium);
 
   if (hasGoogleAdClick || (/google/i.test(utmSource) && paidMedium)) {
-    return { sourceCategory: 'Paid Ads', sourceName: 'Google Ads', campaignName, adClickId, sourceMedium: utmMedium || 'Paid Ads', gclid, gbraid, wbraid, gadSource };
+    return { sourceCategory: 'Paid Ads', sourceName: 'Google Ads', campaignName, campaignId, adClickId, sourceMedium: utmMedium || 'Paid Ads', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
   }
   if (hasFacebookAdClick || (/(facebook|instagram|meta)/i.test(utmSource) && paidMedium)) {
-    return { sourceCategory: 'Paid Ads', sourceName: 'Meta Ads', campaignName, adClickId, sourceMedium: utmMedium || 'Paid Ads', gclid, gbraid, wbraid, gadSource };
+    return { sourceCategory: 'Paid Ads', sourceName: 'Meta Ads', campaignName, campaignId, adClickId, sourceMedium: utmMedium || 'Paid Ads', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
   }
   if (hasMicrosoftAdClick || (/(bing|microsoft)/i.test(utmSource) && paidMedium)) {
-    return { sourceCategory: 'Paid Ads', sourceName: 'Microsoft Ads', campaignName, adClickId, sourceMedium: utmMedium || 'Paid Ads', gclid, gbraid, wbraid, gadSource };
+    return { sourceCategory: 'Paid Ads', sourceName: 'Microsoft Ads', campaignName, campaignId, adClickId, sourceMedium: utmMedium || 'Paid Ads', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
   }
   if (utmSource) {
-    return { sourceCategory: utmMedium || 'Campaign', sourceName: utmSource, campaignName, adClickId, sourceMedium: utmMedium || 'Campaign', gclid, gbraid, wbraid, gadSource };
+    return { sourceCategory: utmMedium || 'Campaign', sourceName: utmSource, campaignName, campaignId, adClickId, sourceMedium: utmMedium || 'Campaign', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
   }
   if (!refHost || refHost.includes('problemsolversroadside.com')) {
-    return { sourceCategory: 'Direct', sourceName: 'Direct visit', campaignName, adClickId, sourceMedium: 'Direct', gclid, gbraid, wbraid, gadSource };
+    return { sourceCategory: 'Direct', sourceName: 'Direct visit', campaignName, campaignId, adClickId, sourceMedium: 'Direct', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
   }
-  if (/google\./i.test(refHost)) return { sourceCategory: 'Organic Search', sourceName: 'Google Search', campaignName, adClickId, sourceMedium: 'Organic Search', gclid, gbraid, wbraid, gadSource };
-  if (/bing\./i.test(refHost)) return { sourceCategory: 'Organic Search', sourceName: 'Bing Search', campaignName, adClickId, sourceMedium: 'Organic Search', gclid, gbraid, wbraid, gadSource };
+  if (/google\./i.test(refHost)) return { sourceCategory: 'Organic Search', sourceName: 'Google Search', campaignName, campaignId, adClickId, sourceMedium: 'Organic Search', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
+  if (/bing\./i.test(refHost)) return { sourceCategory: 'Organic Search', sourceName: 'Bing Search', campaignName, campaignId, adClickId, sourceMedium: 'Organic Search', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
   if (/(facebook|instagram|t\.co|twitter|x\.com|youtube|tiktok)/i.test(refHost)) {
-    return { sourceCategory: 'Social Referral', sourceName: refHost, campaignName, adClickId, sourceMedium: 'Social Referral', gclid, gbraid, wbraid, gadSource };
+    return { sourceCategory: 'Social Referral', sourceName: refHost, campaignName, campaignId, adClickId, sourceMedium: 'Social Referral', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
   }
-  return { sourceCategory: 'Referral', sourceName: refHost, campaignName, adClickId, sourceMedium: 'Referral', gclid, gbraid, wbraid, gadSource };
+  return { sourceCategory: 'Referral', sourceName: refHost, campaignName, campaignId, adClickId, sourceMedium: 'Referral', utmSource, utmMedium, utmCampaign: campaignName, gclid, gbraid, wbraid, gadSource };
 }
 
 function parseDevice(userAgent) {
@@ -180,8 +185,13 @@ async function getLocation(req, ip) {
   });
 }
 
-function isOwnerVisit(req, ip, visitorId) {
-  if (req.session?.admin?.id) return true;
+function identifyOwnerVisit(req, ip, visitorId) {
+  if (req.session?.admin?.id) {
+    return { isOwner: true, visitorType: 'owner', visitorLabel: `Owner${req.session.admin.name ? `: ${req.session.admin.name}` : ''}`, matchedBy: 'dashboard-session' };
+  }
+  if (req.query.ownerBrowser === '1') {
+    return { isOwner: true, visitorType: 'owner_test', visitorLabel: 'OWNER / TEST CLICK', matchedBy: 'owner-browser' };
+  }
   const ownerIps = String(process.env.OWNER_IPS || '')
     .split(',')
     .map((item) => item.trim())
@@ -190,15 +200,18 @@ function isOwnerVisit(req, ip, visitorId) {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
-  return ownerIps.includes(ip) || ownerVisitorIds.includes(visitorId);
+  if (ownerIps.includes(ip)) return { isOwner: true, visitorType: 'owner_test', visitorLabel: 'OWNER / TEST CLICK', matchedBy: 'configured-ip' };
+  if (ownerVisitorIds.includes(visitorId)) return { isOwner: true, visitorType: 'owner_test', visitorLabel: 'OWNER / TEST CLICK', matchedBy: 'configured-visitor-id' };
+  return { isOwner: false, visitorType: 'visitor', visitorLabel: 'Visitor', matchedBy: '' };
 }
 
 async function track(req, res) {
   try {
     const eventType = EVENT_TYPES.includes(req.query.eventType) ? req.query.eventType : 'page_view';
     const serviceName = clean(req.query.serviceName, 80);
-    const path = clean(req.query.path || req.get('referer') || '/', 260);
-    const landingPath = clean(req.query.landingPath || path, 260);
+    const path = cleanUrl(req.query.path || req.get('referer') || '/');
+    const landingPath = cleanUrl(req.query.landingPath || path);
+    const originalRawLandingUrl = cleanUrl(req.query.originalRawLandingUrl || landingPath || path);
     const referrer = clean(req.query.referrer, 500);
     const visitorId = clean(req.query.visitorId, 80);
     const ipAddress = clean(getClientIp(req), 80);
@@ -208,10 +221,11 @@ async function track(req, res) {
       gclid: req.query.gclid,
       gbraid: req.query.gbraid,
       wbraid: req.query.wbraid,
-      gadSource: req.query.gadSource
+      gadSource: req.query.gadSource,
+      originalRawLandingUrl
     });
     const device = parseDevice(userAgent);
-    const ownerVisit = isOwnerVisit(req, ipAddress, visitorId);
+    const ownerVisit = identifyOwnerVisit(req, ipAddress, visitorId);
 
     if (serviceName && !PUBLIC_SERVICE_NAMES.includes(serviceName)) {
       return res.status(204).end();
@@ -224,13 +238,14 @@ async function track(req, res) {
       pageTitle: clean(req.query.pageTitle, 140),
       path,
       landingPath,
+      originalRawLandingUrl,
       serviceName,
       referrer,
       userAgent,
       ipAddress,
       ipHash: hashIp(ipAddress),
-      visitorType: ownerVisit ? 'owner' : 'visitor',
-      visitorLabel: ownerVisit ? `Owner${req.session?.admin?.name ? `: ${req.session.admin.name}` : ''}` : 'Visitor',
+      visitorType: ownerVisit.visitorType,
+      visitorLabel: ownerVisit.visitorLabel,
       ...source,
       ...device,
       location: await getLocation(req, ipAddress),
@@ -240,6 +255,11 @@ async function track(req, res) {
         timezone: clean(req.query.timezone, 80),
         language: clean(req.query.language, 40),
         sourceMedium: source.sourceMedium,
+        originalRawLandingUrl,
+        utmSource: source.utmSource,
+        utmMedium: source.utmMedium,
+        utmCampaign: source.utmCampaign,
+        campaignId: source.campaignId,
         gclid: source.gclid,
         gbraid: source.gbraid,
         wbraid: source.wbraid,
@@ -249,7 +269,7 @@ async function track(req, res) {
         buttonHref: clean(req.query.buttonHref, 260),
         buttonName: clean(req.query.buttonName, 80),
         stepName: clean(req.query.stepName, 80),
-        ownerMatchedBy: ownerVisit ? (req.session?.admin?.id ? 'dashboard-session' : 'configured-identity') : ''
+        ownerMatchedBy: ownerVisit.matchedBy
       }
     });
   } catch (error) {

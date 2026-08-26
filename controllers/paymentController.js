@@ -7,6 +7,54 @@ const { sendPaymentStatusSms } = require('../services/smsService');
 const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
 const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
 
+function serviceItemId(serviceName) {
+  return String(serviceName || 'Roadside Service')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '') || 'roadside-service';
+}
+
+function buildPurchaseConversionPayload({ request, payment, session }) {
+  const paymentStatus = payment?.status;
+  const requestPaymentStatus = request?.paymentStatus;
+  const stripePaymentStatus = session?.payment_status;
+  if (!request || !payment || paymentStatus !== 'Paid' || requestPaymentStatus !== 'Paid' || stripePaymentStatus !== 'paid') {
+    return null;
+  }
+
+  const amount = Number(payment.amount || 0);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+
+  const paymentIntentId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id;
+  const transactionId = payment.stripePaymentIntentId
+    || paymentIntentId
+    || request.referenceNumber
+    || request.requestId
+    || request._id?.toString();
+  if (!transactionId) return null;
+
+  const bookingId = request.referenceNumber || request.requestId || request._id?.toString();
+  const value = Number(amount.toFixed(2));
+  const currency = String(payment.currency || session.currency || process.env.STRIPE_CURRENCY || 'usd').toUpperCase();
+  const serviceName = request.problem || 'Roadside Service';
+
+  return {
+    transaction_id: String(transactionId),
+    booking_id: String(bookingId || transactionId),
+    value,
+    currency,
+    items: [{
+      item_id: serviceItemId(serviceName),
+      item_name: serviceName,
+      item_category: 'Roadside Service',
+      quantity: 1,
+      price: value
+    }]
+  };
+}
+
 async function getTechnicianAvailability() {
   const settings = await BusinessSettings.findOne()
     .sort({ acceptingJobsUpdatedAt: -1, updatedAt: -1 })
@@ -160,7 +208,8 @@ async function success(req, res, next) {
       metaDescription: 'Your roadside assistance payment was successful.',
       request,
       payment,
-      session
+      session,
+      purchaseConversion: buildPurchaseConversionPayload({ request, payment, session })
     });
   } catch (error) {
     next(error);
@@ -205,5 +254,6 @@ module.exports = {
   success,
   cancel,
   stripeWebhook,
-  recordStripeCheckoutPayment
+  recordStripeCheckoutPayment,
+  buildPurchaseConversionPayload
 };

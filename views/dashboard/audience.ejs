@@ -35,7 +35,7 @@
         </div>
         <div class="google-daily-total-grid">
           <article><span>Google Ads Landings</span><strong><%= audience.googleAdsAudit.totals.landings %></strong></article>
-          <article><span>Unique Ad Visitors</span><strong><%= audience.googleAdsAudit.totals.uniqueVisitors %></strong></article>
+          <article><span>Unique Tracked Visitors</span><strong><%= audience.googleAdsAudit.totals.uniqueVisitors %></strong></article>
           <article><span>Sessions</span><strong><%= audience.googleAdsAudit.totals.sessions %></strong></article>
           <article><span>Page Views</span><strong><%= audience.googleAdsAudit.totals.pageViews %></strong></article>
           <article><span>Unique Ad Click IDs</span><strong><%= audience.googleAdsAudit.totals.uniqueAdClickIds %></strong></article>
@@ -49,14 +49,15 @@
           <article><span>Repeat Visitors</span><strong><%= audience.googleAdsAudit.totals.repeatVisitors %></strong></article>
           <article><span>Abandoned Visits</span><strong><%= audience.googleAdsAudit.totals.abandonedVisits %></strong></article>
           <article><span>Abandonment Rate</span><strong><%= audience.googleAdsAudit.totals.abandonmentRate %>%</strong></article>
-          <article><span>Owner Ad Visits</span><strong><%= audience.googleAdsAudit.ownerTotals.landings %></strong></article>
+          <article><span>Owner/Test Clicks</span><strong><%= audience.googleAdsAudit.ownerTotals.landings %></strong></article>
+          <article><span>Unknown Ad Visits</span><strong><%= audience.googleAdsAudit.unknownTotals.landings %></strong></article>
         </div>
         <div class="audience-expanded-list">
           <% audience.googleAdsAudit.dateGroups.forEach((dateGroup) => { %>
             <details class="audience-date-group">
               <summary class="audience-date-summary">
                 <strong><%= dateGroup.displayDate %></strong>
-                <span><%= dateGroup.totals.landings %> external landings · <%= dateGroup.totals.uniqueVisitors %> visitors · <%= dateGroup.ownerVisits %> owner · <%= dateGroup.totals.abandonedVisits %> abandoned</span>
+                <span><%= dateGroup.totals.landings %> external landings · <%= dateGroup.totals.uniqueVisitors %> tracked visitors · <%= dateGroup.ownerVisits %> owner/test · <%= dateGroup.unknownVisits %> unknown · <%= dateGroup.totals.abandonedVisits %> abandoned</span>
               </summary>
               <div class="google-daily-total-grid compact">
                 <article><span>Landings</span><strong><%= dateGroup.totals.landings %></strong></article>
@@ -74,20 +75,24 @@
                 <article><span>Repeat</span><strong><%= dateGroup.totals.repeatVisitors %></strong></article>
                 <article><span>Abandoned</span><strong><%= dateGroup.totals.abandonedVisits %></strong></article>
                 <article><span>Abandonment</span><strong><%= dateGroup.totals.abandonmentRate %>%</strong></article>
-                <article><span>Owner</span><strong><%= dateGroup.ownerVisits %></strong></article>
+                <article><span>Owner/Test</span><strong><%= dateGroup.ownerVisits %></strong></article>
+                <article><span>Unknown</span><strong><%= dateGroup.unknownVisits %></strong></article>
               </div>
               <div class="google-journey-list">
                 <% dateGroup.journeys.forEach((journey) => { %>
-                  <details class="visitor-journey-card google-journey-card <%= journey.visitorLabel === 'Owner' ? 'is-owner' : '' %>">
+                  <details class="visitor-journey-card google-journey-card <%= journey.trafficIdentity === 'Owner-test' ? 'is-owner' : '' %>">
                     <summary class="journey-summary">
                       <div>
                         <span class="journey-badge"><%= journey.badge %></span>
                         <h3><%= journey.visitorLabel %></h3>
+                        <p><strong>Traffic type:</strong> <%= journey.trafficIdentity %></p>
                         <p><strong>Timestamp:</strong> <%= journey.firstSeenDisplay %></p>
                         <p><strong>Landed:</strong> <%= journey.landingLabel %> <span class="muted-inline"><%= journey.landingPath %></span></p>
                       </div>
                       <div class="journey-meta">
-                        <p><strong>GCLID / GBRAID / WBRAID:</strong> <%= journey.adClickId %></p>
+                        <p><strong>GCLID:</strong> <%= journey.gclid %></p>
+                        <p><strong>GBRAID:</strong> <%= journey.gbraid %></p>
+                        <p><strong>WBRAID:</strong> <%= journey.wbraid %></p>
                         <p><strong>Session:</strong> <%= journey.sessionId %></p>
                         <p><strong>Visitor:</strong> <%= journey.visitorId %></p>
                         <p><strong>Page Views:</strong> <%= journey.pageViewCount %></p>
@@ -98,6 +103,9 @@
                     <div class="journey-details google-journey-details">
                       <div class="google-audit-grid">
                         <p><span>Source / Medium</span><strong><%= journey.sourceLabel %> / <%= journey.sourceMedium %></strong></p>
+                        <p><span>UTM Source</span><strong><%= journey.utmSource %></strong></p>
+                        <p><span>UTM Campaign</span><strong><%= journey.utmCampaign %></strong></p>
+                        <p><span>Campaign ID</span><strong><%= journey.campaignId %></strong></p>
                         <p><span>IP / Area</span><strong><%= journey.ipAddress %> · <%= journey.locationLabel %></strong></p>
                         <p><span>Browser</span><strong><%= journey.browserName %> · <%= journey.operatingSystem %></strong></p>
                         <p><span>Total Page Time</span><strong><%= journey.totalDurationDisplay %></strong></p>
@@ -106,6 +114,10 @@
                         <p><span>Quote Requested</span><strong><%= journey.quoteRequested ? 'Yes' : 'No' %></strong></p>
                         <p><span>Checkout Reached</span><strong><%= journey.checkoutReached ? 'Yes' : 'No' %></strong></p>
                         <p><span>Exited Without Action</span><strong><%= journey.exitedWithoutAction ? 'Yes' : 'No' %></strong></p>
+                      </div>
+                      <div>
+                        <h4>Original Raw Landing URL</h4>
+                        <p class="muted-copy"><%= journey.originalRawLandingUrl %></p>
                       </div>
                       <div>
                         <h4>Pages Viewed In Order</h4>
@@ -477,12 +489,13 @@
     <% } %>
     <div class="visitor-journey-list">
       <% audience.visitorJourneys.forEach((journey) => { %>
-        <details class="visitor-journey-card <%= journey.badge === 'Owner visit' ? 'is-owner' : '' %>">
+        <details class="visitor-journey-card <%= journey.trafficIdentity === 'Owner-test' ? 'is-owner' : '' %>">
           <summary class="journey-summary">
             <div>
               <span class="journey-badge"><%= journey.badge %></span>
               <h3><%= journey.visitorLabel %></h3>
               <p><strong>Source:</strong> <%= journey.sourceLabel %> <span class="muted-inline">(<%= journey.sourceCategory %>)</span></p>
+              <p><strong>Traffic type:</strong> <%= journey.trafficIdentity %></p>
               <p><strong>Landed:</strong> <%= journey.landingLabel %> <span class="muted-inline"><%= journey.landingPath %></span></p>
             </div>
             <div class="journey-meta">

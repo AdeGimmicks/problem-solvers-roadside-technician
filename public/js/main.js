@@ -59,10 +59,19 @@ const problemInput = document.querySelector('[name="problem"]');
 const analyticsVisitorKey = 'problemSolversVisitorId';
 const analyticsSessionKey = 'problemSolversSessionId';
 const analyticsLandingKey = 'problemSolversLandingPath';
+const analyticsRawLandingUrlKey = 'problemSolversRawLandingUrl';
 const analyticsAttributionKey = 'problemSolversAdAttribution';
+const analyticsOwnerBrowserKey = 'problemSolversOwnerBrowser';
 const analyticsPageStartedAt = Date.now();
 let analyticsDurationSent = false;
 let requestFormStartedTracked = false;
+
+if (location.pathname.startsWith('/dashboard')) {
+  try {
+    window.localStorage.setItem(analyticsOwnerBrowserKey, '1');
+    window.localStorage.setItem('problemSolversOwnerBrowserIdentifiedAt', new Date().toISOString());
+  } catch (error) {}
+}
 
 function randomAnalyticsId(prefix) {
   if (window.crypto?.randomUUID) return `${prefix}-${window.crypto.randomUUID()}`;
@@ -96,6 +105,29 @@ function getAnalyticsLandingPath() {
   }
 }
 
+function getAnalyticsRawLandingUrl() {
+  const currentParams = new URLSearchParams(window.location.search);
+  const hasCurrentAdId = Boolean(currentParams.get('gclid') || currentParams.get('gbraid') || currentParams.get('wbraid'));
+  try {
+    let value = window.sessionStorage.getItem(analyticsRawLandingUrlKey);
+    if (!value || hasCurrentAdId) {
+      value = window.location.href;
+      window.sessionStorage.setItem(analyticsRawLandingUrlKey, value);
+    }
+    return value;
+  } catch (error) {
+    return window.location.href;
+  }
+}
+
+function isAnalyticsOwnerBrowser() {
+  try {
+    return window.localStorage.getItem(analyticsOwnerBrowserKey) === '1';
+  } catch (error) {
+    return false;
+  }
+}
+
 function getAnalyticsAttribution() {
   const searchParams = new URLSearchParams(window.location.search);
   const current = {
@@ -111,6 +143,7 @@ function getAnalyticsAttribution() {
         ...current,
         adClickId: current.gclid || current.gbraid || current.wbraid,
         landingPath: `${location.pathname}${location.search}`,
+        originalRawLandingUrl: window.location.href,
         capturedAt: new Date().toISOString()
       };
       window.sessionStorage.setItem(analyticsAttributionKey, JSON.stringify(value));
@@ -126,12 +159,15 @@ function getAnalyticsAttribution() {
 function trackVisitorEvent(eventType, data = {}) {
   if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/technician')) return;
   const attribution = getAnalyticsAttribution();
+  const landingPath = attribution.landingPath || getAnalyticsLandingPath();
+  const originalRawLandingUrl = attribution.originalRawLandingUrl || getAnalyticsRawLandingUrl();
   const payload = new URLSearchParams({
     eventType,
     visitorId: getAnalyticsId(analyticsVisitorKey, 'visitor'),
     sessionId: getAnalyticsId(analyticsSessionKey, 'session', window.sessionStorage),
     path: `${location.pathname}${location.search}`,
-    landingPath: getAnalyticsLandingPath(),
+    landingPath,
+    originalRawLandingUrl,
     pageTitle: document.title || '',
     referrer: document.referrer || '',
     screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
@@ -142,6 +178,7 @@ function trackVisitorEvent(eventType, data = {}) {
     gbraid: attribution.gbraid || '',
     wbraid: attribution.wbraid || '',
     gadSource: attribution.gadSource || '',
+    ownerBrowser: isAnalyticsOwnerBrowser() ? '1' : '',
     ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined && value !== null && value !== ''))
   });
   const url = `/api/analytics/track?${payload.toString()}`;

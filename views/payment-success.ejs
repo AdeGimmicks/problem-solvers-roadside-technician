@@ -23,6 +23,20 @@
         <a class="btn secondary" href="/">Back Home</a>
       </div>
     </div>
+    <% if (purchaseConversion) { %>
+      <div
+        id="purchase-conversion-data"
+        hidden
+        data-transaction-id="<%= purchaseConversion.transaction_id %>"
+        data-booking-id="<%= purchaseConversion.booking_id %>"
+        data-value="<%= purchaseConversion.value %>"
+        data-currency="<%= purchaseConversion.currency %>"
+        data-item-id="<%= purchaseConversion.items[0].item_id %>"
+        data-item-name="<%= purchaseConversion.items[0].item_name %>"
+        data-item-category="<%= purchaseConversion.items[0].item_category %>"
+      ></div>
+      <script src="/js/purchase-conversion.js?v=google-ads-purchase-20260825" defer></script>
+    <% } %>
   </section>
 </main>
 <%- include('partials/footer') %>
