@@ -153,6 +153,57 @@ iframe {
   text-decoration: none;
 }
 
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.nav-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-menu summary::after {
+  content: "▾";
+  margin-left: 7px;
+  font-size: 0.8em;
+  color: var(--yellow);
+}
+
+.nav-menu-panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  padding: 10px;
+  border: 1px solid rgba(255, 210, 31, 0.35);
+  border-radius: var(--radius);
+  background: rgba(15, 15, 18, 0.98);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+}
+
+.nav-menu:not([open]) .nav-menu-panel {
+  display: none;
+}
+
+.nav-menu-panel a {
+  display: block;
+  padding: 11px 12px;
+  border-radius: calc(var(--radius) - 4px);
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.nav-menu-panel a:hover,
+.nav-menu-panel a:focus-visible {
+  background: var(--yellow);
+  color: var(--black);
+}
+
 .nav-cta {
   padding: 12px 18px;
   border-radius: var(--radius);
@@ -445,8 +496,46 @@ main > section {
 .mobile-roadside-actions {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 28px;
+}
+
+.home-auto-repair-callout {
+  max-width: 1360px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  border-top: 1px solid rgba(255, 210, 31, 0.28);
+  border-bottom: 1px solid rgba(255, 210, 31, 0.28);
+  background:
+    radial-gradient(circle at 90% 16%, rgba(255, 210, 31, 0.13), transparent 26%),
+    linear-gradient(180deg, #111113, #070708);
+}
+
+.home-auto-repair-callout h2 {
+  max-width: 760px;
+  margin-bottom: 10px;
+  color: var(--white);
+  font-size: clamp(2.2rem, 4vw, 4rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.home-auto-repair-callout p:not(.eyebrow) {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.home-auto-repair-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .home-service-strip {
@@ -3504,6 +3593,19 @@ td {
     width: 100%;
     min-height: 58px;
     justify-content: center;
+  }
+
+  .home-auto-repair-callout {
+    grid-template-columns: 1fr;
+    padding-inline: 18px;
+  }
+
+  .home-auto-repair-actions {
+    justify-content: stretch;
+  }
+
+  .home-auto-repair-actions .btn {
+    width: 100%;
   }
 
   .services-landing {

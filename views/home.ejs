@@ -18,6 +18,7 @@
       ['Jump Start', '⚡', 'Jump', 'Starts', 'Battery boost at your location.', '/jump-start'],
       ['Fuel Delivery', '⛽', 'Fuel', 'Delivery', 'Emergency fuel brought to you.', '/fuel-delivery'],
       ['Lockout Service', '▣', 'Lockout', 'Service', 'Help getting back into your vehicle.', '/lockout'],
+      ['Mobile Auto Repair', 'AR', 'Auto', 'Repair', 'Brake, starter, alternator, and diagnostic help.', '/auto-repair'],
       ['Tire Inflation', '✚', 'Tire', 'Inflation', 'Air-up support for low tires.', null],
       ['Battery Replacement', '▤', 'Battery', 'Replacement', 'Mobile battery install support.', null]
     ].forEach((item) => { %>
@@ -55,6 +56,18 @@
       <a class="btn primary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
       <a class="btn secondary" href="sms:<%= settings.textNumber %>">Text Now</a>
       <a class="btn ghost" href="/request-service">Request Service</a>
+    </div>
+  </section>
+
+  <section class="section home-auto-repair-callout">
+    <div>
+      <p class="eyebrow">Mobile auto repair</p>
+      <h2>Brake, Starter, Alternator, And Diagnostic Help At Your Location</h2>
+      <p>Need more than roadside assistance? Request a final quote for mobile auto repair before payment.</p>
+    </div>
+    <div class="home-auto-repair-actions">
+      <a class="btn primary" href="/auto-repair">Request Auto Repair Quote</a>
+      <a class="btn secondary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
     </div>
   </section>
 

@@ -57,7 +57,17 @@
   </div>
   <button class="nav-toggle" type="button" aria-label="Open navigation" data-nav-toggle>☰</button>
   <nav class="site-nav" data-nav>
-    <a href="/services">Services</a>
+    <details class="nav-menu">
+      <summary>Services</summary>
+      <div class="nav-menu-panel">
+        <a href="/tire-change">Tire Change</a>
+        <a href="/jump-start">Jump Start</a>
+        <a href="/lockout">Lockout</a>
+        <a href="/fuel-delivery">Fuel Delivery</a>
+        <a href="/auto-repair">Mobile Auto Repair</a>
+        <a href="/services">All Services</a>
+      </div>
+    </details>
     <a href="/about">About</a>
     <a href="/contact">Contact</a>
     <a class="nav-cta" href="/request-service">Request Service</a>
@@ -75,13 +85,24 @@
       <p class="mobile-roadside-copy">Tire changes,Jump starts, lockouts, fuel delivery, battery replacement, and tire inflation. We come to your location with no membership required.</p>
       <div class="mobile-roadside-actions">
         <a class="btn primary" href="/services">Get Assistance Now</a>
+        <a class="btn ghost" href="/auto-repair">Mobile Auto Repair</a>
         <a class="btn secondary" href="tel:+13129007711">Call Now</a>
       </div>
       <p class="mobile-roadside-note">Serving Chicago & Nearby Areas, fast Roadside Help at Your Location.</p>
     </section>
   </section>
 
-  
+  <section class="section home-auto-repair-callout">
+    <div>
+      <p class="eyebrow">Mobile auto repair</p>
+      <h2>Brake, Starter, Alternator, And Diagnostic Help At Your Location</h2>
+      <p>Need more than roadside assistance? Request a final quote for mobile auto repair before payment.</p>
+    </div>
+    <div class="home-auto-repair-actions">
+      <a class="btn primary" href="/auto-repair">Request Auto Repair Quote</a>
+      <a class="btn secondary" href="tel:+13129007711">Call Now</a>
+    </div>
+  </section>
 
 
 
@@ -128,6 +149,7 @@
   <div>
     <strong>Quick Links</strong>
     <a href="/services">Services</a>
+    <a href="/auto-repair">Mobile Auto Repair</a>
     <a href="/request-service">Request Service</a>
     <a href="/technicians/apply">Technician Sign Up</a>
     <a href="/store-manager/login">Store Manager</a>
