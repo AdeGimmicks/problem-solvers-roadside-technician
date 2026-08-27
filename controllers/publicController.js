@@ -284,6 +284,19 @@ function autoRepair(req, res) {
   });
 }
 
+function autoRepairService(req, res, next) {
+  const selectedService = AUTO_REPAIR_SERVICES.find((service) => service.slug === req.params.repairSlug);
+  if (!selectedService) return next();
+
+  res.render('auto-repair', {
+    title: `${selectedService.name} Quote Request`,
+    metaDescription: `Request a final quote for ${selectedService.name.toLowerCase()} at your location.`,
+    services: AUTO_REPAIR_SERVICES,
+    form: { problem: selectedService.name },
+    errors: []
+  });
+}
+
 async function autoRepairQuote(req, res, next) {
   const request = await ServiceRequest.findOne({
     _id: req.params.id,
@@ -403,6 +416,7 @@ function sitemap(req, res) {
     '',
     ...DIRECT_SERVICE_SLUGS.map((slug) => `/${slug}`),
     '/auto-repair',
+    ...AUTO_REPAIR_SERVICES.map((service) => `/auto-repair/${service.slug}`),
     '/services',
     '/about',
     '/contact',
@@ -419,6 +433,7 @@ module.exports = {
   services,
   servicePage,
   autoRepair,
+  autoRepairService,
   autoRepairQuote,
   about,
   contact,

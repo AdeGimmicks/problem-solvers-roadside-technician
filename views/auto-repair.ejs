@@ -1,6 +1,7 @@
 <%- include('partials/head') %>
 <%- include('partials/nav') %>
 <main>
+  <% if (!form.problem) { %>
   <section class="direct-service-hero auto-repair-hero">
     <div class="direct-service-copy">
       <p class="eyebrow">Mobile auto repair</p>
@@ -26,7 +27,7 @@
     </div>
     <div class="direct-service-grid services-direct-grid">
       <% services.forEach((service) => { %>
-        <a class="direct-service-card services-direct-card" href="/auto-repair?service=<%= encodeURIComponent(service.slug) %>#auto-repair-request">
+        <a class="direct-service-card services-direct-card" href="/auto-repair/<%= encodeURIComponent(service.slug) %>">
           <span>●</span>
           <h3><%= service.name %></h3>
           <p><%= service.description %></p>
@@ -35,6 +36,7 @@
       <% }) %>
     </div>
   </section>
+  <% } %>
 
   <% if (form.problem) { %>
   <section id="auto-repair-request" class="form-layout single request-layout">

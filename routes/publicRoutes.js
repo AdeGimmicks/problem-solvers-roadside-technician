@@ -63,6 +63,7 @@ router.get('/auto-repair', publicController.autoRepair);
 router.post('/auto-repair', upload.array('photos', 5), autoRepairRequestValidators, requestController.submitAutoRepairRequest);
 router.post('/api/auto-repair-requests', upload.array('photos', 5), autoRepairRequestValidators, requestController.submitAutoRepairRequest);
 router.get('/auto-repair/quote/:id', publicController.autoRepairQuote);
+router.get('/auto-repair/:repairSlug', publicController.autoRepairService);
 router.get('/about', publicController.about);
 router.get('/contact', publicController.contact);
 router.post('/contact', contactValidators, requestController.submitContact);
