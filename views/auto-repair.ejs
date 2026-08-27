@@ -7,7 +7,7 @@
       <h1>Auto Repair At Your Location</h1>
       <p class="direct-service-summary">Request brake service, alternator replacement, starter replacement, or diagnostic help. Mechanical work gets a final quote after your vehicle details are reviewed.</p>
       <div class="direct-service-actions">
-        <a class="btn primary" href="#auto-repair-request">Request Final Quote</a>
+        <a class="btn primary" href="#auto-repair-services">Request Final Quote</a>
         <a class="btn secondary" href="tel:<%= settings.phoneNumber %>">Call Now</a>
         <a class="btn ghost" href="sms:<%= settings.textNumber || settings.phoneNumber %>">Text Us</a>
       </div>
@@ -19,7 +19,7 @@
     </aside>
   </section>
 
-  <section class="section">
+  <section id="auto-repair-services" class="section">
     <div class="section-heading">
       <p class="eyebrow">Repair services</p>
       <h2>Choose The Repair Needed</h2>
@@ -36,6 +36,7 @@
     </div>
   </section>
 
+  <% if (form.problem) { %>
   <section id="auto-repair-request" class="form-layout single request-layout">
     <form class="form-card wide request-card" action="/auto-repair" method="post" enctype="multipart/form-data" data-request-form data-auto-repair-form novalidate>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -163,5 +164,6 @@
       </datalist>
     </form>
   </section>
+  <% } %>
 </main>
 <%- include('partials/footer') %>
