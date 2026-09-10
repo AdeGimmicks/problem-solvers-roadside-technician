@@ -1,11 +1,14 @@
 const ServiceRequest = require('../models/ServiceRequest');
 const Payment = require('../models/Payment');
 const BusinessSettings = require('../models/BusinessSettings');
+const Customer = require('../models/Customer');
 const { stripe, stripePublishableKey } = require('../config/services');
 const { sendPaymentStatusSms } = require('../services/smsService');
 
 const STRIPE_WEBSITE_NAME = 'Problem Solvers Roadside';
 const STRIPE_BUSINESS_TYPE = 'Roadside Assistance';
+const BATTERY_REPLACEMENT_SERVICE = 'Battery Replacement';
+const BATTERY_REPLACEMENT_PRICE = 240;
 
 function serviceItemId(serviceName) {
   return String(serviceName || 'Roadside Service')
@@ -80,17 +83,88 @@ async function getTechnicianAvailability() {
   };
 }
 
+async function createDirectBatteryReplacementRequest(session, paymentIntentId) {
+  const existingPayment = paymentIntentId
+    ? await Payment.findOne({ stripePaymentIntentId: paymentIntentId }).populate('serviceRequest')
+    : null;
+  if (existingPayment?.serviceRequest) {
+    return existingPayment.serviceRequest;
+  }
+
+  const customerDetails = session.customer_details || {};
+  const shippingDetails = session.shipping_details || {};
+  const customerName = customerDetails.name || shippingDetails.name || 'Battery Replacement Customer';
+  const phone = customerDetails.phone || shippingDetails.phone || 'Phone not provided';
+  const email = customerDetails.email || undefined;
+  const serviceAddress = shippingDetails.address || customerDetails.address;
+  const address = serviceAddress
+    ? [
+      serviceAddress.line1,
+      serviceAddress.line2,
+      serviceAddress.city,
+      serviceAddress.state,
+      serviceAddress.postal_code,
+      serviceAddress.country
+    ].filter(Boolean).join(', ')
+    : 'Customer location collected in Stripe checkout';
+
+  const customer = await Customer.create({
+    name: customerName,
+    phone,
+    email,
+    vehicles: [{
+      make: 'Battery replacement',
+      model: 'Vehicle details not collected before payment',
+      color: 'Not provided',
+      year: 'Not provided'
+    }],
+    notes: `Direct ${BATTERY_REPLACEMENT_SERVICE} Stripe checkout. Stripe session: ${session.id}`
+  });
+
+  return ServiceRequest.create({
+    customer: customer._id,
+    customerName,
+    phone,
+    email,
+    vehicleMake: 'Battery replacement',
+    vehicleModel: 'Vehicle details not collected before payment',
+    vehicleColor: 'Not provided',
+    vehicleYear: 'Not provided',
+    problem: BATTERY_REPLACEMENT_SERVICE,
+    serviceDetails: {
+      directBatteryReplacementCheckout: true,
+      stripeSessionId: session.id
+    },
+    currentLocation: address,
+    message: 'Direct battery replacement payment completed through Stripe before the full roadside form.',
+    preferredPaymentMethod: 'Card',
+    status: 'Pending',
+    paymentStatus: 'Payment Pending',
+    basePrice: BATTERY_REPLACEMENT_PRICE,
+    travelFee: 0,
+    totalPrice: BATTERY_REPLACEMENT_PRICE,
+    estimatedPrice: BATTERY_REPLACEMENT_PRICE
+  });
+}
+
 async function recordStripeCheckoutPayment(session) {
-  const serviceRequestId = session?.metadata?.serviceRequestId;
+  let serviceRequestId = session?.metadata?.serviceRequestId;
+  const directBatteryCheckout = session?.metadata?.directBatteryReplacementCheckout === 'true';
+  const paymentIntentId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id;
+
+  if (!serviceRequestId && directBatteryCheckout) {
+    const directRequest = await createDirectBatteryReplacementRequest(session, paymentIntentId);
+    serviceRequestId = directRequest?._id;
+  }
+
   if (!serviceRequestId) return null;
 
   const request = await ServiceRequest.findById(serviceRequestId);
   if (!request) return null;
   const wasPaid = request.paymentStatus === 'Paid';
 
-  const paymentIntentId = typeof session.payment_intent === 'string'
-    ? session.payment_intent
-    : session.payment_intent?.id;
   let payment = paymentIntentId
     ? await Payment.findOne({ stripePaymentIntentId: paymentIntentId })
     : null;
@@ -116,6 +190,64 @@ async function recordStripeCheckoutPayment(session) {
   }
 
   return { request, payment };
+}
+
+async function createBatteryReplacementCheckout(req, res, next) {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe is not configured yet.' });
+    }
+
+    const availability = await getTechnicianAvailability();
+    const customerAcceptedWait = req.body.customerAcceptedWait === true || req.body.customerAcceptedWait === 'true';
+    if (availability.busy && !customerAcceptedWait) {
+      return res.status(409).json({
+        error: 'No technician is currently accepting immediate jobs. Please confirm you are willing to wait before paying.',
+        availability
+      });
+    }
+
+    const metadata = {
+      website: STRIPE_WEBSITE_NAME,
+      business: STRIPE_BUSINESS_TYPE,
+      service: BATTERY_REPLACEMENT_SERVICE,
+      directBatteryReplacementCheckout: 'true',
+      customerAcceptedWait: customerAcceptedWait ? 'true' : 'false'
+    };
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: process.env.STRIPE_CURRENCY || 'usd',
+          unit_amount: BATTERY_REPLACEMENT_PRICE * 100,
+          product_data: {
+            name: `${STRIPE_WEBSITE_NAME} - ${BATTERY_REPLACEMENT_SERVICE}`,
+            description: `${BATTERY_REPLACEMENT_SERVICE} at your location`,
+            metadata
+          }
+        }
+      }],
+      phone_number_collection: { enabled: true },
+      billing_address_collection: 'required',
+      shipping_address_collection: {
+        allowed_countries: ['US']
+      },
+      metadata,
+      payment_intent_data: {
+        description: BATTERY_REPLACEMENT_SERVICE,
+        metadata
+      },
+      success_url: `${process.env.APP_URL}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.APP_URL}/payments/cancel?service=battery-replacement`
+    });
+
+    res.json({ url: session.url, publishableKeyConfigured: Boolean(stripePublishableKey) });
+  } catch (error) {
+    next(error);
+  }
 }
 
 async function createCheckoutSession(req, res, next) {
@@ -219,11 +351,14 @@ async function success(req, res, next) {
 async function cancel(req, res, next) {
   try {
     const request = req.query.request ? await ServiceRequest.findById(req.query.request) : null;
+    const isBatteryReplacement = req.query.service === 'battery-replacement';
     res.render('payment-cancel', {
       title: 'Payment Cancelled',
       metaDescription: 'Your payment was cancelled.',
       request,
-      returnUrl: request ? `/request-service?resume=${encodeURIComponent(request._id.toString())}` : '/request-service'
+      returnUrl: request
+        ? `/request-service?resume=${encodeURIComponent(request._id.toString())}`
+        : isBatteryReplacement ? '/request-service?service=Battery%20Replacement' : '/request-service'
     });
   } catch (error) {
     next(error);
@@ -250,6 +385,7 @@ async function stripeWebhook(req, res) {
 }
 
 module.exports = {
+  createBatteryReplacementCheckout,
   createCheckoutSession,
   success,
   cancel,

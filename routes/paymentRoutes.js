@@ -3,6 +3,7 @@ const paymentController = require('../controllers/paymentController');
 
 const router = express.Router();
 
+router.post('/battery-replacement-checkout', paymentController.createBatteryReplacementCheckout);
 router.post('/checkout', paymentController.createCheckoutSession);
 router.get('/success', paymentController.success);
 router.get('/cancel', paymentController.cancel);

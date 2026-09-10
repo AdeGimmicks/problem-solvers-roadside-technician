@@ -491,7 +491,7 @@ const servicePricing = {
   'Fuel Delivery': 60,
   'Lockout Service': 65,
   'Tire Inflation': 35,
-  'Battery Replacement': 75,
+  'Battery Replacement': 240,
   'Battery Testing': 35,
   'Car Diagnostic Scanner': 50,
   'Light Roadside Repairs': 75
@@ -1577,6 +1577,33 @@ async function startStripeCheckout(request, options = {}) {
   window.location.href = payload.url;
 }
 
+async function startBatteryReplacementCheckout(options = {}) {
+  const csrfToken = await getCsrfToken();
+  const response = await fetch('/payments/battery-replacement-checkout', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
+    },
+    body: JSON.stringify({
+      customerAcceptedWait: options.customerAcceptedWait === true
+    })
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload.error || 'Stripe checkout is not ready yet.');
+    if (response.status === 409 && payload.availability) error.availability = payload.availability;
+    throw error;
+  }
+  if (!payload.url) throw new Error('Stripe did not return a checkout page.');
+
+  trackVisitorEvent('checkout_reached', { serviceName: 'Battery Replacement', directCheckout: true });
+  window.location.href = payload.url;
+}
+
 function formatAvailabilityWarning(availability) {
   return availability?.message
     || 'No technician is currently accepting immediate jobs. If you can wait, continue to payment and your request will be handled as a wait-list request. If this is urgent, call first before paying.';
@@ -1649,6 +1676,10 @@ function setupStaticRequestSave() {
     try {
       waitButton.disabled = true;
       waitButton.textContent = 'Opening Payment...';
+      if (problemInput?.value === 'Battery Replacement') {
+        await startBatteryReplacementCheckout({ customerAcceptedWait: true });
+        return;
+      }
       let waitlistedRequest = pendingCheckoutRequest;
       if (!waitlistedRequest) {
         if (!validateVehicleSelection()) {
@@ -1769,6 +1800,29 @@ function setupRequestSteps(form) {
     if (activeName === 'service') {
       if (!validateStepFields(activeStep)) return;
       renderSelectedServiceDetails();
+      if (problemInput?.value === 'Battery Replacement') {
+        const nextButton = activeStep.querySelector('[data-step-next]');
+        try {
+          hideAvailabilityWarning();
+          if (nextButton) {
+            nextButton.disabled = true;
+            nextButton.textContent = 'Opening Payment...';
+          }
+          await startBatteryReplacementCheckout();
+        } catch (error) {
+          if (error.availability) {
+            showAvailabilityWarning(error.availability);
+            return;
+          }
+          alert(error.message || 'Unable to open payment. Please call or text us.');
+        } finally {
+          if (nextButton) {
+            nextButton.disabled = false;
+            nextButton.textContent = 'Continue';
+          }
+        }
+        return;
+      }
     }
 
     if (activeName === 'details') {

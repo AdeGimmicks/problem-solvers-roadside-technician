@@ -33,7 +33,7 @@ const SERVICES = [
     description: 'Battery replacement at your location when a battery is available for your vehicle.',
     included: ['Battery fitment check', 'Old battery removal', 'New battery installation'],
     when: 'Call when testing confirms a failed battery or repeated no-start issues.',
-    price: '$125 plus battery'
+    price: '$240'
   },
   {
     slug: 'lockout',
